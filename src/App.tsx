@@ -25,6 +25,12 @@ interface Listing {
   createdAt: string;
 }
 
+interface ChatMessage {
+  id: string;
+  sender: "user" | "assistant";
+  text: string;
+}
+
 const ADMIN_EMAIL = "jnivaldoliveira@gmail.com";
 const OFFICIAL_WHATSAPP = "2389361197";
 const OFFICIAL_PHONE_DISPLAY = "+238 936 11 97";
@@ -130,6 +136,12 @@ const INITIAL_LISTINGS: Listing[] = [
   },
 ];
 
+const QUICK_PROMPTS = [
+  "Como funcionam as 50 vagas gratuitas?",
+  "Quanto custa após as 50 vagas e como pagar?",
+  "Como falar com o suporte oficial?",
+];
+
 export default function App() {
   const [tab, setTab] = useState<"home" | "publish" | "account" | "admin">("home");
   const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
@@ -160,6 +172,17 @@ export default function App() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bca_transfer");
   const [proofRef, setProofRef] = useState("");
   const [feedback, setFeedback] = useState<string>("");
+
+  // Assistente flutuante
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: "welcome",
+      sender: "assistant",
+      text: "Olá! Sou o assistente do CaboVerde Conecta. Posso esclarecer dúvidas sobre vagas gratuitas, pagamento de 1.500 CVE (BCA, BCN ou Hotmart Visa), publicação de anúncios e contacto direto.",
+    },
+  ]);
 
   const totalFreeSlots = 50;
   const usedFreeSlots = useMemo(
@@ -193,6 +216,44 @@ export default function App() {
 
   function addAudit(entry: string) {
     setAuditLogs((prev) => [`[${new Date().toLocaleTimeString()}] ${entry}`, ...prev]);
+  }
+
+  function buildAssistantReply(rawText: string): string {
+    const t = rawText.toLowerCase();
+    if (t.includes("gratuit") || t.includes("50") || t.includes("vaga")) {
+      return `A campanha de lançamento oferece 50 vagas gratuitas. Neste momento restam ${freeSlotsRemaining} de ${totalFreeSlots} vagas. Após o limite de 50 anúncios, cada publicação passa a ter o valor padrão de 1.500 CVE.`;
+    }
+    if (t.includes("1.500") || t.includes("1500") || t.includes("pagar") || t.includes("bca") || t.includes("bcn") || t.includes("hotmart") || t.includes("visa")) {
+      return `O valor padrão após as 50 vagas gratuitas é 1.500 CVE. Pode pagar por transferência bancária para BCA (conta ${BANK_ACCOUNTS.bca.account}, NIB ${BANK_ACCOUNTS.bca.nib}) ou BCN (conta ${BANK_ACCOUNTS.bcn.account}) indicando o comprovativo, ou por cartão Visa via Hotmart. O comprovativo não publica sozinho: a publicação depende da confirmação do administrador (${ADMIN_EMAIL}).`;
+    }
+    if (t.includes("suporte") || t.includes("contacto") || t.includes("whatsapp") || t.includes("telefone")) {
+      return `O contacto oficial do CaboVerde Conecta é WhatsApp / telefone ${OFFICIAL_PHONE_DISPLAY} (${OFFICIAL_WHATSAPP}) e o e-mail de administração é ${ADMIN_EMAIL}. No portal, o contacto entre interessados e anunciantes é direto.`;
+    }
+    if (t.includes("estado") || t.includes("pendente") || t.includes("publicar")) {
+      return "Os estados de pagamento (pending, confirmed, rejected) e de anúncio (pending, published, rejected, suspended) são separados. Novos anúncios entram em análise até confirmação e publicação no painel administrativo.";
+    }
+    return `O CaboVerde Conecta reúne classificados, serviços, imóveis, viaturas, hospedagem e oportunidades nas 9 ilhas de Cabo Verde. Restam ${freeSlotsRemaining} vagas gratuitas de 50, após as quais o valor é 1.500 CVE. Contacto oficial: ${OFFICIAL_PHONE_DISPLAY}.`;
+  }
+
+  function sendChatMessage(customText?: string) {
+    const content = (customText ?? chatInput).trim();
+    if (!content) return;
+
+    const userMsg: ChatMessage = {
+      id: `u-${Date.now()}`,
+      sender: "user",
+      text: content,
+    };
+    const replyMsg: ChatMessage = {
+      id: `a-${Date.now() + 1}`,
+      sender: "assistant",
+      text: buildAssistantReply(content),
+    };
+
+    setMessages((prev) => [...prev, userMsg, replyMsg]);
+    if (!customText) {
+      setChatInput("");
+    }
   }
 
   function handlePublishSubmit(e: React.FormEvent) {
@@ -229,7 +290,6 @@ export default function App() {
       phone: phone.trim() || OFFICIAL_PHONE_DISPLAY,
       image: imageUrl.trim() || INITIAL_LISTINGS[0].image,
       ownerEmail: ownerEmail.trim() || ADMIN_EMAIL,
-      // Comprovativo nunca publica sozinho: aguarda confirmação do admin
       listingStatus: "pending",
       paymentStatus: usingFreeSlot ? "confirmed" : "pending",
       paymentMethod: usingFreeSlot ? "free_launch" : paymentMethod,
@@ -346,7 +406,7 @@ export default function App() {
         </div>
       </header>
 
-      <main style={{ maxWidth: 1200, margin: "0 auto", padding: "1.85rem 1.25rem 3rem" }}>
+      <main style={{ maxWidth: 1200, margin: "0 auto", padding: "1.85rem 1.25rem 5rem" }}>
         {tab === "home" && (
           <>
             <h1 style={{ margin: "0 0 0.45rem", fontSize: "1.95rem", letterSpacing: "-0.02em" }}>
@@ -842,6 +902,162 @@ export default function App() {
         )}
       </main>
 
+      {/* Assistente Flutuante */}
+      <div
+        style={{
+          position: "fixed",
+          right: 20,
+          bottom: 20,
+          zIndex: 40,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-end",
+          gap: "0.65rem",
+        }}
+      >
+        {chatOpen && (
+          <div
+            style={{
+              width: "min(360px, calc(100vw - 32px))",
+              backgroundColor: "#10182A",
+              border: "1px solid rgba(181,195,216,0.22)",
+              borderRadius: 16,
+              overflow: "hidden",
+              boxShadow: "0 18px 40px rgba(0,0,0,0.55)",
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "#151F33",
+                borderBottom: "1px solid rgba(181,195,216,0.14)",
+                padding: "0.8rem 1rem",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <strong style={{ fontSize: "0.95rem" }}>Assistente CaboVerde Conecta</strong>
+                <div style={{ fontSize: "0.75rem", color: "#38D6A0" }}>Ajuda sobre vagas, 1.500 CVE e anúncios</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setChatOpen(false)}
+                style={{
+                  background: "transparent",
+                  border: "1px solid rgba(181,195,216,0.2)",
+                  color: "#F8FAFC",
+                  borderRadius: 8,
+                  padding: "0.25rem 0.55rem",
+                  cursor: "pointer",
+                  fontSize: "0.8rem",
+                }}
+              >
+                Fechar
+              </button>
+            </div>
+
+            <div
+              style={{
+                maxHeight: 270,
+                overflowY: "auto",
+                padding: "0.85rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.55rem",
+              }}
+            >
+              {messages.map((m) => (
+                <div
+                  key={m.id}
+                  style={{
+                    alignSelf: m.sender === "user" ? "flex-end" : "flex-start",
+                    maxWidth: "88%",
+                    padding: "0.6rem 0.78rem",
+                    borderRadius: 12,
+                    backgroundColor: m.sender === "user" ? "#2563EB" : "#151F33",
+                    border:
+                      m.sender === "user"
+                        ? "1px solid rgba(96,165,250,0.5)"
+                        : "1px solid rgba(181,195,216,0.16)",
+                    color: "#F8FAFC",
+                    fontSize: "0.84rem",
+                    lineHeight: 1.42,
+                  }}
+                >
+                  {m.text}
+                </div>
+              ))}
+
+              <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginTop: "0.2rem" }}>
+                {QUICK_PROMPTS.map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => sendChatMessage(q)}
+                    style={{
+                      padding: "0.34rem 0.6rem",
+                      borderRadius: 999,
+                      border: "1px solid rgba(181,195,216,0.18)",
+                      backgroundColor: "#151F33",
+                      color: "#B5C3D8",
+                      cursor: "pointer",
+                      fontSize: "0.74rem",
+                      textAlign: "left",
+                    }}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                sendChatMessage();
+              }}
+              style={{
+                display: "flex",
+                gap: "0.45rem",
+                padding: "0.7rem 0.85rem",
+                borderTop: "1px solid rgba(181,195,216,0.14)",
+                backgroundColor: "#10182A",
+              }}
+            >
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Escreva a sua dúvida..."
+                style={{ ...inputStyle, flex: 1, padding: "0.5rem 0.7rem", fontSize: "0.84rem" }}
+              />
+              <button type="submit" style={{ ...actionBtnStyle("#2563EB"), padding: "0.5rem 0.8rem" }}>
+                Enviar
+              </button>
+            </form>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setChatOpen((prev) => !prev)}
+          style={{
+            padding: "0.72rem 1.05rem",
+            borderRadius: 999,
+            border: "1px solid rgba(96,165,250,0.55)",
+            backgroundColor: "#2563EB",
+            color: "#F8FAFC",
+            fontWeight: 700,
+            fontSize: "0.88rem",
+            cursor: "pointer",
+            boxShadow: "0 12px 28px rgba(0,0,0,0.45)",
+          }}
+        >
+          {chatOpen ? "Ocultar Assistente" : "Assistente"}
+        </button>
+      </div>
+
       {lightbox && (
         <div
           onClick={() => setLightbox(null)}
@@ -1013,25 +1229,4 @@ function eyebrowStyle(color: string): React.CSSProperties {
   };
 }
 
-function badgeStyle(bg: string): React.CSSProperties {
-  return {
-    padding: "0.3rem 0.68rem",
-    borderRadius: 999,
-    backgroundColor: bg,
-    color: "#F8FAFC",
-    fontWeight: 600,
-  };
-}
-
-function actionBtnStyle(bg: string): React.CSSProperties {
-  return {
-    padding: "0.5rem 0.85rem",
-    borderRadius: 8,
-    border: "none",
-    backgroundColor: bg,
-    color: "#F8FAFC",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: "0.82rem",
-  };
-}
+function badgeStyle(bg: string):
