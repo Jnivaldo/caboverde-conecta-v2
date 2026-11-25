@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
+import type { User } from "@supabase/supabase-js";
+import { supabase } from "./lib/supabase";
+import AuthPanel from "./components/AuthPanel";
 
 import {
   type Listing,
   type ListingStatus,
   type PaymentStatus,
   type PaymentMethod,
-  previewListingRepository,
 } from "./data/listingRepository";
 import { countListingsByStatus, getPreviewListingsByEmail } from "./data/listingManagement";
 import { applyListingEdit, validateListingEdit, type EditableListingFields } from "./data/listingEditPolicy";
@@ -41,6 +43,30 @@ const LOCATIONS: Record<string, string[]> = {
 
 const INITIAL_LISTINGS: Listing[] = [];
 
+function mapDatabaseListing(row: Record<string, unknown>): Listing {
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ""),
+    category: String(row.category ?? ""),
+    subcategory: String(row.subcategory ?? ""),
+    island: String(row.island ?? ""),
+    municipality: String(row.municipality ?? ""),
+    price: String(row.price ?? ""),
+    description: String(row.description ?? ""),
+    whatsapp: String(row.whatsapp ?? ""),
+    phone: String(row.phone ?? ""),
+    image: String(row.image_url ?? ""),
+    ownerEmail: String(row.owner_email ?? ""),
+    ownerAccountId: String(row.owner_id ?? ""),
+    listingStatus: row.listing_status as ListingStatus,
+    paymentStatus: row.payment_status as PaymentStatus,
+    paymentMethod: "free_launch",
+    proofRef: row.proof_ref ? String(row.proof_ref) : undefined,
+    slotNumber: typeof row.slot_number === "number" ? row.slot_number : undefined,
+    createdAt: String(row.created_at ?? "").slice(0, 10),
+  };
+}
+
 
 const QUICK_PROMPTS = [
   "Como funcionam as 50 vagas gratuitas?",
@@ -50,25 +76,54 @@ const QUICK_PROMPTS = [
 
 export default function App() {
   const [tab, setTab] = useState<"home" | "publish" | "account" | "admin">("home");
-  const [listings, setListings] = useState<Listing[]>(() =>
-    previewListingRepository.loadListings()
-  );
-  const [auditLogs, setAuditLogs] = useState<string[]>(() =>
-    previewListingRepository.loadAudit()
-  );
+  const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
+  const [auditLogs, setAuditLogs] = useState<string[]>([]);
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [accountEmail, setAccountEmail] = useState("");
   const [editingListingId, setEditingListingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<EditableListingFields | null>(null);
   const [editFeedback, setEditFeedback] = useState("");
 
   useEffect(() => {
-    previewListingRepository.saveListings(listings);
-    previewListingRepository.saveAudit(auditLogs);
-  }, [listings, auditLogs]);
+    let active = true;
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (!active) return;
+      if (!error) setAuthUser(data.user);
+      setAuthLoading(false);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    setAccountEmail(authUser?.email ?? "");
+    let active = true;
+    async function loadSharedListings() {
+      const { data, error } = await supabase
+        .from("listings")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!active) return;
+      if (error) {
+        console.error("Falha ao carregar anúncios do servidor:", error.message);
+        return;
+      }
+      setListings((data ?? []).map((row) => mapDatabaseListing(row as Record<string, unknown>)));
+    }
+    loadSharedListings();
+    return () => { active = false; };
+  }, [authUser]);
 
   const accountListings = useMemo(
-    () => getPreviewListingsByEmail(listings, accountEmail),
-    [listings, accountEmail]
+    () => authUser ? getPreviewListingsByEmail(listings, authUser.email ?? "") : [],
+    [listings, authUser]
   );
   const accountListingCounts = useMemo(
     () => countListingsByStatus(accountListings),
@@ -182,9 +237,14 @@ export default function App() {
     }
   }
 
-  function handlePublishSubmit(e: React.FormEvent) {
+  async function handlePublishSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFeedback("");
+    if (!authUser) {
+      setFeedback("Para publicar um anúncio, entre na sua conta ou crie uma conta em Minha Conta.");
+      setTab("account");
+      return;
+    }
 
     if (title.trim().length < 5 || title.trim().length > 100) {
       setFeedback("O título deve ter entre 5 e 100 caracteres.");
@@ -232,47 +292,43 @@ export default function App() {
       return;
     }
 
-    const usingFreeSlot = false; // A vaga só pode ser reservada após integração transacional com o servidor.
-    if (paymentMethod === "free_launch" && !canClaimFreeSlot) {
-      setFeedback("A campanha atingiu o limite de 50 anúncios gratuitos. Os pagamentos ainda não estão ativos, por isso não é possível submeter novos anúncios nesta pré-visualização.");
+    const { data, error } = await supabase
+      .from("listings")
+      .insert({
+        owner_id: authUser.id,
+        owner_email: authUser.email ?? ownerEmail.trim(),
+        title: title.trim(),
+        category: pubCategory,
+        subcategory: pubSubcategory,
+        island: pubIsland,
+        municipality: pubMunicipality,
+        price: price.trim(),
+        description: description.trim(),
+        whatsapp: cleanWhatsApp,
+        phone: cleanPhone,
+        image_url: imageUrl.trim(),
+        listing_status: "pending",
+        payment_status: "pending",
+        payment_method: "free_launch",
+        proof_ref: null,
+        slot_number: null,
+      })
+      .select("*")
+      .single();
+
+    if (error) {
+      setFeedback("Não foi possível enviar o anúncio ao servidor: " + error.message);
       return;
     }
 
-    const nextSlot = usingFreeSlot ? usedFreeSlots + 1 : undefined;
-    const newAd: Listing = {
-      id: `CV-${typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`}`,
-      title: title.trim(),
-      category: pubCategory,
-      subcategory: pubSubcategory,
-      island: pubIsland,
-      municipality: pubMunicipality,
-      price: price.trim(),
-      description: description.trim(),
-      whatsapp: cleanWhatsApp,
-      phone: cleanPhone,
-      image: imageUrl.trim(),
-      ownerEmail: ownerEmail.trim(),
-      ownerAccountId: `preview-email:${ownerEmail.trim().toLowerCase()}`,
-      listingStatus: "pending",
-      paymentStatus: usingFreeSlot ? "confirmed" : "pending",
-      paymentMethod: usingFreeSlot ? "free_launch" : paymentMethod,
-      proofRef: usingFreeSlot ? "CAMPANHA-50-GRATIS" : proofRef.trim(),
-      slotNumber: nextSlot,
-      createdAt: new Date().toISOString().slice(0, 10),
-    };
-
+    const newAd = mapDatabaseListing(data as Record<string, unknown>);
     setListings((prev) => [newAd, ...prev]);
-    addAudit(
-      `Novo anúncio ${newAd.id} ("${newAd.title}") guardado como pré-registo local (${
-        usingFreeSlot ? `vaga gratuita #${nextSlot}` : "sem pagamento nem reserva de vaga"
-      }).`
-    );
-
+    addAudit(`Anúncio ${newAd.id} enviado para análise pelo utilizador autenticado.`);
     setTitle("");
     setPrice("");
     setDescription("");
     setProofRef("");
-    setFeedback("Pré-registo criado apenas nesta sessão do navegador. Ainda não foi enviado ao servidor, não reservou uma vaga gratuita e não constitui comprovativo nem pagamento. A publicação ficará disponível quando a ligação segura ao servidor estiver ativa.");
+    setFeedback("Anúncio enviado ao servidor com sucesso e guardado como pendente de análise. A vaga gratuita só será contabilizada após validação administrativa.");
   }
 
   function beginListingEdit(item: Listing) {
@@ -758,28 +814,18 @@ export default function App() {
             <span style={eyebrowStyle("#38D6A0")}>ÁREA DO ANUNCIANTE</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>Minha Conta</h1>
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
-              Consulte os pré-registos associados ao email usado na publicação. Nesta demonstração, os dados continuam guardados apenas neste navegador; este filtro não é um início de sessão nem substitui a autenticação segura do serviço oficial.
+              Entre na sua conta para consultar os anúncios associados ao seu perfil em qualquer dispositivo.
             </p>
 
-            <div style={{ display: "grid", gap: "0.45rem", marginBottom: "1rem", maxWidth: 520 }}>
-              <label htmlFor="account-email-preview" style={{ color: "#F8FAFC", fontSize: "0.86rem", fontWeight: 600 }}>
-                Email usado no anúncio
-              </label>
-              <input
-                id="account-email-preview"
-                type="email"
-                value={accountEmail}
-                onChange={(e) => setAccountEmail(e.target.value)}
-                placeholder="exemplo@email.com"
-                autoComplete="email"
-                style={inputStyle}
-              />
-              <span style={{ color: "#B5C3D8", fontSize: "0.78rem" }}>
-                Introduza o mesmo email que indicou ao submeter o anúncio.
-              </span>
+            <div style={{ ...subCardStyle, maxWidth: 520, marginBottom: "1rem" }}>
+              {authLoading ? (
+                <span style={{ color: "#B5C3D8", fontSize: "0.88rem" }}>A verificar sessão segura...</span>
+              ) : (
+                <AuthPanel user={authUser} onSignedOut={() => { setAccountEmail(""); setListings([]); }} />
+              )}
             </div>
 
-            {accountEmail.trim() && (
+            {authUser && accountEmail.trim() && (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(125px, 1fr))", gap: "0.65rem", marginBottom: "1rem" }}>
                 {[
                   { label: "Total", value: accountListings.length, color: "#60A5FA" },
@@ -796,18 +842,18 @@ export default function App() {
             )}
 
             <div style={{ display: "grid", gap: "0.85rem" }}>
-              {!accountEmail.trim() ? (
+              {!authUser ? (
                 <div style={subCardStyle}>
-                  <strong>Identifique os seus anúncios</strong>
+                  <strong>Entre para consultar os seus anúncios</strong>
                   <span style={{ color: "#B5C3D8", fontSize: "0.88rem" }}>
-                    Escreva o email usado na publicação para consultar os anúncios associados a esse endereço neste navegador.
+                    Crie uma conta e confirme o email. Os anúncios ficam associados à sua identidade autenticada.
                   </span>
                 </div>
               ) : accountListings.length === 0 ? (
                 <div style={subCardStyle}>
-                  <strong>Nenhum anúncio encontrado para este email</strong>
+                  <strong>Nenhum anúncio associado a esta conta</strong>
                   <span style={{ color: "#B5C3D8", fontSize: "0.88rem" }}>
-                    Confirme se escreveu o mesmo endereço utilizado no formulário de publicação. Os anúncios guardados noutro navegador ou dispositivo não aparecem nesta demonstração.
+                    Quando submeter anúncios, poderá acompanhar aqui os estados de análise e publicação.
                   </span>
                 </div>
               ) : (
