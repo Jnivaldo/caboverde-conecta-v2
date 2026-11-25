@@ -755,12 +755,32 @@ export default function App() {
       <main style={{ maxWidth: 1200, margin: "0 auto", padding: "1.85rem 1.25rem 5rem" }}>
         {tab === "home" && (
           <>
-            <h1 style={{ margin: "0 0 0.45rem", fontSize: "1.95rem", letterSpacing: "-0.02em" }}>
-              Classificados, serviços e oportunidades em Cabo Verde
-            </h1>
-            <p style={{ margin: "0 0 1.35rem", color: "#B5C3D8", fontSize: "0.96rem" }}>
-              Divulgação e contacto direto entre interessados e anunciantes. Após as 50 vagas gratuitas: 1.500 CVE.
-            </p>
+            <section
+              aria-label="Apresentação CaboVerde Conecta"
+              style={{
+                textAlign: "center",
+                maxWidth: 1040,
+                margin: "0 auto 1.8rem",
+                padding: "1.1rem 0.5rem 0.25rem",
+              }}
+            >
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "0.55rem", marginBottom: "0.9rem", color: "#38D6A0", fontSize: "0.76rem", fontWeight: 800, letterSpacing: "0.19em", textTransform: "uppercase" }}>
+                <span style={{ width: 28, height: 2, background: "#38D6A0", borderRadius: 99 }} />
+                O mercado digital de Cabo Verde
+                <span style={{ width: 28, height: 2, background: "#38D6A0", borderRadius: 99 }} />
+              </div>
+              <h1 style={{ margin: "0", color: "#F8FAFC", fontSize: "clamp(2.7rem, 8vw, 5.65rem)", lineHeight: 0.98, letterSpacing: "-0.065em", fontWeight: 900, textTransform: "uppercase" }}>
+                <span style={{ display: "inline-block" }}>CABOVERDE</span>{" "}
+                <span style={{ display: "inline-block", color: "#60A5FA" }}>CONECTA</span>
+              </h1>
+              <div style={{ width: 76, height: 4, margin: "1.05rem auto 0.95rem", borderRadius: 99, background: "#38D6A0" }} />
+              <h2 style={{ margin: "0 auto 0.65rem", maxWidth: 850, color: "#F8FAFC", fontSize: "clamp(1.05rem, 2.5vw, 1.65rem)", lineHeight: 1.25, letterSpacing: "0.035em", fontWeight: 800, textTransform: "uppercase" }}>
+                A plataforma de anúncios de Cabo Verde
+              </h2>
+              <p style={{ margin: "0 auto", maxWidth: 760, color: "#B5C3D8", fontSize: "clamp(0.9rem, 1.6vw, 1.02rem)", lineHeight: 1.65 }}>
+                Imóveis, viaturas, produtos, serviços e oportunidades — tudo num só lugar.
+              </p>
+            </section>
 
             <div
               style={{
