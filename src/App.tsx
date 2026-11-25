@@ -155,7 +155,7 @@ type ListingGalleryProps = {
   title: string;
   images: { id: string; url: string }[];
   fallbackImage: string;
-  onOpen: (src: string) => void;
+  onOpen: (src: string, images: { id: string; url: string }[], index: number) => void;
 };
 
 function ListingGallery({ title, images, fallbackImage, onOpen }: ListingGalleryProps) {
@@ -188,7 +188,7 @@ function ListingGallery({ title, images, fallbackImage, onOpen }: ListingGallery
         key={slides[activeIndex].id}
         src={slides[activeIndex].url}
         alt={title + " — fotografia " + (activeIndex + 1)}
-        onClick={() => onOpen(slides[activeIndex].url)}
+        onClick={() => onOpen(slides[activeIndex].url, slides, activeIndex)}
         style={{ ...cardImageStyle, animation: "conecta-gallery-fade .55s ease both" }}
       />
       {slides.length > 1 && (
@@ -315,7 +315,22 @@ export default function App() {
   const [subcategory, setSubcategory] = useState("");
   const [island, setIsland] = useState("");
   const [municipality, setMunicipality] = useState("");
-  const [lightbox, setLightbox] = useState<{ src: string; title: string } | null>(null);
+  const [lightbox, setLightbox] = useState<{ src: string; title: string; images: { id: string; url: string }[]; index: number } | null>(null);
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLightbox(null);
+      if (event.key === "ArrowRight" && lightbox.images.length > 1) {
+        setLightbox((current) => current ? { ...current, index: (current.index + 1) % current.images.length, src: current.images[(current.index + 1) % current.images.length].url } : null);
+      }
+      if (event.key === "ArrowLeft" && lightbox.images.length > 1) {
+        setLightbox((current) => current ? { ...current, index: (current.index - 1 + current.images.length) % current.images.length, src: current.images[(current.index - 1 + current.images.length) % current.images.length].url } : null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightbox?.images.length, Boolean(lightbox)]);
 
   // Formulário de publicação
   const [title, setTitle] = useState("");
@@ -888,7 +903,7 @@ export default function App() {
                     title={ad.title}
                     images={(mediaByListing[ad.id] || []).filter((media) => media.type === "image").sort((a, b) => a.sort - b.sort)}
                     fallbackImage={ad.image}
-                    onOpen={(src) => setLightbox({ src, title: ad.title })}
+                    onOpen={(src, images, index) => setLightbox({ src, title: ad.title, images, index })}
                   />
                   <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 }}>
                     <span style={{ fontSize: "0.79rem", color: "#B5C3D8" }}>
@@ -1181,7 +1196,7 @@ export default function App() {
                           <img
                             src={item.image}
                             alt={item.title}
-                            onClick={() => setLightbox({ src: item.image, title: item.title })}
+                            onClick={() => setLightbox({ src: item.image, title: item.title, images: [{ id: "cover", url: item.image }], index: 0 })}
                             style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in", display: "block" }}
                           />
                         ) : (
@@ -1528,35 +1543,48 @@ export default function App() {
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(3,6,15,0.88)",
+            backgroundColor: "rgba(3,6,15,0.96)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "1.25rem",
-            zIndex: 50,
+            padding: "1rem",
+            zIndex: 100,
+            backdropFilter: "blur(10px)",
           }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: "#151F33",
-              border: "1px solid rgba(181,195,216,0.2)",
-              borderRadius: 14,
-              padding: "1rem",
-              maxWidth: 820,
-              width: "100%",
-              textAlign: "center",
-            }}
+            style={{ position: "relative", width: "min(1100px, 100%)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.85rem" }}
           >
-            <img
-              src={lightbox.src}
-              alt={lightbox.title}
-              style={{ maxWidth: "100%", maxHeight: "72vh", objectFit: "contain", borderRadius: 10 }}
-            />
-            <p style={{ margin: "0.75rem 0", color: "#B5C3D8" }}>{lightbox.title}</p>
-            <button type="button" onClick={() => setLightbox(null)} style={actionBtnStyle("#2563EB")}>
-              Fechar
-            </button>
+            <button type="button" aria-label="Fechar galeria" onClick={() => setLightbox(null)} style={{ position: "absolute", top: -42, right: 0, width: 38, height: 38, borderRadius: "50%", border: "1px solid rgba(255,255,255,.3)", background: "rgba(21,31,51,.88)", color: "#fff", fontSize: 24, cursor: "pointer", zIndex: 2 }}>×</button>
+            <div style={{ position: "relative", width: "100%", minHeight: "min(68vh, 680px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <img
+                key={lightbox.src}
+                src={lightbox.src}
+                alt={lightbox.title + " — fotografia " + (lightbox.index + 1)}
+                style={{ maxWidth: "100%", width: "auto", maxHeight: "min(76vh, 760px)", objectFit: "contain", borderRadius: 10, boxShadow: "0 24px 80px rgba(0,0,0,.55)", animation: "conecta-gallery-fade .28s ease both" }}
+              />
+              {lightbox.images.length > 1 && (
+                <>
+                  <button type="button" aria-label="Fotografia anterior" onClick={() => setLightbox((current) => current ? { ...current, index: (current.index - 1 + current.images.length) % current.images.length, src: current.images[(current.index - 1 + current.images.length) % current.images.length].url } : null)} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 48, height: 48, borderRadius: "50%", border: "1px solid rgba(255,255,255,.55)", background: "rgba(7,11,24,.78)", color: "#fff", fontSize: 32, lineHeight: 1, cursor: "pointer" }}>‹</button>
+                  <button type="button" aria-label="Fotografia seguinte" onClick={() => setLightbox((current) => current ? { ...current, index: (current.index + 1) % current.images.length, src: current.images[(current.index + 1) % current.images.length].url } : null)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 48, height: 48, borderRadius: "50%", border: "1px solid rgba(255,255,255,.55)", background: "rgba(7,11,24,.78)", color: "#fff", fontSize: 32, lineHeight: 1, cursor: "pointer" }}>›</button>
+                </>
+              )}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.8rem", flexWrap: "wrap", color: "#F8FAFC", textAlign: "center" }}>
+              <strong style={{ fontSize: "0.96rem" }}>{lightbox.title}</strong>
+              {lightbox.images.length > 1 && <span style={{ padding: "0.35rem 0.7rem", borderRadius: 999, background: "rgba(255,255,255,.12)", color: "#D7E6F4", fontSize: "0.82rem", fontWeight: 700 }}>{lightbox.index + 1} de {lightbox.images.length}</span>}
+            </div>
+            {lightbox.images.length > 1 && (
+              <div style={{ display: "flex", justifyContent: "center", gap: 7, maxWidth: "100%", overflowX: "auto", padding: "0.25rem 0.1rem 0.45rem" }}>
+                {lightbox.images.map((photo, index) => (
+                  <button key={photo.id} type="button" aria-label={"Abrir fotografia " + (index + 1)} onClick={() => setLightbox((current) => current ? { ...current, index, src: photo.url } : null)} style={{ flex: "0 0 auto", width: 62, height: 48, padding: 0, overflow: "hidden", borderRadius: 7, border: index === lightbox.index ? "2px solid #60A5FA" : "1px solid rgba(255,255,255,.22)", opacity: index === lightbox.index ? 1 : .62, background: "transparent", cursor: "pointer" }}>
+                    <img src={photo.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </button>
+                ))}
+              </div>
+            )}
+            <span style={{ color: "#9FB0C8", fontSize: "0.76rem" }}>Use as setas do teclado ou os controlos para percorrer as fotografias · Esc para fechar</span>
           </div>
         </div>
       )}
