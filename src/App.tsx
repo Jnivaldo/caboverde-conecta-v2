@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
 import AuthPanel from "./components/AuthPanel";
+import ListingMediaPicker from "./components/ListingMediaPicker";
 
 import {
   type Listing,
@@ -26,6 +27,7 @@ const CATEGORIES: Record<string, string[]> = {
   Profissionais: ["Eletricidade e Canalização", "Construção", "Design e Web", "Contabilidade"],
   Empresas: ["Comércio Local", "Restauração", "Agências", "Indústria"],
   Serviços: ["Limpeza e Manutenção", "Transporte", "Aulas e Formação", "Outros Serviços"],
+  "Turismo e Experiências": ["Passeios e Excursões", "Atividades Marítimas", "Pesca e Mergulho", "Aluguer de Equipamentos"],
   Oportunidades: ["Emprego", "Parcerias", "Projetos", "Estágios"],
 };
 
@@ -85,6 +87,8 @@ export default function App() {
   const [editingListingId, setEditingListingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<EditableListingFields | null>(null);
   const [editFeedback, setEditFeedback] = useState("");
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [mediaByListing, setMediaByListing] = useState<Record<string, { id: string; url: string; type: "image" | "video"; sort: number }[]>>({});
 
   useEffect(() => {
     let active = true;
@@ -118,7 +122,19 @@ export default function App() {
         console.error("Falha ao carregar anúncios do servidor:", error.message);
         return;
       }
-      setListings((data ?? []).map((row) => mapDatabaseListing(row as Record<string, unknown>)));
+      const loadedListings = (data ?? []).map((row) => mapDatabaseListing(row as Record<string, unknown>));
+      setListings(loadedListings);
+      if (loadedListings.length) {
+        const { data: mediaRows } = await supabase.from("listing_media").select("id, listing_id, media_url, media_type, sort_order").in("listing_id", loadedListings.map((item) => item.id));
+        if (active && mediaRows) {
+          const grouped: typeof mediaByListing = {};
+          for (const media of mediaRows) {
+            const key = String(media.listing_id);
+            (grouped[key] ||= []).push({ id: String(media.id), url: String(media.media_url), type: media.media_type as "image" | "video", sort: Number(media.sort_order) });
+          }
+          setMediaByListing(grouped);
+        }
+      }
     }
     async function loadAccountRole() {
       if (!authUser) return;
@@ -345,6 +361,34 @@ export default function App() {
     }
 
     const newAd = mapDatabaseListing(data as Record<string, unknown>);
+    const uploadedMedia: { url: string; type: "image" | "video"; sort: number }[] = [];
+    for (const [index, file] of mediaFiles.entries()) {
+      const safeName = file.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]/g, "-").slice(-90);
+      const objectPath = `${authUser.id}/${newAd.id}/${crypto.randomUUID()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage.from("listing-media").upload(objectPath, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+      if (uploadError) {
+        setFeedback(`O anúncio foi criado como pendente, mas o carregamento de ficheiros falhou: ${uploadError.message}. Pode tentar adicionar os ficheiros novamente em Minha Conta.`);
+        setListings((prev) => [newAd, ...prev]);
+        return;
+      }
+      const { data: publicData } = supabase.storage.from("listing-media").getPublicUrl(objectPath);
+      uploadedMedia.push({ url: publicData.publicUrl, type: file.type.startsWith("video/") ? "video" : "image", sort: index });
+    }
+    if (uploadedMedia.length) {
+      const rows = uploadedMedia.map((media) => ({ listing_id: newAd.id, owner_id: authUser.id, media_url: media.url, media_type: media.type, sort_order: media.sort }));
+      const { error: mediaInsertError } = await supabase.from("listing_media").insert(rows);
+      if (mediaInsertError) {
+        setFeedback(`O anúncio foi criado, mas não foi possível associar a galeria: ${mediaInsertError.message}. Contacte o suporte antes de repetir a publicação.`);
+        setListings((prev) => [newAd, ...prev]);
+        return;
+      }
+      setMediaByListing((prev) => ({ ...prev, [newAd.id]: uploadedMedia.map((media, index) => ({ id: `pending-${index}`, ...media })) }));
+      const firstImage = uploadedMedia.find((media) => media.type === "image");
+      if (firstImage) {
+        await supabase.from("listings").update({ image_url: firstImage.url }).eq("id", newAd.id).eq("owner_id", authUser.id);
+        newAd.image = firstImage.url;
+      }
+    }
     setListings((prev) => [newAd, ...prev]);
     setUsedFreeSlots((current) => Math.max(current, newAd.slotNumber ?? current));
     addAudit(`Anúncio ${newAd.id} enviado ao servidor e recebeu a vaga gratuita #${newAd.slotNumber}.`);
@@ -352,6 +396,7 @@ export default function App() {
     setPrice("");
     setDescription("");
     setProofRef("");
+    setMediaFiles([]);
     setFeedback("Anúncio enviado ao servidor com sucesso e guardado como pendente de análise. A vaga gratuita só será contabilizada após validação administrativa.");
   }
 
@@ -665,12 +710,9 @@ export default function App() {
               {publicListings.map((ad) => (
                 <article key={ad.id} style={cardStyle}>
                   <div style={imageFrameStyle}>
-                    <img
-                      src={ad.image}
-                      alt={ad.title}
-                      onClick={() => setLightbox({ src: ad.image, title: ad.title })}
-                      style={cardImageStyle}
-                    />
+                    {mediaByListing[ad.id]?.find((media) => media.type === "image") ? (
+                      <img src={mediaByListing[ad.id].find((media) => media.type === "image")!.url} alt={ad.title} onClick={() => setLightbox({ src: mediaByListing[ad.id].find((media) => media.type === "image")!.url, title: ad.title })} style={cardImageStyle} />
+                    ) : <img src={ad.image} alt={ad.title} onClick={() => setLightbox({ src: ad.image, title: ad.title })} style={cardImageStyle} />}
                   </div>
                   <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 }}>
                     <span style={{ fontSize: "0.79rem", color: "#B5C3D8" }}>
@@ -681,6 +723,7 @@ export default function App() {
                     <p style={{ margin: "0.15rem 0 0.35rem", fontSize: "0.86rem", color: "#B5C3D8", lineHeight: 1.45 }}>
                       {ad.description}
                     </p>
+                    {(mediaByListing[ad.id] || []).length > 1 && <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>{mediaByListing[ad.id].slice(1).map((media) => media.type === "video" ? <video key={media.id} src={media.url} controls style={{ width: 90, height: 68, objectFit: "cover", borderRadius: 7 }} /> : <img key={media.id} src={media.url} alt={ad.title} onClick={() => setLightbox({ src: media.url, title: ad.title })} style={{ width: 90, height: 68, objectFit: "cover", borderRadius: 7, cursor: "zoom-in" }} />)}</div>}
                       <div style={{ display: "flex", gap: "0.5rem", marginTop: "auto" }}>
                       {ad.whatsapp && (
                         <a
@@ -836,7 +879,12 @@ export default function App() {
               </div>
 
               <div style={subCardStyle}>
-                <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>2. Modalidade e Pagamento (1.500 CVE)</strong>
+                <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>2. Fotografias e vídeos</strong>
+                <ListingMediaPicker files={mediaFiles} onChange={setMediaFiles} />
+              </div>
+
+              <div style={subCardStyle}>
+                <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>3. Modalidade e Pagamento (1.500 CVE)</strong>
                 <div style={{ fontSize: "0.85rem", color: "#B5C3D8", lineHeight: 1.55 }}>
                   Esta pré-visualização ainda não processa pagamentos. Não faça transferências bancárias nem envie comprovativos. Os dados de pagamento só serão apresentados quando o fluxo seguro estiver ativo.
                 </div>
