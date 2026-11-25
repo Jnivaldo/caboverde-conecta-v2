@@ -377,7 +377,7 @@ export default function App() {
       setFeedback("Indique uma categoria com pelo menos 3 caracteres.");
       return;
     }
-    if (pubSubcategory === "__custom__" && customSubcategory.trim().length < 2) {
+    if ((pubCategory === "__custom__" || pubSubcategory === "__custom__") && customSubcategory.trim().length < 2) {
       setFeedback("Indique o produto, subproduto ou serviço que pretende anunciar.");
       return;
     }
@@ -427,7 +427,7 @@ export default function App() {
     const { data, error } = await supabase.rpc("submit_listing", {
       p_title: title.trim(),
       p_category: pubCategory === "__custom__" ? customCategory.trim() : pubCategory,
-      p_subcategory: pubSubcategory === "__custom__" ? customSubcategory.trim() : pubSubcategory,
+      p_subcategory: pubCategory === "__custom__" || pubSubcategory === "__custom__" ? customSubcategory.trim() : pubSubcategory,
       p_island: pubIsland,
       p_municipality: pubMunicipality,
       p_price: price.trim(),
