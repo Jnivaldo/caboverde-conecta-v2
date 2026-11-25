@@ -247,6 +247,8 @@ export default function App() {
   const [title, setTitle] = useState("");
   const [pubCategory, setPubCategory] = useState("Imóveis");
   const [pubSubcategory, setPubSubcategory] = useState("Moradias");
+  const [customCategory, setCustomCategory] = useState("");
+  const [customSubcategory, setCustomSubcategory] = useState("");
   const [pubIsland, setPubIsland] = useState("Santiago");
   const [pubMunicipality, setPubMunicipality] = useState("Tarrafal");
   const [price, setPrice] = useState("");
@@ -371,6 +373,14 @@ export default function App() {
       setFeedback("Indique um preço ou valor válido (máximo de 60 caracteres).");
       return;
     }
+    if (pubCategory === "__custom__" && customCategory.trim().length < 3) {
+      setFeedback("Indique uma categoria com pelo menos 3 caracteres.");
+      return;
+    }
+    if (pubSubcategory === "__custom__" && customSubcategory.trim().length < 2) {
+      setFeedback("Indique o produto, subproduto ou serviço que pretende anunciar.");
+      return;
+    }
     if (!pubIsland || !LOCATIONS[pubIsland]?.includes(pubMunicipality)) {
       setFeedback("Selecione uma ilha e um concelho válidos.");
       return;
@@ -416,8 +426,8 @@ export default function App() {
 
     const { data, error } = await supabase.rpc("submit_listing", {
       p_title: title.trim(),
-      p_category: pubCategory,
-      p_subcategory: pubSubcategory,
+      p_category: pubCategory === "__custom__" ? customCategory.trim() : pubCategory,
+      p_subcategory: pubSubcategory === "__custom__" ? customSubcategory.trim() : pubSubcategory,
       p_island: pubIsland,
       p_municipality: pubMunicipality,
       p_price: price.trim(),
@@ -471,6 +481,8 @@ export default function App() {
     setPrice("");
     setDescription("");
     setProofRef("");
+    setCustomCategory("");
+    setCustomSubcategory("");
     setMediaFiles([]);
     setFeedback("Anúncio enviado ao servidor com sucesso e guardado como pendente de análise. A vaga gratuita só será contabilizada após validação administrativa.");
   }
@@ -864,18 +876,27 @@ export default function App() {
                         {c}
                       </option>
                     ))}
+                    <option value="__custom__">Outra categoria / Não encontrei</option>
                   </select>
-                  <select
-                    value={pubSubcategory}
-                    onChange={(e) => setPubSubcategory(e.target.value)}
-                    style={inputStyle}
-                  >
-                    {(CATEGORIES[pubCategory] || []).map((sub) => (
-                      <option key={sub} value={sub}>
-                        {sub}
-                      </option>
-                    ))}
-                  </select>
+                  {pubCategory === "__custom__" ? (
+                    <input type="text" maxLength={60} value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="Escreva a categoria (ex.: Instrumentos náuticos)" style={inputStyle} />
+                  ) : (
+                    <select
+                      value={pubSubcategory}
+                      onChange={(e) => setPubSubcategory(e.target.value)}
+                      style={inputStyle}
+                    >
+                      {(CATEGORIES[pubCategory] || []).map((sub) => (
+                        <option key={sub} value={sub}>
+                          {sub}
+                        </option>
+                      ))}
+                      <option value="__custom__">Outro produto / subproduto / serviço</option>
+                    </select>
+                  )}
+                  {(pubCategory === "__custom__" || pubSubcategory === "__custom__") && (
+                    <input type="text" maxLength={80} value={customSubcategory} onChange={(e) => setCustomSubcategory(e.target.value)} placeholder="Descreva o produto, subproduto ou serviço" style={inputStyle} />
+                  )}
                   <select
                     value={pubIsland}
                     onChange={(e) => {
