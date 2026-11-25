@@ -309,6 +309,16 @@ export default function App() {
     return () => { active = false; };
   }, [authUser]);
 
+  const [marketplaceCategoryOptions, setMarketplaceCategoryOptions] = useState<{ category_name: string; subcategory_name: string | null }[]>([]);
+  const [categorySuggestions, setCategorySuggestions] = useState<CategorySuggestion[]>([]);
+  const [categorySuggestionsLoading, setCategorySuggestionsLoading] = useState(false);
+  const [categoryReviewFeedback, setCategoryReviewFeedback] = useState("");
+  const [suggestionCategory, setSuggestionCategory] = useState("");
+  const [suggestionSubcategory, setSuggestionSubcategory] = useState("");
+  const [suggestionDescription, setSuggestionDescription] = useState("");
+  const [suggestionFeedback, setSuggestionFeedback] = useState("");
+  const [suggestionSubmitting, setSuggestionSubmitting] = useState(false);
+
   const accountListings = useMemo(
     () => authUser ? getPreviewListingsByEmail(listings, authUser.email ?? "") : [],
     [listings, authUser]
@@ -422,15 +432,6 @@ export default function App() {
   const [feedback, setFeedback] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
-  const [marketplaceCategoryOptions, setMarketplaceCategoryOptions] = useState<{ category_name: string; subcategory_name: string | null }[]>([]);
-  const [categorySuggestions, setCategorySuggestions] = useState<CategorySuggestion[]>([]);
-  const [categorySuggestionsLoading, setCategorySuggestionsLoading] = useState(false);
-  const [categoryReviewFeedback, setCategoryReviewFeedback] = useState("");
-  const [suggestionCategory, setSuggestionCategory] = useState("");
-  const [suggestionSubcategory, setSuggestionSubcategory] = useState("");
-  const [suggestionDescription, setSuggestionDescription] = useState("");
-  const [suggestionFeedback, setSuggestionFeedback] = useState("");
-  const [suggestionSubmitting, setSuggestionSubmitting] = useState(false);
 
   // Assistente flutuante
   const [chatOpen, setChatOpen] = useState(false);
