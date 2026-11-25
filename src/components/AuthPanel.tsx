@@ -14,6 +14,8 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [recoveryMode, setRecoveryMode] = useState(() => typeof window !== "undefined" && window.location.hash.includes("type=recovery"));
@@ -47,6 +49,19 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : "Não foi possível concluir a autenticação.");
     } finally {
+      setLoading(false);
+    }
+  }
+
+  async function signInWithGoogle() {
+    setLoading(true);
+    setFeedback("");
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: AUTH_REDIRECT_URL },
+    });
+    if (error) {
+      setFeedback(error.message);
       setLoading(false);
     }
   }
@@ -98,7 +113,7 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
         <form onSubmit={updateRecoveredPassword} style={{ display: "grid", gap: "0.65rem" }}>
           <label style={labelStyle}>
             Nova palavra-passe
-            <input type="password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="Mínimo de 8 caracteres" style={inputStyle} />
+            <div style={passwordFieldStyle}><input type={showNewPassword ? "text" : "password"} required minLength={8} autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="Mínimo de 8 caracteres" style={passwordInputStyle} /><button type="button" aria-label={showNewPassword ? "Ocultar palavra-passe" : "Mostrar palavra-passe"} aria-pressed={showNewPassword} onClick={() => setShowNewPassword((value) => !value)} style={eyeButtonStyle}>{showNewPassword ? "Ocultar" : "Mostrar"} <span aria-hidden="true">◉</span></button></div>
           </label>
           <button type="submit" disabled={loading} style={activeButtonStyle}>{loading ? "Aguarde..." : "Guardar nova palavra-passe"}</button>
         </form>
@@ -132,6 +147,11 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
           Criar conta
         </button>
       </div>
+      <button type="button" onClick={signInWithGoogle} disabled={loading} style={googleButtonStyle}>
+        <span aria-hidden="true" style={{ fontWeight: 900, fontSize: "1.05rem" }}>G</span>
+        {loading ? "A ligar ao Google..." : "Continuar com Google"}
+      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", color: "#8FA2BD", fontSize: "0.75rem" }}><span style={{ height: 1, background: "rgba(181,195,216,.2)", flex: 1 }} />ou com email<span style={{ height: 1, background: "rgba(181,195,216,.2)", flex: 1 }} /></div>
       <form onSubmit={submit} style={{ display: "grid", gap: "0.65rem" }}>
         <label style={labelStyle}>
           Email
@@ -139,7 +159,7 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
         </label>
         <label style={labelStyle}>
           Palavra-passe
-          <input type="password" required minLength={8} autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Mínimo de 8 caracteres" style={inputStyle} />
+          <div style={passwordFieldStyle}><input type={showPassword ? "text" : "password"} required minLength={8} autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Mínimo de 8 caracteres" style={passwordInputStyle} /><button type="button" aria-label={showPassword ? "Ocultar palavra-passe" : "Mostrar palavra-passe"} aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)} style={eyeButtonStyle}>{showPassword ? "Ocultar" : "Mostrar"} <span aria-hidden="true">◉</span></button></div>
         </label>
         <button type="submit" disabled={loading} style={activeButtonStyle}>
           {loading ? "Aguarde..." : mode === "signup" ? "Criar conta" : "Entrar na minha conta"}
@@ -168,6 +188,11 @@ const inputStyle: React.CSSProperties = {
   width: "100%",
   boxSizing: "border-box",
 };
+
+const passwordFieldStyle: React.CSSProperties = { position: "relative", display: "flex", alignItems: "center" };
+const passwordInputStyle: React.CSSProperties = { ...inputStyle, paddingRight: "5.5rem" };
+const eyeButtonStyle: React.CSSProperties = { position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: 0, background: "transparent", color: "#93C5FD", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", padding: "0.3rem" };
+const googleButtonStyle: React.CSSProperties = { ...buttonStyle, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.65rem", width: "100%", background: "#F8FAFC", color: "#111827", border: "1px solid #CBD5E1", minHeight: 44 };
 
 const labelStyle: React.CSSProperties = {
   display: "grid",
