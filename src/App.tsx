@@ -237,6 +237,7 @@ export default function App() {
       phone: cleanPhone,
       image: imageUrl.trim(),
       ownerEmail: ownerEmail.trim(),
+      ownerAccountId: `preview-email:${ownerEmail.trim().toLowerCase()}`,
       listingStatus: "pending",
       paymentStatus: usingFreeSlot ? "confirmed" : "pending",
       paymentMethod: usingFreeSlot ? "free_launch" : paymentMethod,
