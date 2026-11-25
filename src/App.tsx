@@ -104,6 +104,7 @@ export default function App() {
 
   useEffect(() => {
     setAccountEmail(authUser?.email ?? "");
+    setOwnerEmail(authUser?.email ?? "");
     let active = true;
     async function loadSharedListings() {
       const { data, error } = await supabase
@@ -348,15 +349,15 @@ export default function App() {
     setEditFeedback("");
   }
 
-  function saveListingEdit(e: React.FormEvent, item: Listing) {
+  async function saveListingEdit(e: React.FormEvent, item: Listing) {
     e.preventDefault();
-    if (!editDraft) return;
-    if (item.ownerEmail.trim().toLowerCase() !== accountEmail.trim().toLowerCase()) {
-      setEditFeedback("Não foi possível confirmar a correspondência do email deste pré-registo.");
+    if (!editDraft || !authUser) return;
+    if (item.ownerAccountId !== authUser.id) {
+      setEditFeedback("Não foi possível confirmar a propriedade deste anúncio.");
       return;
     }
     if (item.listingStatus === "rejected") {
-      setEditFeedback("Anúncios rejeitados não podem ser editados nesta demonstração.");
+      setEditFeedback("Anúncios rejeitados não podem ser editados.");
       return;
     }
     const result = validateListingEdit(editDraft);
@@ -364,13 +365,29 @@ export default function App() {
       setEditFeedback(result.errors.join(" "));
       return;
     }
+    const { error } = await supabase.from("listings").update({
+      title: result.value.title,
+      category: result.value.category,
+      subcategory: result.value.subcategory,
+      island: result.value.island,
+      municipality: result.value.municipality,
+      price: result.value.price,
+      description: result.value.description,
+      whatsapp: result.value.whatsapp,
+      phone: result.value.phone,
+      image_url: result.value.image,
+    }).eq("id", item.id).eq("owner_id", authUser.id);
+    if (error) {
+      setEditFeedback("Não foi possível guardar as alterações: " + error.message);
+      return;
+    }
     setListings((prev) => prev.map((current) =>
       current.id === item.id ? applyListingEdit(current, result.value) : current
     ));
-    addAudit(`Edição local do anúncio ${item.id}; estados de pagamento e publicação preservados.`);
+    addAudit(`Anúncio ${item.id} atualizado no servidor; estados de pagamento e publicação preservados.`);
     setEditingListingId(null);
     setEditDraft(null);
-    setEditFeedback("Alterações guardadas apenas neste navegador. A atualização ainda não foi enviada ao servidor.");
+    setEditFeedback("Alterações guardadas no servidor.");
   }
 
   function updatePaymentAndListing(
