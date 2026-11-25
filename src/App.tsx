@@ -3,6 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
 import AuthPanel from "./components/AuthPanel";
 import ListingMediaPicker from "./components/ListingMediaPicker";
+import ListingMediaManager from "./components/ListingMediaManager";
 
 import {
   type Listing,
@@ -1001,6 +1002,15 @@ export default function App() {
                           {editingListingId === item.id ? "Cancelar edição" : "Editar anúncio"}
                         </button>
                       </div>
+                    )}
+
+                    {authUser && item.ownerAccountId === authUser.id && (
+                      <ListingMediaManager
+                        listingId={item.id}
+                        ownerId={authUser.id}
+                        currentCover={item.image}
+                        onCoverChange={(url) => setListings((prev) => prev.map((current) => current.id === item.id ? { ...current, image: url } : current))}
+                      />
                     )}
 
                     {editingListingId === item.id && editDraft && (
