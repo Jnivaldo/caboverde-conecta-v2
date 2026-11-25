@@ -782,6 +782,72 @@ export default function App() {
               </p>
             </section>
 
+            <section
+              aria-label="Progresso da campanha de lançamento"
+              style={{
+                margin: "0 auto 1.5rem",
+                padding: "clamp(1.05rem, 3vw, 1.55rem)",
+                borderRadius: 18,
+                border: "1px solid rgba(96,165,250,0.28)",
+                background: "linear-gradient(125deg, #10182A 0%, #14233D 58%, #102A35 100%)",
+                boxShadow: "0 18px 42px rgba(0,0,0,0.22)",
+                overflow: "hidden",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.7rem", flexWrap: "wrap", marginBottom: "1.15rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#38D6A0", fontSize: "0.75rem", fontWeight: 850, letterSpacing: "0.13em", textTransform: "uppercase" }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 99, background: "#38D6A0", boxShadow: "0 0 12px rgba(56,214,160,.65)" }} />
+                  Campanha de lançamento
+                </div>
+                <span style={{ padding: "0.38rem 0.72rem", borderRadius: 999, border: "1px solid rgba(56,214,160,.3)", background: "rgba(56,214,160,.09)", color: "#8EF0C8", fontSize: "0.76rem", fontWeight: 750 }}>
+                  50 anúncios gratuitos
+                </span>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1.25rem", flexWrap: "wrap" }}>
+                <div style={{ flex: "1 1 220px", minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "0.65rem", flexWrap: "wrap" }}>
+                    <strong style={{ color: "#F8FAFC", fontSize: "clamp(3rem, 8vw, 4.5rem)", lineHeight: 0.95, letterSpacing: "-0.07em", fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>
+                      {freeSlotsRemaining}
+                    </strong>
+                    <span style={{ color: "#8EF0C8", fontSize: "clamp(1rem, 2.4vw, 1.25rem)", fontWeight: 800 }}>vagas gratuitas restantes</span>
+                  </div>
+                  <p style={{ margin: "0.55rem 0 0", color: "#B5C3D8", fontSize: "0.86rem", lineHeight: 1.55 }}>
+                    Garanta uma das vagas de lançamento para publicar o seu anúncio gratuitamente.
+                  </p>
+                </div>
+
+                <div style={{ flex: "1 1 270px", minWidth: 0, maxWidth: 440, width: "100%", padding: "1rem", borderRadius: 14, border: "1px solid rgba(181,195,216,0.14)", background: "rgba(7,11,24,.34)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "0.6rem", marginBottom: "0.7rem" }}>
+                    <span style={{ color: "#DCE7F5", fontSize: "0.84rem", fontWeight: 700 }}>Vagas já utilizadas</span>
+                    <strong style={{ color: "#F8FAFC", fontSize: "1.05rem", fontWeight: 850, fontVariantNumeric: "tabular-nums" }}>{usedFreeSlots} <span style={{ color: "#8FA2BD", fontSize: "0.82rem", fontWeight: 600 }}>/ {totalFreeSlots}</span></strong>
+                  </div>
+                  <div
+                    role="progressbar"
+                    aria-label="Progresso das vagas gratuitas utilizadas"
+                    aria-valuemin={0}
+                    aria-valuemax={totalFreeSlots}
+                    aria-valuenow={Math.min(totalFreeSlots, usedFreeSlots)}
+                    style={{ height: 11, borderRadius: 99, overflow: "hidden", background: "rgba(181,195,216,.15)", boxShadow: "inset 0 1px 3px rgba(0,0,0,.25)" }}
+                  >
+                    <div style={{ width: Math.min(100, (usedFreeSlots / totalFreeSlots) * 100) + "%", height: "100%", borderRadius: 99, background: "linear-gradient(90deg, #38D6A0 0%, #60A5FA 100%)", transition: "width .55s ease" }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", marginTop: "0.55rem", color: "#8FA2BD", fontSize: "0.72rem" }}>
+                    <span>0 vagas</span>
+                    <span>{Math.round(Math.min(100, (usedFreeSlots / totalFreeSlots) * 100))}% preenchido</span>
+                    <span>50 vagas</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.65rem", flexWrap: "wrap", borderTop: "1px solid rgba(181,195,216,0.13)", marginTop: "1.05rem", paddingTop: "0.85rem" }}>
+                <span style={{ color: "#B5C3D8", fontSize: "0.78rem" }}>
+                  <strong style={{ color: "#F8FAFC" }}>{listings.filter((item) => item.listingStatus === "published").length}</strong> anúncio(s) publicado(s) neste momento
+                </span>
+                <span style={{ color: "#9FB0C8", fontSize: "0.78rem" }}>Após a campanha: <strong style={{ color: "#F8FAFC" }}>1.500 CVE</strong> por anúncio</span>
+              </div>
+            </section>
+
             <div
               style={{
                 backgroundColor: "#10182A",
