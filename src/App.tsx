@@ -151,6 +151,80 @@ const QUICK_PROMPTS = [
   "Como falar com o suporte oficial?",
 ];
 
+type ListingGalleryProps = {
+  title: string;
+  images: { id: string; url: string }[];
+  fallbackImage: string;
+  onOpen: (src: string) => void;
+};
+
+function ListingGallery({ title, images, fallbackImage, onOpen }: ListingGalleryProps) {
+  const slides = images.length ? images : (fallbackImage ? [{ id: "cover", url: fallbackImage }] : []);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [title, slides.length]);
+
+  useEffect(() => {
+    if (slides.length < 2) return;
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % slides.length);
+    }, 4500);
+    return () => window.clearInterval(timer);
+  }, [slides.length]);
+
+  if (!slides.length) {
+    return <div style={{ ...imageFrameStyle, display: "grid", placeItems: "center", color: "#8FA2BD" }}>Sem fotografia</div>;
+  }
+
+  const move = (direction: number) => {
+    setActiveIndex((current) => (current + direction + slides.length) % slides.length);
+  };
+
+  return (
+    <div style={{ ...imageFrameStyle, position: "relative" }}>
+      <img
+        key={slides[activeIndex].id}
+        src={slides[activeIndex].url}
+        alt={title + " — fotografia " + (activeIndex + 1)}
+        onClick={() => onOpen(slides[activeIndex].url)}
+        style={{ ...cardImageStyle, animation: "conecta-gallery-fade .55s ease both" }}
+      />
+      {slides.length > 1 && (
+        <>
+          <button type="button" aria-label="Fotografia anterior" onClick={() => move(-1)} style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", border: "1px solid rgba(255,255,255,.55)", background: "rgba(7,11,24,.72)", color: "#fff", fontSize: 22, lineHeight: 1, cursor: "pointer" }}>‹</button>
+          <button type="button" aria-label="Fotografia seguinte" onClick={() => move(1)} style={{ position: "absolute", right: 9, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", border: "1px solid rgba(255,255,255,.55)", background: "rgba(7,11,24,.72)", color: "#fff", fontSize: 22, lineHeight: 1, cursor: "pointer" }}>›</button>
+          <div style={{ position: "absolute", left: 0, right: 0, bottom: 9, display: "flex", justifyContent: "center", alignItems: "center", gap: 5 }}>
+            {slides.map((slide, index) => (
+              <button key={slide.id} type="button" aria-label={"Ver fotografia " + (index + 1)} onClick={() => setActiveIndex(index)} style={{ width: index === activeIndex ? 18 : 7, height: 7, padding: 0, border: 0, borderRadius: 99, background: index === activeIndex ? "#fff" : "rgba(255,255,255,.58)", cursor: "pointer", transition: "all .2s ease" }} />
+            ))}
+          </div>
+          <span style={{ position: "absolute", top: 9, right: 9, padding: "4px 8px", borderRadius: 99, background: "rgba(7,11,24,.72)", color: "#fff", fontSize: 11, fontWeight: 650 }}>{activeIndex + 1}/{slides.length}</span>
+        </>
+      )}
+      <style>{`@keyframes conecta-gallery-fade { from { opacity: .55; transform: scale(1.015); } to { opacity: 1; transform: scale(1); } }`}</style>
+    </div>
+  );
+}
+
+function ListingDescription({ description }: { description: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = description.trim().length > 150;
+  return (
+    <div style={{ margin: "0.15rem 0 0.35rem" }}>
+      <p style={{ margin: 0, fontSize: "0.86rem", color: "#B5C3D8", lineHeight: 1.5, ...(isLong && !expanded ? { display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 3, overflow: "hidden" } : {}) }}>
+        {description}
+      </p>
+      {isLong && (
+        <button type="button" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded} style={{ marginTop: 5, padding: 0, border: 0, background: "transparent", color: "#7DB4FF", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+          {expanded ? "Ler menos" : "Ler mais"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const [tab, setTab] = useState<"home" | "publish" | "account" | "admin">("home");
   const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
@@ -810,21 +884,26 @@ export default function App() {
               >
               {publicListings.map((ad) => (
                 <article key={ad.id} style={cardStyle}>
-                  <div style={imageFrameStyle}>
-                    {mediaByListing[ad.id]?.find((media) => media.type === "image") ? (
-                      <img src={mediaByListing[ad.id].find((media) => media.type === "image")!.url} alt={ad.title} onClick={() => setLightbox({ src: mediaByListing[ad.id].find((media) => media.type === "image")!.url, title: ad.title })} style={cardImageStyle} />
-                    ) : <img src={ad.image} alt={ad.title} onClick={() => setLightbox({ src: ad.image, title: ad.title })} style={cardImageStyle} />}
-                  </div>
+                  <ListingGallery
+                    title={ad.title}
+                    images={(mediaByListing[ad.id] || []).filter((media) => media.type === "image").sort((a, b) => a.sort - b.sort)}
+                    fallbackImage={ad.image}
+                    onOpen={(src) => setLightbox({ src, title: ad.title })}
+                  />
                   <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 }}>
                     <span style={{ fontSize: "0.79rem", color: "#B5C3D8" }}>
                       {ad.category} · {ad.subcategory} · {ad.island} ({ad.municipality})
                     </span>
                     <h2 style={{ margin: 0, fontSize: "1.03rem", lineHeight: 1.35 }}>{ad.title}</h2>
                     <strong style={{ color: "#38D6A0", fontSize: "0.98rem" }}>{ad.price}</strong>
-                    <p style={{ margin: "0.15rem 0 0.35rem", fontSize: "0.86rem", color: "#B5C3D8", lineHeight: 1.45 }}>
-                      {ad.description}
-                    </p>
-                    {(mediaByListing[ad.id] || []).length > 1 && <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>{mediaByListing[ad.id].slice(1).map((media) => media.type === "video" ? <video key={media.id} src={media.url} controls style={{ width: 90, height: 68, objectFit: "cover", borderRadius: 7 }} /> : <img key={media.id} src={media.url} alt={ad.title} onClick={() => setLightbox({ src: media.url, title: ad.title })} style={{ width: 90, height: 68, objectFit: "cover", borderRadius: 7, cursor: "zoom-in" }} />)}</div>}
+                    <ListingDescription description={ad.description} />
+                    {(mediaByListing[ad.id] || []).some((media) => media.type === "video") && (
+                      <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
+                        {(mediaByListing[ad.id] || []).filter((media) => media.type === "video").map((media) => (
+                          <video key={media.id} src={media.url} controls style={{ width: 110, height: 76, objectFit: "cover", borderRadius: 7 }} />
+                        ))}
+                      </div>
+                    )}
                       <div style={{ display: "flex", gap: "0.5rem", marginTop: "auto" }}>
                       {ad.whatsapp && (
                         <a
