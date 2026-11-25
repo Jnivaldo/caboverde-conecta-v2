@@ -262,6 +262,8 @@ export default function App() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("free_launch");
   const [proofRef, setProofRef] = useState("");
   const [feedback, setFeedback] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
   // Assistente flutuante
   const [chatOpen, setChatOpen] = useState(false);
@@ -360,7 +362,9 @@ export default function App() {
 
   async function handlePublishSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isSubmitting) return;
     setFeedback("");
+    setSubmissionSuccess(false);
     if (!authUser) {
       setFeedback("Para publicar um anúncio, entre na sua conta ou crie uma conta em Minha Conta.");
       setTab("account");
@@ -426,6 +430,7 @@ export default function App() {
       return;
     }
 
+    setIsSubmitting(true);
     const { data, error } = await supabase.rpc("submit_listing", {
       p_title: title.trim(),
       p_category: useCustomCategory ? customCategory.trim() : pubCategory,
@@ -444,6 +449,7 @@ export default function App() {
         ? "As 50 vagas gratuitas já foram preenchidas. O pagamento seguro ainda não está ativo."
         : "Não foi possível enviar o anúncio ao servidor: " + error.message;
       setFeedback(message);
+      setIsSubmitting(false);
       return;
     }
 
@@ -456,6 +462,7 @@ export default function App() {
       if (uploadError) {
         setFeedback(`O anúncio foi criado como pendente, mas o carregamento de ficheiros falhou: ${uploadError.message}. Pode tentar adicionar os ficheiros novamente em Minha Conta.`);
         setListings((prev) => [newAd, ...prev]);
+        setIsSubmitting(false);
         return;
       }
       const { data: publicData } = supabase.storage.from("listing-media").getPublicUrl(objectPath);
@@ -467,6 +474,7 @@ export default function App() {
       if (mediaInsertError) {
         setFeedback(`O anúncio foi criado, mas não foi possível associar a galeria: ${mediaInsertError.message}. Contacte o suporte antes de repetir a publicação.`);
         setListings((prev) => [newAd, ...prev]);
+        setIsSubmitting(false);
         return;
       }
       setMediaByListing((prev) => ({ ...prev, [newAd.id]: uploadedMedia.map((media, index) => ({ id: `pending-${index}`, ...media })) }));
@@ -488,7 +496,9 @@ export default function App() {
     setUseCustomCategory(false);
     setUseCustomSubcategory(false);
     setMediaFiles([]);
-    setFeedback("Anúncio enviado ao servidor com sucesso e guardado como pendente de análise. A vaga gratuita só será contabilizada após validação administrativa.");
+    setFeedback("Anúncio submetido com sucesso! O seu anúncio está pendente de aprovação pelo administrador.");
+    setIsSubmitting(false);
+    setSubmissionSuccess(true);
   }
 
   function beginListingEdit(item: Listing) {
@@ -853,6 +863,20 @@ export default function App() {
             </div>
 
             {feedback && <div style={feedbackBoxStyle}>{feedback}</div>}
+            {submissionSuccess && (
+              <div role="status" aria-live="polite" style={{ position: "relative", overflow: "hidden", margin: "0.8rem 0 1rem", padding: "1.4rem", borderRadius: 16, border: "1px solid rgba(56,214,160,0.65)", background: "linear-gradient(135deg, #102D35 0%, #15233B 55%, #24204A 100%)", boxShadow: "0 16px 38px rgba(0,0,0,0.28)", textAlign: "center" }}>
+                <style>{`@keyframes conecta-confetti-fall { 0% { transform: translateY(-12vh) rotate(0deg); opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(110vh) rotate(720deg); opacity: 0; } } @keyframes conecta-success-pop { 0% { transform: scale(.82); opacity: 0; } 70% { transform: scale(1.04); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }`}</style>
+                <div aria-hidden="true" style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 1000 }}>
+                  {Array.from({ length: 42 }, (_, i) => <span key={i} style={{ position: "absolute", top: -18, left: `${(i * 37) % 100}%`, width: i % 3 === 0 ? 9 : 6, height: i % 3 === 0 ? 13 : 8, borderRadius: i % 2 ? "50%" : 2, background: ["#38D6A0", "#60A5FA", "#FBBF24", "#F472B6", "#C4B5FD"][i % 5], animation: `conecta-confetti-fall ${1.7 + (i % 5) * 0.18}s ease-out ${(i % 8) * 0.045}s forwards` }} />)}
+                </div>
+                <div style={{ position: "relative", zIndex: 1, animation: "conecta-success-pop .45s ease-out both" }}>
+                  <div style={{ fontSize: "2.5rem", marginBottom: 5 }}>🎉</div>
+                  <strong style={{ display: "block", color: "#F8FAFC", fontSize: "1.18rem", marginBottom: 7 }}>Anúncio submetido com sucesso!</strong>
+                  <p style={{ margin: "0 auto 0.9rem", maxWidth: 520, color: "#D7E6F4", lineHeight: 1.55, fontSize: "0.92rem" }}>Recebemos os seus dados e fotografias. O anúncio está <strong style={{ color: "#FBBF24" }}>PENDENTE DE APROVAÇÃO</strong> e só ficará visível ao público depois da validação do administrador.</p>
+                  <button type="button" onClick={() => setSubmissionSuccess(false)} style={{ ...secondaryBtnStyle, borderColor: "rgba(56,214,160,0.55)" }}>Continuar</button>
+                </div>
+              </div>
+            )}
 
             <form onSubmit={handlePublishSubmit} style={{ display: "grid", gap: "0.9rem" }}>
               <div style={subCardStyle}>
@@ -1015,8 +1039,8 @@ export default function App() {
                 </select>
               </div>
 
-              <button type="submit" style={primaryBtnStyle}>
-                Submeter Anúncio para Análise
+              <button type="submit" disabled={isSubmitting} style={{ ...primaryBtnStyle, opacity: isSubmitting ? 0.72 : 1, cursor: isSubmitting ? "wait" : "pointer", minHeight: 48 }}>
+                {isSubmitting ? "A enviar anúncio… Não feche esta página" : "Submeter Anúncio para Análise"}
               </button>
             </form>
           </section>
