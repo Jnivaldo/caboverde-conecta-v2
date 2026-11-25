@@ -436,6 +436,7 @@ export default function App() {
   // Assistente flutuante
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
@@ -490,41 +491,52 @@ export default function App() {
     setAuditLogs((prev) => [`[${new Date().toLocaleTimeString()}] ${entry}`, ...prev]);
   }
 
-  function buildAssistantReply(rawText: string): string {
-    const t = rawText.toLowerCase();
-    if (t.includes("gratuit") || t.includes("50") || t.includes("vaga")) {
-      return `A campanha de lançamento oferece até 50 vagas gratuitas. Neste momento, o servidor indica ${freeSlotsRemaining} vaga(s) disponível(is). Ao submeter um anúncio, o sistema reserva a vaga de forma segura e guarda o anúncio como pendente de análise. Depois da campanha, o preço previsto é 1.500 CVE por anúncio.`;
-    }
-    if (t.includes("1.500") || t.includes("1500") || t.includes("pagar") || t.includes("bca") || t.includes("bcn") || t.includes("hotmart") || t.includes("visa")) {
-      return "Após a campanha, o preço previsto é 1.500 CVE por anúncio. O pagamento ainda não está ativo nesta versão de pré-lançamento. Não faça transferências nem envie comprovativos através desta pré-visualização.";
-    }
-    if (t.includes("suporte") || t.includes("contacto") || t.includes("whatsapp") || t.includes("telefone")) {
-      return "O contacto entre interessados e anunciantes é direto através dos dados indicados em cada anúncio. O canal de suporte da plataforma ainda não está ligado nesta pré-visualização.";
-    }
-    if (t.includes("estado") || t.includes("pendente") || t.includes("publicar")) {
-      return "Os estados de pagamento (pending, confirmed, rejected) e de anúncio (pending, published, rejected, suspended) são separados. Novos anúncios entram em análise até confirmação e publicação no painel administrativo.";
-    }
-    return `O CaboVerde Conecta reúne classificados, serviços, imóveis, viaturas, hospedagem e oportunidades em Cabo Verde. A campanha prevê até 50 anúncios gratuitos; neste momento há ${freeSlotsRemaining} vaga(s) disponível(is), segundo o servidor. Os anúncios submetidos ficam pendentes de análise. Depois da campanha, o valor previsto é 1.500 CVE.`;
-  }
-
-  function sendChatMessage(customText?: string) {
+  async function sendChatMessage(customText?: string) {
     const content = (customText ?? chatInput).trim();
-    if (!content) return;
+    if (!content || chatLoading) return;
 
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
       sender: "user",
       text: content,
     };
-    const replyMsg: ChatMessage = {
-      id: `a-${Date.now() + 1}`,
-      sender: "assistant",
-      text: buildAssistantReply(content),
-    };
+    const history = [...messages.filter((message) => message.id !== "welcome"), userMsg]
+      .slice(-8)
+      .map((message) => ({
+        role: message.sender === "user" ? "user" as const : "assistant" as const,
+        content: message.text,
+      }));
 
-    setMessages((prev) => [...prev, userMsg, replyMsg]);
-    if (!customText) {
-      setChatInput("");
+    setMessages((previous) => [...previous, userMsg]);
+    setChatInput("");
+    setChatLoading(true);
+
+    try {
+      const response = await fetch("/api/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history }),
+      });
+      const result = await response.json() as { reply?: string; error?: string };
+      if (!response.ok || typeof result.reply !== "string" || !result.reply.trim()) {
+        throw new Error(result.error || "Não foi possível obter uma resposta neste momento.");
+      }
+      setMessages((previous) => [...previous, {
+        id: `a-${Date.now()}`,
+        sender: "assistant",
+        text: result.reply!.trim(),
+      }]);
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : "O assistente está temporariamente indisponível. Tente novamente.";
+      setMessages((previous) => [...previous, {
+        id: `a-${Date.now()}`,
+        sender: "assistant",
+        text: message,
+      }]);
+    } finally {
+      setChatLoading(false);
     }
   }
 
@@ -1758,12 +1770,14 @@ export default function App() {
                 </div>
               ))}
 
+              {chatLoading && <div role="status" aria-live="polite" style={{ alignSelf: "flex-start", color: "#8EF0C8", fontSize: "0.78rem", padding: "0.25rem 0.2rem" }}>O assistente está a preparar a resposta…</div>}
               <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginTop: "0.2rem" }}>
                 {QUICK_PROMPTS.map((q) => (
                   <button
                     key={q}
                     type="button"
                     onClick={() => sendChatMessage(q)}
+                    disabled={chatLoading}
                     style={{
                       padding: "0.34rem 0.6rem",
                       borderRadius: 999,
@@ -1797,12 +1811,13 @@ export default function App() {
               <input
                 type="text"
                 value={chatInput}
+                disabled={chatLoading}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Escreva a sua dúvida..."
                 style={{ ...inputStyle, flex: 1, padding: "0.5rem 0.7rem", fontSize: "0.84rem" }}
               />
-              <button type="submit" style={{ ...actionBtnStyle("#2563EB"), padding: "0.5rem 0.8rem" }}>
-                Enviar
+              <button type="submit" disabled={chatLoading || !chatInput.trim()} style={{ ...actionBtnStyle("#2563EB"), padding: "0.5rem 0.8rem", opacity: chatLoading || !chatInput.trim() ? 0.6 : 1 }}>
+                {chatLoading ? "A enviar…" : "Enviar"}
               </button>
             </form>
           </div>
