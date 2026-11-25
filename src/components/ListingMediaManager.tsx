@@ -29,17 +29,18 @@ export default function ListingMediaManager({ listingId, ownerId, currentCover, 
     }
     setBusy(true); setMessage("");
     try {
-      for (const file of files) {
+      for (const [index, file] of files.entries()) {
         const safe = file.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]/g, "-").slice(-90);
         const path = ownerId + "/" + listingId + "/" + crypto.randomUUID() + "-" + safe;
         const { error: uploadError } = await supabase.storage.from("listing-media").upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
         if (uploadError) throw uploadError;
         const { data } = supabase.storage.from("listing-media").getPublicUrl(path);
-        const { error: rowError } = await supabase.from("listing_media").insert({ listing_id: listingId, owner_id: ownerId, media_url: data.publicUrl, media_type: file.type.startsWith("video/") ? "video" : "image", sort_order: items.length });
+        const { error: rowError } = await supabase.from("listing_media").insert({ listing_id: listingId, owner_id: ownerId, media_url: data.publicUrl, media_type: file.type.startsWith("video/") ? "video" : "image", sort_order: items.length + index });
         if (rowError) throw rowError;
       }
       await load(); setMessage("Galeria atualizada com sucesso.");
     } catch (error) {
+      await load();
       setMessage("Não foi possível concluir o carregamento: " + (error instanceof Error ? error.message : "erro desconhecido"));
     } finally { setBusy(false); }
   }
