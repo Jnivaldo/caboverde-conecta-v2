@@ -59,11 +59,51 @@ const INITIAL_LISTINGS: Listing[] = [];
 const PREVIEW_LISTINGS_KEY = "caboverde-conecta-v2:preview:listings";
 const PREVIEW_AUDIT_KEY = "caboverde-conecta-v2:preview:audit";
 
-function readPreviewStorage<T>(key: string, fallback: T): T {
+function isStoredListing(value: unknown): value is Listing {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Partial<Listing>;
+  return (
+    typeof item.id === "string" &&
+    typeof item.title === "string" &&
+    typeof item.category === "string" &&
+    typeof item.subcategory === "string" &&
+    typeof item.island === "string" &&
+    typeof item.municipality === "string" &&
+    typeof item.price === "string" &&
+    typeof item.description === "string" &&
+    typeof item.whatsapp === "string" &&
+    typeof item.phone === "string" &&
+    typeof item.image === "string" &&
+    typeof item.ownerEmail === "string" &&
+    ["pending", "published", "rejected", "suspended"].includes(item.listingStatus || "") &&
+    ["pending", "confirmed", "rejected"].includes(item.paymentStatus || "") &&
+    item.paymentMethod === "free_launch" &&
+    typeof item.createdAt === "string"
+  );
+}
+
+function normalizeStoredListings(value: unknown): Listing[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isStoredListing).slice(0, 500);
+}
+
+function normalizeStoredAudit(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((entry): entry is string => typeof entry === "string")
+    .map((entry) => entry.slice(0, 1000))
+    .slice(0, 2000);
+}
+
+function readPreviewStorage<T>(
+  key: string,
+  fallback: T,
+  normalize: (value: unknown) => T
+): T {
   if (typeof window === "undefined") return fallback;
   try {
     const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
+    return raw ? normalize(JSON.parse(raw) as unknown) : fallback;
   } catch {
     return fallback;
   }
@@ -78,10 +118,10 @@ const QUICK_PROMPTS = [
 export default function App() {
   const [tab, setTab] = useState<"home" | "publish" | "account" | "admin">("home");
   const [listings, setListings] = useState<Listing[]>(() =>
-    readPreviewStorage<Listing[]>(PREVIEW_LISTINGS_KEY, INITIAL_LISTINGS)
+    readPreviewStorage<Listing[]>(PREVIEW_LISTINGS_KEY, INITIAL_LISTINGS, normalizeStoredListings)
   );
   const [auditLogs, setAuditLogs] = useState<string[]>(() =>
-    readPreviewStorage<string[]>(PREVIEW_AUDIT_KEY, [])
+    readPreviewStorage<string[]>(PREVIEW_AUDIT_KEY, [], normalizeStoredAudit)
   );
 
   useEffect(() => {
@@ -258,7 +298,7 @@ export default function App() {
 
     const nextSlot = usingFreeSlot ? usedFreeSlots + 1 : undefined;
     const newAd: Listing = {
-      id: `CV-${Math.floor(200 + Math.random() * 800)}`,
+      id: `CV-${typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`}`,
       title: title.trim(),
       category: pubCategory,
       subcategory: pubSubcategory,
