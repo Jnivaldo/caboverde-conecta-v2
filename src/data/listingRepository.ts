@@ -65,7 +65,10 @@ function isStoredListing(value: unknown): value is Listing {
 
 export function normalizeStoredListings(value: unknown): Listing[] {
   if (!Array.isArray(value)) return [];
-  return value.filter(isStoredListing).map((item) => ({\n    ...item,\n    ownerAccountId: item.ownerAccountId || `preview-email:${item.ownerEmail.trim().toLowerCase()}`,\n  })).slice(0, 500);
+  return value.filter(isStoredListing).map((item) => ({
+    ...item,
+    ownerAccountId: item.ownerAccountId || `preview-email:${item.ownerEmail.trim().toLowerCase()}`,
+  })).slice(0, 500);
 }
 
 export function normalizeStoredAudit(value: unknown): string[] {
