@@ -20,6 +20,15 @@ interface ChatMessage {
   text: string;
 }
 
+interface CategorySuggestion {
+  id: string;
+  requester_id: string;
+  requested_category: string;
+  requested_subcategory: string;
+  description: string;
+  created_at: string;
+}
+
 const CATEGORIES: Record<string, string[]> = {
   Imóveis: [
     "Casas", "Moradias", "Prédios", "Edifícios completos", "Apartamentos", "Estúdios e Kitnets",
@@ -309,6 +318,66 @@ export default function App() {
     [accountListings]
   );
 
+  const availableCategories = useMemo(
+    () => Array.from(new Set([
+      ...Object.keys(CATEGORIES),
+      ...marketplaceCategoryOptions.map((item) => item.category_name),
+    ])).sort((a, b) => a.localeCompare(b, "pt")),
+    [marketplaceCategoryOptions]
+  );
+
+  function getCategorySubcategories(categoryName: string): string[] {
+    return Array.from(new Set([
+      ...(CATEGORIES[categoryName] || []),
+      ...marketplaceCategoryOptions
+        .filter((item) => item.category_name === categoryName && item.subcategory_name)
+        .map((item) => item.subcategory_name as string),
+    ])).sort((a, b) => a.localeCompare(b, "pt"));
+  }
+
+  useEffect(() => {
+    let active = true;
+    async function loadMarketplaceCategories() {
+      const { data, error } = await supabase
+        .from("marketplace_categories")
+        .select("category_name, subcategory_name")
+        .eq("is_active", true);
+      if (!active) return;
+      if (error) {
+        console.error("Não foi possível carregar as categorias aprovadas:", error.message);
+        return;
+      }
+      setMarketplaceCategoryOptions((data ?? []) as { category_name: string; subcategory_name: string | null }[]);
+    }
+    loadMarketplaceCategories();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!canAdmin) {
+      setCategorySuggestions([]);
+      return;
+    }
+    let active = true;
+    setCategorySuggestionsLoading(true);
+    async function loadPendingCategorySuggestions() {
+      const { data, error } = await supabase
+        .from("category_suggestions")
+        .select("id, requester_id, requested_category, requested_subcategory, description, created_at")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (!active) return;
+      if (error) {
+        setCategoryReviewFeedback("Não foi possível carregar as sugestões: " + error.message);
+      } else {
+        setCategorySuggestions((data ?? []) as CategorySuggestion[]);
+      }
+      setCategorySuggestionsLoading(false);
+    }
+    loadPendingCategorySuggestions();
+    return () => { active = false; };
+  }, [canAdmin]);
+
   // Filtros públicos (apenas anúncios publicados)
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
@@ -353,6 +422,15 @@ export default function App() {
   const [feedback, setFeedback] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [marketplaceCategoryOptions, setMarketplaceCategoryOptions] = useState<{ category_name: string; subcategory_name: string | null }[]>([]);
+  const [categorySuggestions, setCategorySuggestions] = useState<CategorySuggestion[]>([]);
+  const [categorySuggestionsLoading, setCategorySuggestionsLoading] = useState(false);
+  const [categoryReviewFeedback, setCategoryReviewFeedback] = useState("");
+  const [suggestionCategory, setSuggestionCategory] = useState("");
+  const [suggestionSubcategory, setSuggestionSubcategory] = useState("");
+  const [suggestionDescription, setSuggestionDescription] = useState("");
+  const [suggestionFeedback, setSuggestionFeedback] = useState("");
+  const [suggestionSubmitting, setSuggestionSubmitting] = useState(false);
 
   // Assistente flutuante
   const [chatOpen, setChatOpen] = useState(false);
@@ -446,6 +524,68 @@ export default function App() {
     setMessages((prev) => [...prev, userMsg, replyMsg]);
     if (!customText) {
       setChatInput("");
+    }
+  }
+
+  async function submitCategorySuggestion() {
+    setSuggestionFeedback("");
+    if (!authUser) {
+      setSuggestionFeedback("Entre na sua conta para enviar uma sugestão.");
+      setTab("account");
+      return;
+    }
+    const requestedCategory = (suggestionCategory.trim() || (useCustomCategory ? customCategory.trim() : pubCategory)).trim();
+    const requestedSubcategory = (suggestionSubcategory.trim() || ((useCustomCategory || useCustomSubcategory) ? customSubcategory.trim() : "")).trim();
+    if (requestedCategory.length < 2) {
+      setSuggestionFeedback("Indique uma categoria com pelo menos 2 caracteres.");
+      return;
+    }
+    if (!requestedSubcategory && !suggestionDescription.trim()) {
+      setSuggestionFeedback("Indique um produto, subproduto ou serviço, ou explique a nova categoria.");
+      return;
+    }
+    setSuggestionSubmitting(true);
+    const { error } = await supabase.from("category_suggestions").insert({
+      requester_id: authUser.id,
+      requested_category: requestedCategory,
+      requested_subcategory: requestedSubcategory,
+      description: suggestionDescription.trim(),
+      status: "pending",
+    });
+    if (error) {
+      setSuggestionFeedback("Não foi possível enviar a sugestão: " + error.message);
+    } else {
+      setSuggestionFeedback("Sugestão enviada! A administração irá analisá-la. Se for aprovada, ficará disponível na lista para todos.");
+      setSuggestionCategory("");
+      setSuggestionSubcategory("");
+      setSuggestionDescription("");
+    }
+    setSuggestionSubmitting(false);
+  }
+
+  async function reviewCategorySuggestion(id: string, decision: "approved" | "rejected") {
+    setCategoryReviewFeedback("");
+    const { error } = await supabase.rpc("review_category_suggestion", {
+      p_suggestion_id: id,
+      p_decision: decision,
+      p_admin_notes: null,
+    });
+    if (error) {
+      setCategoryReviewFeedback("Não foi possível atualizar a sugestão: " + error.message);
+      return;
+    }
+    setCategorySuggestions((current) => current.filter((item) => item.id !== id));
+    if (decision === "approved") {
+      const { data, error: categoriesError } = await supabase
+        .from("marketplace_categories")
+        .select("category_name, subcategory_name")
+        .eq("is_active", true);
+      if (!categoriesError && data) {
+        setMarketplaceCategoryOptions(data as { category_name: string; subcategory_name: string | null }[]);
+      }
+      setCategoryReviewFeedback("Sugestão aprovada e adicionada às opções de publicação.");
+    } else {
+      setCategoryReviewFeedback("Sugestão rejeitada.");
     }
   }
 
@@ -876,7 +1016,7 @@ export default function App() {
                 style={inputStyle}
               >
                 <option value="">Todas as categorias</option>
-                {Array.from(new Set([...Object.keys(CATEGORIES), ...listings.map((item) => item.category).filter(Boolean)])).map((c) => (
+                {Array.from(new Set([...availableCategories, ...listings.map((item) => item.category).filter(Boolean)])).map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>
@@ -889,7 +1029,7 @@ export default function App() {
                 style={inputStyle}
               >
                 <option value="">Todas as subcategorias</option>
-                {(category ? Array.from(new Set([...(CATEGORIES[category] || []), ...listings.filter((item) => item.category === category).map((item) => item.subcategory).filter(Boolean)])) : []).map((sub) => (
+                {(category ? Array.from(new Set([...getCategorySubcategories(category), ...listings.filter((item) => item.category === category).map((item) => item.subcategory).filter(Boolean)])) : []).map((sub) => (
                   <option key={sub} value={sub}>
                     {sub}
                   </option>
@@ -939,7 +1079,7 @@ export default function App() {
             </div>
 
             <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1.65rem" }}>
-              {Object.keys(CATEGORIES).map((cat) => {
+              {availableCategories.map((cat) => {
                 const selected = category === cat;
                 return (
                   <button
@@ -1085,13 +1225,13 @@ export default function App() {
                       setUseCustomCategory(false);
                       setCustomCategory("");
                       setPubCategory(nextCat);
-                      setPubSubcategory(CATEGORIES[nextCat]?.[0] || "Geral");
+                      setPubSubcategory(getCategorySubcategories(nextCat)[0] || "Geral");
                       setUseCustomSubcategory(false);
                       setCustomSubcategory("");
                     }}
                     style={{ ...inputStyle, opacity: 1 }}
                   >
-                    {Object.keys(CATEGORIES).map((c) => (
+                    {availableCategories.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                     <option value="__custom_category__">＋ Outra categoria — escrever</option>
@@ -1105,7 +1245,7 @@ export default function App() {
                   {!useCustomCategory && (
                     <>
                       <select value={pubSubcategory} disabled={useCustomSubcategory} onChange={(e) => setPubSubcategory(e.target.value)} style={{ ...inputStyle, opacity: useCustomSubcategory ? 0.55 : 1 }}>
-                        {(CATEGORIES[pubCategory] || []).map((sub) => <option key={sub} value={sub}>{sub}</option>)}
+                        {getCategorySubcategories(pubCategory).map((sub) => <option key={sub} value={sub}>{sub}</option>)}
                       </select>
                       <button type="button" onClick={() => { setUseCustomSubcategory((v) => !v); setCustomSubcategory(""); }} style={{ ...inputStyle, cursor: "pointer", color: "#BFDBFE", border: "1px dashed #60A5FA", background: "rgba(37,99,235,0.10)", textAlign: "left", fontWeight: 650 }}>
                         {useCustomSubcategory ? "− Usar uma subcategoria da lista" : "+ Não encontrou o produto ou serviço? Adicionar outro"}
@@ -1141,6 +1281,39 @@ export default function App() {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div style={{ marginTop: "0.75rem", padding: "0.9rem", border: "1px dashed rgba(96,165,250,0.55)", borderRadius: 12, background: "rgba(37,99,235,0.07)", display: "grid", gap: "0.6rem" }}>
+                  <strong style={{ color: "#F8FAFC", fontSize: "0.9rem" }}>Não encontrou uma categoria, produto ou serviço?</strong>
+                  <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.82rem", lineHeight: 1.45 }}>Envie uma sugestão à administração. Depois de aprovada, a nova opção ficará disponível para todos os anunciantes.</p>
+                  <input
+                    type="text"
+                    maxLength={60}
+                    value={suggestionCategory}
+                    onChange={(e) => setSuggestionCategory(e.target.value)}
+                    placeholder={`Categoria (por defeito: ${useCustomCategory ? customCategory || "nova categoria" : pubCategory})`}
+                    style={inputStyle}
+                  />
+                  <input
+                    type="text"
+                    maxLength={80}
+                    value={suggestionSubcategory}
+                    onChange={(e) => setSuggestionSubcategory(e.target.value)}
+                    placeholder="Novo produto, subproduto ou serviço (opcional para categoria nova)"
+                    style={inputStyle}
+                  />
+                  <textarea
+                    rows={2}
+                    maxLength={500}
+                    value={suggestionDescription}
+                    onChange={(e) => setSuggestionDescription(e.target.value)}
+                    placeholder="Explique brevemente a sugestão (opcional)"
+                    style={inputStyle}
+                  />
+                  {suggestionFeedback && <div role="status" aria-live="polite" style={{ color: suggestionFeedback.startsWith("Sugestão enviada") ? "#6EE7B7" : "#FBBF24", fontSize: "0.82rem" }}>{suggestionFeedback}</div>}
+                  <button type="button" onClick={submitCategorySuggestion} disabled={suggestionSubmitting} style={{ ...secondaryBtnStyle, borderColor: "rgba(96,165,250,0.55)", color: "#BFDBFE", opacity: suggestionSubmitting ? 0.65 : 1 }}>
+                    {suggestionSubmitting ? "A enviar sugestão…" : "Enviar sugestão para aprovação"}
+                  </button>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: "0.65rem" }}>
@@ -1336,14 +1509,14 @@ export default function App() {
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.65rem" }}>
                           <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
                             Categoria
-                            <select value={editDraft.category} onChange={(e) => setEditDraft({ ...editDraft, category: e.target.value, subcategory: CATEGORIES[e.target.value]?.[0] || "" })} style={inputStyle}>
-                              {Object.keys(CATEGORIES).map((value) => <option key={value} value={value}>{value}</option>)}
+                            <select value={editDraft.category} onChange={(e) => setEditDraft({ ...editDraft, category: e.target.value, subcategory: getCategorySubcategories(e.target.value)[0] || "" })} style={inputStyle}>
+                              {Array.from(new Set([...availableCategories, editDraft.category])).map((value) => <option key={value} value={value}>{value}</option>)}
                             </select>
                           </label>
                           <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
                             Subcategoria
                             <select value={editDraft.subcategory} onChange={(e) => setEditDraft({ ...editDraft, subcategory: e.target.value })} style={inputStyle}>
-                              {(CATEGORIES[editDraft.category] || []).map((value) => <option key={value} value={value}>{value}</option>)}
+                              {Array.from(new Set([...getCategorySubcategories(editDraft.category), editDraft.subcategory].filter(Boolean))).map((value) => <option key={value} value={value}>{value}</option>)}
                             </select>
                           </label>
                           <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
@@ -1402,6 +1575,36 @@ export default function App() {
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
               Painel ligado à base de dados partilhada. As ações de moderação são validadas pelo servidor e registadas na auditoria.
             </p>
+
+            <div style={{ ...subCardStyle, marginBottom: "1.1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.7rem", flexWrap: "wrap" }}>
+                <strong style={{ fontSize: "0.98rem" }}>Sugestões de categorias e serviços</strong>
+                <span style={badgeStyle(categorySuggestions.length ? "#B45309" : "#166534")}>{categorySuggestions.length} pendentes</span>
+              </div>
+              {categoryReviewFeedback && <div role="status" aria-live="polite" style={{ color: "#6EE7B7", fontSize: "0.84rem" }}>{categoryReviewFeedback}</div>}
+              {categorySuggestionsLoading ? (
+                <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.86rem" }}>A carregar sugestões…</p>
+              ) : categorySuggestions.length === 0 ? (
+                <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.86rem" }}>Não existem sugestões pendentes neste momento.</p>
+              ) : (
+                <div style={{ display: "grid", gap: "0.65rem" }}>
+                  {categorySuggestions.map((suggestion) => (
+                    <div key={suggestion.id} style={{ padding: "0.85rem", border: "1px solid rgba(181,195,216,0.18)", borderRadius: 10, display: "grid", gap: "0.55rem" }}>
+                      <div>
+                        <strong style={{ color: "#F8FAFC" }}>{suggestion.requested_category}</strong>
+                        {suggestion.requested_subcategory && <span style={{ color: "#93C5FD" }}> › {suggestion.requested_subcategory}</span>}
+                        {suggestion.description && <p style={{ margin: "0.35rem 0 0", color: "#B5C3D8", fontSize: "0.84rem" }}>{suggestion.description}</p>}
+                        <span style={{ display: "block", marginTop: 5, color: "#8294AE", fontSize: "0.74rem" }}>Recebida em {new Date(suggestion.created_at).toLocaleDateString("pt-PT")}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <button type="button" onClick={() => reviewCategorySuggestion(suggestion.id, "approved")} style={actionBtnStyle("#15803D")}>Aprovar e adicionar à lista</button>
+                        <button type="button" onClick={() => reviewCategorySuggestion(suggestion.id, "rejected")} style={actionBtnStyle("#B91C1C")}>Rejeitar</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div style={{ display: "grid", gap: "0.9rem", marginBottom: "1.5rem" }}>
               {listings.map((item) => (
