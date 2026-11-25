@@ -21,8 +21,8 @@ export function validateListingEdit(input: EditableListingFields): ListingEditRe
     municipality: input.municipality.trim(),
     price: input.price.trim(),
     description: input.description.trim(),
-    whatsapp: input.whatsapp.replace(/\\D/g, ""),
-    phone: input.phone.replace(/\\D/g, ""),
+    whatsapp: input.whatsapp.replace(/\D/g, ""),
+    phone: input.phone.replace(/\D/g, ""),
     image: input.image.trim(),
   };
   const errors: string[] = [];
