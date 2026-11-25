@@ -34,20 +34,6 @@ interface ChatMessage {
 const OFFICIAL_WHATSAPP = "2389361197";
 const OFFICIAL_PHONE_DISPLAY = "+238 936 11 97";
 
-const BANK_ACCOUNTS = {
-  bca: {
-    bank: "BCA",
-    holder: "JOSE NIVALDO GONCALVES DE OLIVEIRA",
-    account: "7050338410001",
-    nib: "000300007050338410176",
-  },
-  bcn: {
-    bank: "BCN",
-    holder: "José Nivaldo Gonçalves de Oliveira",
-    account: "119418310001",
-  },
-};
-
 const CATEGORIES: Record<string, string[]> = {
   Imóveis: ["Apartamentos", "Moradias", "Terrenos", "Comercial"],
   Viaturas: ["Carros", "Motas", "Comerciais", "Peças"],
@@ -159,7 +145,7 @@ export default function App() {
       return `A campanha de lançamento oferece 50 vagas gratuitas. A disponibilidade das vagas é confirmada pelo servidor no momento da submissão. Depois de esgotada a campanha, cada publicação custa 1.500 CVE.`;
     }
     if (t.includes("1.500") || t.includes("1500") || t.includes("pagar") || t.includes("bca") || t.includes("bcn") || t.includes("hotmart") || t.includes("visa")) {
-      return `O valor padrão após as 50 vagas gratuitas é 1.500 CVE. Pode pagar por transferência bancária para BCA (conta ${BANK_ACCOUNTS.bca.account}, NIB ${BANK_ACCOUNTS.bca.nib}) ou BCN (conta ${BANK_ACCOUNTS.bcn.account}) indicando o comprovativo, O comprovativo não publica sozinho: a publicação depende da análise da equipa responsável. O pagamento por cartão ainda não está ativo.`;
+      return "Após a campanha, o preço previsto é 1.500 CVE por anúncio. O pagamento ainda não está ativo nesta versão de pré-lançamento. Não faça transferências nem envie comprovativos através desta pré-visualização.";
     }
     if (t.includes("suporte") || t.includes("contacto") || t.includes("whatsapp") || t.includes("telefone")) {
       return `O contacto entre interessados e anunciantes é direto através dos dados indicados em cada anúncio. Para assuntos da plataforma, utilize os canais oficiais apresentados na página de contacto.`;
@@ -195,8 +181,49 @@ export default function App() {
     e.preventDefault();
     setFeedback("");
 
-    if (!title.trim() || !price.trim() || !pubIsland || !pubMunicipality || !ownerEmail.trim()) {
-      setFeedback("Preencha o título, o preço, a localização e o email de contacto.");
+    if (title.trim().length < 5 || title.trim().length > 100) {
+      setFeedback("O título deve ter entre 5 e 100 caracteres.");
+      return;
+    }
+    if (!price.trim() || price.trim().length > 60) {
+      setFeedback("Indique um preço ou valor válido (máximo de 60 caracteres).");
+      return;
+    }
+    if (!pubIsland || !LOCATIONS[pubIsland]?.includes(pubMunicipality)) {
+      setFeedback("Selecione uma ilha e um concelho válidos.");
+      return;
+    }
+    if (!ownerEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail.trim())) {
+      setFeedback("Indique um endereço de email válido.");
+      return;
+    }
+    const cleanWhatsApp = whatsapp.replace(/\D/g, "");
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (!cleanWhatsApp && !cleanPhone) {
+      setFeedback("Indique pelo menos um contacto: WhatsApp ou telefone.");
+      return;
+    }
+    if ((cleanWhatsApp && (cleanWhatsApp.length < 7 || cleanWhatsApp.length > 15)) ||
+        (cleanPhone && (cleanPhone.length < 7 || cleanPhone.length > 15))) {
+      setFeedback("Os contactos devem conter entre 7 e 15 dígitos, incluindo o indicativo do país quando aplicável.");
+      return;
+    }
+    if (description.trim().length > 3000) {
+      setFeedback("A descrição não pode ultrapassar 3.000 caracteres.");
+      return;
+    }
+    if (imageUrl.trim()) {
+      try {
+        const parsedImageUrl = new URL(imageUrl.trim());
+        if (parsedImageUrl.protocol !== "https:") throw new Error("HTTPS required");
+      } catch {
+        setFeedback("A imagem deve utilizar um endereço HTTPS válido.");
+        return;
+      }
+    }
+
+    if (paymentMethod !== "free_launch") {
+      setFeedback("Os pagamentos por transferência ainda não estão ativos nesta versão. Não faça transferências nem envie comprovativos. Aguarde a ativação do pagamento seguro.");
       return;
     }
 
@@ -221,8 +248,8 @@ export default function App() {
       municipality: pubMunicipality,
       price: price.trim(),
       description: description.trim(),
-      whatsapp: whatsapp.trim(),
-      phone: phone.trim(),
+      whatsapp: cleanWhatsApp,
+      phone: cleanPhone,
       image: imageUrl.trim(),
       ownerEmail: ownerEmail.trim(),
       listingStatus: "pending",
@@ -492,21 +519,22 @@ export default function App() {
                     <p style={{ margin: "0.15rem 0 0.35rem", fontSize: "0.86rem", color: "#B5C3D8", lineHeight: 1.45 }}>
                       {ad.description}
                     </p>
-                    <div style={{ display: "flex", gap: "0.5rem", marginTop: "auto" }}>
-                      <a
-                        href={`https://wa.me/${ad.whatsapp}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={whatsappBtnStyle}
-                      >
-                        Contactar via WhatsApp
-                      </a>
-                      <a
-                        href={`tel:${ad.phone.replace(/\s+/g, "")}`}
-                        style={callLinkStyle}
-                      >
-                        Ligar
-                      </a>
+                      <div style={{ display: "flex", gap: "0.5rem", marginTop: "auto" }}>
+                      {ad.whatsapp && (
+                        <a
+                          href={`https://wa.me/${ad.whatsapp.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={whatsappBtnStyle}
+                        >
+                          Contactar via WhatsApp
+                        </a>
+                      )}
+                      {ad.phone && (
+                        <a href={`tel:${ad.phone.replace(/\D/g, "")}`} style={callLinkStyle}>
+                          Ligar
+                        </a>
+                      )}
                     </div>
                   </div>
                 </article>
@@ -646,6 +674,9 @@ export default function App() {
 
               <div style={subCardStyle}>
                 <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>2. Modalidade e Pagamento (1.500 CVE)</strong>
+                <div style={{ fontSize: "0.85rem", color: "#B5C3D8", lineHeight: 1.55 }}>
+                  Esta pré-visualização ainda não processa pagamentos. Não faça transferências bancárias nem envie comprovativos. Os dados de pagamento só serão apresentados quando o fluxo seguro estiver ativo.
+                </div>
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
@@ -661,22 +692,8 @@ export default function App() {
                 </select>
 
                 {(paymentMethod === "bca_transfer" || paymentMethod === "bcn_transfer") && (
-                  <div style={{ fontSize: "0.85rem", color: "#B5C3D8", lineHeight: 1.55 }}>
-                    <div>
-                      <strong style={{ color: "#F8FAFC" }}>BCA:</strong> {BANK_ACCOUNTS.bca.holder} · Conta{" "}
-                      {BANK_ACCOUNTS.bca.account} · NIB {BANK_ACCOUNTS.bca.nib}
-                    </div>
-                    <div>
-                      <strong style={{ color: "#F8FAFC" }}>BCN:</strong> {BANK_ACCOUNTS.bcn.holder} · Conta{" "}
-                      {BANK_ACCOUNTS.bcn.account}
-                    </div>
-                    <input
-                      type="text"
-                      value={proofRef}
-                      onChange={(e) => setProofRef(e.target.value)}
-                      placeholder="Referência ou número do comprovativo de 1.500 CVE"
-                      style={{ ...inputStyle, marginTop: "0.55rem", width: "100%" }}
-                    />
+                  <div style={{ fontSize: "0.85rem", color: "#FBBF24", lineHeight: 1.55 }}>
+                    Pagamento indisponível em modo de pré-lançamento. Não transfira dinheiro.
                   </div>
                 )}
               </div>
