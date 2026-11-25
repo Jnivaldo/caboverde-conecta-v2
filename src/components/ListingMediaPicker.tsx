@@ -46,10 +46,10 @@ export default function ListingMediaPicker({ files, onChange, disabled = false }
           {previews.map(({ file, url, video }, index) => (
             <div key={file.name + file.lastModified + index} style={{ border: "1px solid rgba(181,195,216,0.2)", borderRadius: 10, overflow: "hidden", background: "#0B1220" }}>
               <div style={{ aspectRatio: "4 / 3", background: "#111827" }}>
-                {video ? <video src={url} controls style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <img src={url} alt={file.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                {video ? <video src={url} controls style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <img src={url} alt={"Pré-visualização da fotografia " + (index + 1)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
               </div>
               <div style={{ padding: 7 }}>
-                <div title={file.name} style={{ color: "#E2E8F0", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{video ? "Vídeo" : "Fotografia"} · {(file.size / 1024 / 1024).toFixed(1)} MB</div>
+                <div style={{ color: "#E2E8F0", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{video ? "Vídeo" : "Fotografia"} · {(file.size / 1024 / 1024).toFixed(1)} MB</div>
                 <button type="button" disabled={disabled} onClick={() => onChange(files.filter((_, i) => i !== index))} style={{ marginTop: 5, border: 0, background: "transparent", color: "#FCA5A5", cursor: "pointer", padding: 0, fontSize: 12 }}>Remover</button>
               </div>
             </div>
