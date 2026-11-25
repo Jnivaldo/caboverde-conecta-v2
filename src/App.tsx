@@ -2,14 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 
 import {
   type Listing,
-  type ListingStatus,
-  type PaymentStatus,
-  readPreviewStorage,
-  writePreviewStorage,
-  PREVIEW_LISTINGS_KEY,
-  PREVIEW_AUDIT_KEY,
-  normalizeStoredListings,
-  normalizeStoredAudit,
+  previewListingRepository,
 } from "./data/listingRepository";
 
 interface ChatMessage {
@@ -53,15 +46,15 @@ const QUICK_PROMPTS = [
 export default function App() {
   const [tab, setTab] = useState<"home" | "publish" | "account" | "admin">("home");
   const [listings, setListings] = useState<Listing[]>(() =>
-    readPreviewStorage<Listing[]>(PREVIEW_LISTINGS_KEY, INITIAL_LISTINGS, normalizeStoredListings)
+    previewListingRepository.loadListings()
   );
   const [auditLogs, setAuditLogs] = useState<string[]>(() =>
-    readPreviewStorage<string[]>(PREVIEW_AUDIT_KEY, [], normalizeStoredAudit)
+    previewListingRepository.loadAudit()
   );
 
   useEffect(() => {
-    writePreviewStorage(PREVIEW_LISTINGS_KEY, listings);
-    writePreviewStorage(PREVIEW_AUDIT_KEY, auditLogs);
+    previewListingRepository.saveListings(listings);
+    previewListingRepository.saveAudit(auditLogs);
   }, [listings, auditLogs]);
 
   // Filtros públicos (apenas anúncios publicados)
