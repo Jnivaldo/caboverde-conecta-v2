@@ -1,29 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 
-type ListingStatus = "pending" | "published" | "rejected" | "suspended";
-type PaymentStatus = "pending" | "confirmed" | "rejected";
-type PaymentMethod = "free_launch";
-
-interface Listing {
-  id: string;
-  title: string;
-  category: string;
-  subcategory: string;
-  island: string;
-  municipality: string;
-  price: string;
-  description: string;
-  whatsapp: string;
-  phone: string;
-  image: string;
-  ownerEmail: string;
-  listingStatus: ListingStatus;
-  paymentStatus: PaymentStatus;
-  paymentMethod: PaymentMethod;
-  proofRef?: string;
-  slotNumber?: number;
-  createdAt: string;
-}
+import {
+  type Listing,
+  type ListingStatus,
+  type PaymentStatus,
+  readPreviewStorage,
+  writePreviewStorage,
+  PREVIEW_LISTINGS_KEY,
+  PREVIEW_AUDIT_KEY,
+  normalizeStoredListings,
+  normalizeStoredAudit,
+} from "./data/listingRepository";
 
 interface ChatMessage {
   id: string;
@@ -56,58 +43,6 @@ const LOCATIONS: Record<string, string[]> = {
 
 const INITIAL_LISTINGS: Listing[] = [];
 
-const PREVIEW_LISTINGS_KEY = "caboverde-conecta-v2:preview:listings";
-const PREVIEW_AUDIT_KEY = "caboverde-conecta-v2:preview:audit";
-
-function isStoredListing(value: unknown): value is Listing {
-  if (!value || typeof value !== "object") return false;
-  const item = value as Partial<Listing>;
-  return (
-    typeof item.id === "string" &&
-    typeof item.title === "string" &&
-    typeof item.category === "string" &&
-    typeof item.subcategory === "string" &&
-    typeof item.island === "string" &&
-    typeof item.municipality === "string" &&
-    typeof item.price === "string" &&
-    typeof item.description === "string" &&
-    typeof item.whatsapp === "string" &&
-    typeof item.phone === "string" &&
-    typeof item.image === "string" &&
-    typeof item.ownerEmail === "string" &&
-    ["pending", "published", "rejected", "suspended"].includes(item.listingStatus || "") &&
-    ["pending", "confirmed", "rejected"].includes(item.paymentStatus || "") &&
-    item.paymentMethod === "free_launch" &&
-    typeof item.createdAt === "string"
-  );
-}
-
-function normalizeStoredListings(value: unknown): Listing[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter(isStoredListing).slice(0, 500);
-}
-
-function normalizeStoredAudit(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .filter((entry): entry is string => typeof entry === "string")
-    .map((entry) => entry.slice(0, 1000))
-    .slice(0, 2000);
-}
-
-function readPreviewStorage<T>(
-  key: string,
-  fallback: T,
-  normalize: (value: unknown) => T
-): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? normalize(JSON.parse(raw) as unknown) : fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 const QUICK_PROMPTS = [
   "Como funcionam as 50 vagas gratuitas?",
@@ -125,12 +60,8 @@ export default function App() {
   );
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(PREVIEW_LISTINGS_KEY, JSON.stringify(listings));
-      window.localStorage.setItem(PREVIEW_AUDIT_KEY, JSON.stringify(auditLogs));
-    } catch {
-      // A pré-visualização continua utilizável mesmo se o navegador bloquear o armazenamento.
-    }
+    writePreviewStorage(PREVIEW_LISTINGS_KEY, listings);
+    writePreviewStorage(PREVIEW_AUDIT_KEY, auditLogs);
   }, [listings, auditLogs]);
 
   // Filtros públicos (apenas anúncios publicados)
