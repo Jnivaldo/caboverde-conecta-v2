@@ -8,6 +8,7 @@ import {
   previewListingRepository,
 } from "./data/listingRepository";
 import { countListingsByStatus, getPreviewListingsByEmail } from "./data/listingManagement";
+import { applyListingEdit, validateListingEdit, type EditableListingFields } from "./data/listingEditPolicy";
 
 interface ChatMessage {
   id: string;
@@ -56,6 +57,9 @@ export default function App() {
     previewListingRepository.loadAudit()
   );
   const [accountEmail, setAccountEmail] = useState("");
+  const [editingListingId, setEditingListingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<EditableListingFields | null>(null);
+  const [editFeedback, setEditFeedback] = useState("");
 
   useEffect(() => {
     previewListingRepository.saveListings(listings);
@@ -269,6 +273,48 @@ export default function App() {
     setDescription("");
     setProofRef("");
     setFeedback("Pré-registo criado apenas nesta sessão do navegador. Ainda não foi enviado ao servidor, não reservou uma vaga gratuita e não constitui comprovativo nem pagamento. A publicação ficará disponível quando a ligação segura ao servidor estiver ativa.");
+  }
+
+  function beginListingEdit(item: Listing) {
+    setEditingListingId(item.id);
+    setEditDraft({
+      title: item.title,
+      category: item.category,
+      subcategory: item.subcategory,
+      island: item.island,
+      municipality: item.municipality,
+      price: item.price,
+      description: item.description,
+      whatsapp: item.whatsapp,
+      phone: item.phone,
+      image: item.image,
+    });
+    setEditFeedback("");
+  }
+
+  function saveListingEdit(e: React.FormEvent, item: Listing) {
+    e.preventDefault();
+    if (!editDraft) return;
+    if (item.ownerEmail.trim().toLowerCase() !== accountEmail.trim().toLowerCase()) {
+      setEditFeedback("Não foi possível confirmar a correspondência do email deste pré-registo.");
+      return;
+    }
+    if (item.listingStatus === "rejected") {
+      setEditFeedback("Anúncios rejeitados não podem ser editados nesta demonstração.");
+      return;
+    }
+    const result = validateListingEdit(editDraft);
+    if (!result.ok) {
+      setEditFeedback(result.errors.join(" "));
+      return;
+    }
+    setListings((prev) => prev.map((current) =>
+      current.id === item.id ? applyListingEdit(current, result.value) : current
+    ));
+    addAudit(`Edição local do anúncio ${item.id}; estados de pagamento e publicação preservados.`);
+    setEditingListingId(null);
+    setEditDraft(null);
+    setEditFeedback("Alterações guardadas apenas neste navegador. A atualização ainda não foi enviada ao servidor.");
   }
 
   function updatePaymentAndListing(
@@ -766,7 +812,7 @@ export default function App() {
                 </div>
               ) : (
                 accountListings.map((item) => (
-                  <div key={item.id} style={rowCardStyle}>
+                  <div key={item.id} style={{ ...rowCardStyle, display: "grid", alignItems: "stretch" }}>
                     <div style={{ display: "flex", gap: "0.9rem", alignItems: "center", flexWrap: "wrap" }}>
                       <div style={{ width: 96, aspectRatio: "4 / 3", borderRadius: 10, overflow: "hidden", backgroundColor: "#10182A" }}>
                         {item.image ? (
@@ -782,14 +828,11 @@ export default function App() {
                           </div>
                         )}
                       </div>
-                      <div>
-                        <strong style={{ fontSize: "1rem" }}>
-                          {item.id} · {item.title}
-                        </strong>
+                      <div style={{ flex: 1, minWidth: 190 }}>
+                        <strong style={{ fontSize: "1rem" }}>{item.id} · {item.title}</strong>
                         <div style={{ fontSize: "0.84rem", color: "#B5C3D8", marginTop: "0.2rem" }}>
-                          {item.category} ({item.subcategory}) · {item.island} ·{" "}
-                          <span style={{ color: "#38D6A0", fontWeight: 600 }}>{item.price}</span> · Ref:{" "}
-                          {item.proofRef || "—"}
+                          {item.category} ({item.subcategory}) · {item.municipality}, {item.island} ·{" "}
+                          <span style={{ color: "#38D6A0", fontWeight: 600 }}>{item.price}</span>
                         </div>
                       </div>
                     </div>
@@ -798,6 +841,79 @@ export default function App() {
                       <span style={badgeStyle("#1D4ED8")}>Pagamento: {item.paymentStatus}</span>
                       <span style={badgeStyle("#6D28D9")}>Anúncio: {item.listingStatus}</span>
                     </div>
+
+                    {item.listingStatus !== "rejected" && (
+                      <div>
+                        <button
+                          type="button"
+                          style={secondaryBtnStyle}
+                          onClick={() => editingListingId === item.id ? (setEditingListingId(null), setEditDraft(null), setEditFeedback("")) : beginListingEdit(item)}
+                        >
+                          {editingListingId === item.id ? "Cancelar edição" : "Editar anúncio"}
+                        </button>
+                      </div>
+                    )}
+
+                    {editingListingId === item.id && editDraft && (
+                      <form onSubmit={(e) => saveListingEdit(e, item)} style={{ display: "grid", gap: "0.7rem", borderTop: "1px solid rgba(181,195,216,0.16)", paddingTop: "1rem" }}>
+                        <strong>Editar dados do anúncio</strong>
+                        <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
+                          Título
+                          <input required minLength={5} maxLength={100} value={editDraft.title} onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })} style={inputStyle} />
+                        </label>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.65rem" }}>
+                          <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
+                            Categoria
+                            <select value={editDraft.category} onChange={(e) => setEditDraft({ ...editDraft, category: e.target.value, subcategory: CATEGORIES[e.target.value]?.[0] || "" })} style={inputStyle}>
+                              {Object.keys(CATEGORIES).map((value) => <option key={value} value={value}>{value}</option>)}
+                            </select>
+                          </label>
+                          <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
+                            Subcategoria
+                            <select value={editDraft.subcategory} onChange={(e) => setEditDraft({ ...editDraft, subcategory: e.target.value })} style={inputStyle}>
+                              {(CATEGORIES[editDraft.category] || []).map((value) => <option key={value} value={value}>{value}</option>)}
+                            </select>
+                          </label>
+                          <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
+                            Ilha
+                            <select value={editDraft.island} onChange={(e) => setEditDraft({ ...editDraft, island: e.target.value, municipality: LOCATIONS[e.target.value]?.[0] || "" })} style={inputStyle}>
+                              {Object.keys(LOCATIONS).map((value) => <option key={value} value={value}>{value}</option>)}
+                            </select>
+                          </label>
+                          <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
+                            Concelho / localidade
+                            <select value={editDraft.municipality} onChange={(e) => setEditDraft({ ...editDraft, municipality: e.target.value })} style={inputStyle}>
+                              {(LOCATIONS[editDraft.island] || []).map((value) => <option key={value} value={value}>{value}</option>)}
+                            </select>
+                          </label>
+                          <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
+                            Preço / valor
+                            <input required maxLength={60} value={editDraft.price} onChange={(e) => setEditDraft({ ...editDraft, price: e.target.value })} style={inputStyle} />
+                          </label>
+                          <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
+                            WhatsApp
+                            <input value={editDraft.whatsapp} onChange={(e) => setEditDraft({ ...editDraft, whatsapp: e.target.value })} style={inputStyle} />
+                          </label>
+                          <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
+                            Telefone
+                            <input value={editDraft.phone} onChange={(e) => setEditDraft({ ...editDraft, phone: e.target.value })} style={inputStyle} />
+                          </label>
+                          <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
+                            Imagem (URL HTTPS)
+                            <input type="url" value={editDraft.image} onChange={(e) => setEditDraft({ ...editDraft, image: e.target.value })} style={inputStyle} />
+                          </label>
+                        </div>
+                        <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
+                          Descrição
+                          <textarea rows={4} maxLength={3000} value={editDraft.description} onChange={(e) => setEditDraft({ ...editDraft, description: e.target.value })} style={{ ...inputStyle, resize: "vertical" }} />
+                        </label>
+                        {editFeedback && <div style={feedbackBoxStyle}>{editFeedback}</div>}
+                        <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap" }}>
+                          <button type="submit" style={primaryBtnStyle}>Guardar alterações</button>
+                          <button type="button" style={secondaryBtnStyle} onClick={() => { setEditingListingId(null); setEditDraft(null); setEditFeedback(""); }}>Cancelar</button>
+                        </div>
+                      </form>
+                    )}
                   </div>
                 ))
               )}
