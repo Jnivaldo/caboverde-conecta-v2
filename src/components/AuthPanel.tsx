@@ -3,6 +3,8 @@ import type { FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 
+const AUTH_REDIRECT_URL = "https://caboverde-conecta-v2-git-feat-legac-1b7fb4-jnivaldoliveira-3917.vercel.app";
+
 interface AuthPanelProps {
   user: User | null;
   onSignedOut: () => void;
@@ -26,7 +28,7 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: { emailRedirectTo: AUTH_REDIRECT_URL },
         });
         if (error) throw error;
         setFeedback(
@@ -57,7 +59,7 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
     setLoading(true);
     setFeedback("");
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: window.location.origin,
+      redirectTo: AUTH_REDIRECT_URL,
     });
     setLoading(false);
     setFeedback(error ? error.message : "Enviámos um link de recuperação para o seu email.");
