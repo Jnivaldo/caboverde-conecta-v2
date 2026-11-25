@@ -7,6 +7,7 @@ import {
   type PaymentMethod,
   previewListingRepository,
 } from "./data/listingRepository";
+import { countListingsByStatus, getPreviewListingsByEmail } from "./data/listingManagement";
 
 interface ChatMessage {
   id: string;
@@ -54,11 +55,21 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState<string[]>(() =>
     previewListingRepository.loadAudit()
   );
+  const [accountEmail, setAccountEmail] = useState("");
 
   useEffect(() => {
     previewListingRepository.saveListings(listings);
     previewListingRepository.saveAudit(auditLogs);
   }, [listings, auditLogs]);
+
+  const accountListings = useMemo(
+    () => getPreviewListingsByEmail(listings, accountEmail),
+    [listings, accountEmail]
+  );
+  const accountListingCounts = useMemo(
+    () => countListingsByStatus(accountListings),
+    [accountListings]
+  );
 
   // Filtros públicos (apenas anúncios publicados)
   const [query, setQuery] = useState("");
@@ -701,46 +712,95 @@ export default function App() {
             <span style={eyebrowStyle("#38D6A0")}>ÁREA DO ANUNCIANTE</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>Minha Conta</h1>
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
-              Esta área de demonstração guarda os registos localmente neste navegador, mesmo após atualizar a página. Os dados não são enviados ao servidor, não ficam disponíveis noutros dispositivos e não representam anúncios reais publicados.
-              Estados de pagamento e publicação só terão validade depois da ativação do serviço oficial.
+              Consulte os pré-registos associados ao email usado na publicação. Nesta demonstração, os dados continuam guardados apenas neste navegador; este filtro não é um início de sessão nem substitui a autenticação segura do serviço oficial.
             </p>
 
+            <div style={{ display: "grid", gap: "0.45rem", marginBottom: "1rem", maxWidth: 520 }}>
+              <label htmlFor="account-email-preview" style={{ color: "#F8FAFC", fontSize: "0.86rem", fontWeight: 600 }}>
+                Email usado no anúncio
+              </label>
+              <input
+                id="account-email-preview"
+                type="email"
+                value={accountEmail}
+                onChange={(e) => setAccountEmail(e.target.value)}
+                placeholder="exemplo@email.com"
+                autoComplete="email"
+                style={inputStyle}
+              />
+              <span style={{ color: "#B5C3D8", fontSize: "0.78rem" }}>
+                Introduza o mesmo email que indicou ao submeter o anúncio.
+              </span>
+            </div>
+
+            {accountEmail.trim() && (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(125px, 1fr))", gap: "0.65rem", marginBottom: "1rem" }}>
+                {[
+                  { label: "Total", value: accountListings.length, color: "#60A5FA" },
+                  { label: "Pendentes", value: accountListingCounts.pending, color: "#FBBF24" },
+                  { label: "Publicados", value: accountListingCounts.published, color: "#38D6A0" },
+                  { label: "Suspensos / rejeitados", value: accountListingCounts.suspended + accountListingCounts.rejected, color: "#F87171" },
+                ].map((item) => (
+                  <div key={item.label} style={{ ...subCardStyle, gap: "0.2rem", padding: "0.75rem" }}>
+                    <span style={{ color: "#B5C3D8", fontSize: "0.76rem" }}>{item.label}</span>
+                    <strong style={{ color: item.color, fontSize: "1.35rem" }}>{item.value}</strong>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div style={{ display: "grid", gap: "0.85rem" }}>
-              {listings.map((item) => (
-                <div key={item.id} style={rowCardStyle}>
-                  <div style={{ display: "flex", gap: "0.9rem", alignItems: "center", flexWrap: "wrap" }}>
-                    <div style={{ width: 96, aspectRatio: "4 / 3", borderRadius: 10, overflow: "hidden", backgroundColor: "#10182A" }}>
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          onClick={() => setLightbox({ src: item.image, title: item.title })}
-                          style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in", display: "block" }}
-                        />
-                      ) : (
-                        <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", color: "#B5C3D8", fontSize: "0.72rem" }}>
-                          Sem imagem enviada
+              {!accountEmail.trim() ? (
+                <div style={subCardStyle}>
+                  <strong>Identifique os seus anúncios</strong>
+                  <span style={{ color: "#B5C3D8", fontSize: "0.88rem" }}>
+                    Escreva o email usado na publicação para consultar os anúncios associados a esse endereço neste navegador.
+                  </span>
+                </div>
+              ) : accountListings.length === 0 ? (
+                <div style={subCardStyle}>
+                  <strong>Nenhum anúncio encontrado para este email</strong>
+                  <span style={{ color: "#B5C3D8", fontSize: "0.88rem" }}>
+                    Confirme se escreveu o mesmo endereço utilizado no formulário de publicação. Os anúncios guardados noutro navegador ou dispositivo não aparecem nesta demonstração.
+                  </span>
+                </div>
+              ) : (
+                accountListings.map((item) => (
+                  <div key={item.id} style={rowCardStyle}>
+                    <div style={{ display: "flex", gap: "0.9rem", alignItems: "center", flexWrap: "wrap" }}>
+                      <div style={{ width: 96, aspectRatio: "4 / 3", borderRadius: 10, overflow: "hidden", backgroundColor: "#10182A" }}>
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            onClick={() => setLightbox({ src: item.image, title: item.title })}
+                            style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in", display: "block" }}
+                          />
+                        ) : (
+                          <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", color: "#B5C3D8", fontSize: "0.72rem" }}>
+                            Sem imagem enviada
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <strong style={{ fontSize: "1rem" }}>
+                          {item.id} · {item.title}
+                        </strong>
+                        <div style={{ fontSize: "0.84rem", color: "#B5C3D8", marginTop: "0.2rem" }}>
+                          {item.category} ({item.subcategory}) · {item.island} ·{" "}
+                          <span style={{ color: "#38D6A0", fontWeight: 600 }}>{item.price}</span> · Ref:{" "}
+                          {item.proofRef || "—"}
                         </div>
-                      )}
-                    </div>
-                    <div>
-                      <strong style={{ fontSize: "1rem" }}>
-                        {item.id} · {item.title}
-                      </strong>
-                      <div style={{ fontSize: "0.84rem", color: "#B5C3D8", marginTop: "0.2rem" }}>
-                        {item.category} ({item.subcategory}) · {item.island} ·{" "}
-                        <span style={{ color: "#38D6A0", fontWeight: 600 }}>{item.price}</span> · Ref:{" "}
-                        {item.proofRef || "—"}
                       </div>
                     </div>
-                  </div>
 
-                  <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap", fontSize: "0.8rem" }}>
-                    <span style={badgeStyle("#1D4ED8")}>Pagamento: {item.paymentStatus}</span>
-                    <span style={badgeStyle("#6D28D9")}>Anúncio: {item.listingStatus}</span>
+                    <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap", fontSize: "0.8rem" }}>
+                      <span style={badgeStyle("#1D4ED8")}>Pagamento: {item.paymentStatus}</span>
+                      <span style={badgeStyle("#6D28D9")}>Anúncio: {item.listingStatus}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </section>
         )}
