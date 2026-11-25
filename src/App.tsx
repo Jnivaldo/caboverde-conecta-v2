@@ -31,9 +31,6 @@ interface ChatMessage {
   text: string;
 }
 
-const OFFICIAL_WHATSAPP = "2389361197";
-const OFFICIAL_PHONE_DISPLAY = "+238 936 11 97";
-
 const CATEGORIES: Record<string, string[]> = {
   Imóveis: ["Apartamentos", "Moradias", "Terrenos", "Comercial"],
   Viaturas: ["Carros", "Motas", "Comerciais", "Peças"],
@@ -90,7 +87,7 @@ export default function App() {
   const [whatsapp, setWhatsapp] = useState("");
   const [phone, setPhone] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bca_transfer");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("free_launch");
   const [proofRef, setProofRef] = useState("");
   const [feedback, setFeedback] = useState<string>("");
 
@@ -148,12 +145,12 @@ export default function App() {
       return "Após a campanha, o preço previsto é 1.500 CVE por anúncio. O pagamento ainda não está ativo nesta versão de pré-lançamento. Não faça transferências nem envie comprovativos através desta pré-visualização.";
     }
     if (t.includes("suporte") || t.includes("contacto") || t.includes("whatsapp") || t.includes("telefone")) {
-      return `O contacto entre interessados e anunciantes é direto através dos dados indicados em cada anúncio. Para assuntos da plataforma, utilize os canais oficiais apresentados na página de contacto.`;
+      return "O contacto entre interessados e anunciantes é direto através dos dados indicados em cada anúncio. O canal de suporte da plataforma ainda não está ligado nesta pré-visualização.";
     }
     if (t.includes("estado") || t.includes("pendente") || t.includes("publicar")) {
       return "Os estados de pagamento (pending, confirmed, rejected) e de anúncio (pending, published, rejected, suspended) são separados. Novos anúncios entram em análise até confirmação e publicação no painel administrativo.";
     }
-    return `O CaboVerde Conecta reúne classificados, serviços, imóveis, viaturas, hospedagem e oportunidades nas 9 ilhas de Cabo Verde. A campanha prevê até 50 anúncios gratuitos; a disponibilidade será confirmada pelo servidor. Depois da campanha, o valor é 1.500 CVE. Contacto oficial: ${OFFICIAL_PHONE_DISPLAY}.`;
+    return "O CaboVerde Conecta reúne classificados, serviços, imóveis, viaturas, hospedagem e oportunidades em Cabo Verde. A campanha prevê até 50 anúncios gratuitos; a disponibilidade será confirmada pelo servidor. Depois da campanha, o valor previsto é 1.500 CVE.";
   }
 
   function sendChatMessage(customText?: string) {
@@ -229,7 +226,7 @@ export default function App() {
 
     const usingFreeSlot = false; // A vaga só pode ser reservada após integração transacional com o servidor.
     if (paymentMethod === "free_launch" && !canClaimFreeSlot) {
-      setFeedback("As 50 vagas gratuitas já foram preenchidas. Selecione uma opção de 1.500 CVE.");
+      setFeedback("A campanha atingiu o limite de 50 anúncios gratuitos. Os pagamentos ainda não estão ativos, por isso não é possível submeter novos anúncios nesta pré-visualização.");
       return;
     }
 
@@ -672,25 +669,21 @@ export default function App() {
                 <div style={{ fontSize: "0.85rem", color: "#B5C3D8", lineHeight: 1.55 }}>
                   Esta pré-visualização ainda não processa pagamentos. Não faça transferências bancárias nem envie comprovativos. Os dados de pagamento só serão apresentados quando o fluxo seguro estiver ativo.
                 </div>
+
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
                   style={inputStyle}
+                  disabled={!canClaimFreeSlot}
                 >
-                  {canClaimFreeSlot && (
+                  {canClaimFreeSlot ? (
                     <option value="free_launch">
                       Solicitar vaga gratuita na campanha (sujeita a confirmação)
                     </option>
+                  ) : (
+                    <option value="free_launch">Campanha gratuita esgotada — pagamentos ainda indisponíveis</option>
                   )}
-                  <option value="bca_transfer">Transferência Bancária BCA — 1.500 CVE (com comprovativo)</option>
-                  <option value="bcn_transfer">Transferência Bancária BCN — 1.500 CVE (com comprovativo)</option>
                 </select>
-
-                {(paymentMethod === "bca_transfer" || paymentMethod === "bcn_transfer") && (
-                  <div style={{ fontSize: "0.85rem", color: "#FBBF24", lineHeight: 1.55 }}>
-                    Pagamento indisponível em modo de pré-lançamento. Não transfira dinheiro.
-                  </div>
-                )}
               </div>
 
               <button type="submit" style={primaryBtnStyle}>
@@ -753,7 +746,7 @@ export default function App() {
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
               Vagas gratuitas ocupadas: <strong style={{ color: "#38D6A0" }}>{usedFreeSlots}/{totalFreeSlots}</strong> ·
               Anúncios publicados: <strong style={{ color: "#F8FAFC" }}>{publicListings.length}</strong> · Contacto oficial:{" "}
-              <strong>{OFFICIAL_PHONE_DISPLAY}</strong>.
+              <strong>—</strong>.
             </p>
 
             <div style={{ display: "grid", gap: "0.9rem", marginBottom: "1.5rem" }}>
