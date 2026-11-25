@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import type { User } from "@supabase/supabase-js";
+import "./responsive.css";import type { User } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
 import AuthPanel from "./components/AuthPanel";
 import ListingMediaPicker from "./components/ListingMediaPicker";
