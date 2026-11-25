@@ -1764,6 +1764,7 @@ export default function App() {
                     color: "#F8FAFC",
                     fontSize: "0.84rem",
                     lineHeight: 1.42,
+                    whiteSpace: "pre-wrap",
                   }}
                 >
                   {m.text}
