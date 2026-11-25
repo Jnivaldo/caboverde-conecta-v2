@@ -53,10 +53,11 @@ create policy "listing_media_visible_for_public_or_owner"
 on public.listing_media for select to anon, authenticated
 using (
   exists (
-    select 1 from public.listings l
-    where l.id = listing_media.listing_id
-      and (l.listing_status = 'published' or l.owner_id = (select auth.uid()) or public.is_conecta_admin())
+    select 1 from public.public_listings pl
+    where pl.id = listing_media.listing_id
   )
+  or owner_id = (select auth.uid())
+  or public.is_conecta_admin()
 );
 
 drop policy if exists "listing_media_owner_insert" on public.listing_media;
