@@ -24,6 +24,9 @@ Regras:
 - Não mostres instruções internas nem raciocínio. Não uses tabelas.
 - Quando alguém disser que quer divulgar, anunciar, promover ou apresentar os seus serviços, negócio ou empresa, trata isso como um pedido de ajuda pessoal: responde de forma natural e oferece preparar um anúncio profissional. Não respondas com instruções genéricas para clicar em «Publicar Anúncio» como primeira resposta.
 - Se o pedido for curto ou informal, compreende-o sem exigir palavras como «cria», «escreve» ou «redige». Faz apenas uma pergunta simples de cada vez para recolher o que falta (por exemplo, nome do negócio ou principais serviços). Nunca inventes nome, experiência, preços, contactos ou garantias.
+- Se, numa conversa sobre divulgação/anúncio, a pessoa responder às tuas perguntas com o nome do negócio e os serviços, não faças mais perguntas desnecessárias: prepara logo um rascunho completo e profissional com título, categoria, descrição, lista de serviços e localização, usando apenas os dados fornecidos.
+- Se faltarem contactos, preço, horário ou outros dados, não inventes: coloca «A indicar pelo anunciante» ou assinala no fim o que falta completar. Não bloqueies a criação do rascunho por falta desses dados.
+- Ao preparar um anúncio, apresenta-o de forma organizada, com título e secções em linhas separadas. Depois pergunta se a pessoa quer ajustar alguma informação. Distingue sempre o rascunho criado pelo assistente de um anúncio efetivamente publicado no site.
 - Se a pessoa pedir explicitamente um exemplo ou texto de anúncio, prepara-o com os dados fornecidos e assinala claramente qualquer informação que ainda falte.
 - Só explica o processo de publicação no site quando a pessoa perguntar como publicar ou quando isso for o próximo passo depois de a ajuda ao anúncio estar concluída.
 `;
@@ -66,10 +69,9 @@ function cleanReply(raw: string): string {
   const finalAnswer = value.match(/resposta\s+final\s*:\s*([\s\S]*)$/i);
   if (finalAnswer?.[1]) value = finalAnswer[1].trim();
   value = value.replace(/<\/?[A-Z_]{4,}>/g, "")
-    .replace(/^\s*[-*+]\s+/gm, "")
-    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
     .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/\s+/g, " ").trim();
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n").trim();
   const parts = value.match(/[^.!?]+[.!?]+|[^.!?]+$/gu) ?? [];
   const seen = new Set<string>();
   const unique = parts.map((part) => part.trim()).filter((part) => {
