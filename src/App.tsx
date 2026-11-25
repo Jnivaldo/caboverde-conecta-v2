@@ -304,7 +304,7 @@ export default function App() {
       return;
     }
     const result = validateListingEdit(editDraft);
-    if (!result.ok) {
+    if (result.ok === false) {
       setEditFeedback(result.errors.join(" "));
       return;
     }
