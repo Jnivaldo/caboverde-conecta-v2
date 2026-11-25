@@ -323,7 +323,7 @@ export default function App() {
   function buildAssistantReply(rawText: string): string {
     const t = rawText.toLowerCase();
     if (t.includes("gratuit") || t.includes("50") || t.includes("vaga")) {
-      return `A campanha de lançamento oferece 50 vagas gratuitas. Nesta pré-visualização não é possível consultar a disponibilidade real nem reservar uma vaga: o formulário guarda apenas um pré-registo local. Depois da campanha, o preço previsto é 1.500 CVE por anúncio.`;
+      return `A campanha de lançamento oferece até 50 vagas gratuitas. Neste momento, o servidor indica ${freeSlotsRemaining} vaga(s) disponível(is). Ao submeter um anúncio, o sistema reserva a vaga de forma segura e guarda o anúncio como pendente de análise. Depois da campanha, o preço previsto é 1.500 CVE por anúncio.`;
     }
     if (t.includes("1.500") || t.includes("1500") || t.includes("pagar") || t.includes("bca") || t.includes("bcn") || t.includes("hotmart") || t.includes("visa")) {
       return "Após a campanha, o preço previsto é 1.500 CVE por anúncio. O pagamento ainda não está ativo nesta versão de pré-lançamento. Não faça transferências nem envie comprovativos através desta pré-visualização.";
@@ -334,7 +334,7 @@ export default function App() {
     if (t.includes("estado") || t.includes("pendente") || t.includes("publicar")) {
       return "Os estados de pagamento (pending, confirmed, rejected) e de anúncio (pending, published, rejected, suspended) são separados. Novos anúncios entram em análise até confirmação e publicação no painel administrativo.";
     }
-    return "O CaboVerde Conecta reúne classificados, serviços, imóveis, viaturas, hospedagem e oportunidades em Cabo Verde. A campanha prevê até 50 anúncios gratuitos; a disponibilidade será confirmada pelo servidor. Depois da campanha, o valor previsto é 1.500 CVE.";
+    return `O CaboVerde Conecta reúne classificados, serviços, imóveis, viaturas, hospedagem e oportunidades em Cabo Verde. A campanha prevê até 50 anúncios gratuitos; neste momento há ${freeSlotsRemaining} vaga(s) disponível(is), segundo o servidor. Os anúncios submetidos ficam pendentes de análise. Depois da campanha, o valor previsto é 1.500 CVE.`;
   }
 
   function sendChatMessage(customText?: string) {
