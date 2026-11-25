@@ -21,15 +21,89 @@ interface ChatMessage {
 }
 
 const CATEGORIES: Record<string, string[]> = {
-  Imóveis: ["Apartamentos", "Moradias", "Terrenos", "Comercial"],
-  Viaturas: ["Carros", "Motas", "Comerciais", "Peças"],
-  Produtos: ["Eletrónica", "Casa e Jardim", "Moda", "Equipamentos"],
-  Hospedagem: ["Estadias Locais", "Quartos", "Casas de Férias", "Alojamento"],
-  Profissionais: ["Eletricidade e Canalização", "Construção", "Design e Web", "Contabilidade"],
-  Empresas: ["Comércio Local", "Restauração", "Agências", "Indústria"],
-  Serviços: ["Limpeza e Manutenção", "Transporte", "Aulas e Formação", "Outros Serviços"],
-  "Turismo e Experiências": ["Passeios e Excursões", "Atividades Marítimas", "Pesca e Mergulho", "Aluguer de Equipamentos"],
-  Oportunidades: ["Emprego", "Parcerias", "Projetos", "Estágios"],
+  Imóveis: [
+    "Casas", "Moradias", "Prédios", "Edifícios completos", "Apartamentos", "Estúdios e Kitnets",
+    "Quartos", "Terrenos para construção", "Terrenos agrícolas", "Quintas e propriedades rurais",
+    "Lojas", "Espaços comerciais", "Escritórios", "Armazéns e depósitos", "Garagens e estacionamentos",
+    "Imóveis industriais", "Imóveis em construção", "Imóveis para reabilitação", "Ruínas",
+    "Arrendamento", "Compra e venda", "Imóveis para investimento", "Outros imóveis"
+  ],
+  Viaturas: [
+    "Carros ligeiros", "Motas e scooters", "Ciclomotores", "Carrinhas e comerciais", "Pick-ups",
+    "Jipes e todo-o-terreno", "Camiões e pesados", "Autocarros e minibus", "Táxis e transporte coletivo",
+    "Veículos agrícolas", "Reboques e atrelados", "Barcos e embarcações", "Motores náuticos",
+    "Peças e acessórios", "Pneus e jantes", "Baterias", "Carros para peças", "Aluguer de viaturas",
+    "Outras viaturas"
+  ],
+  Produtos: [
+    "Telemóveis e smartphones", "Computadores e tablets", "Televisores e áudio", "Fotografia e vídeo",
+    "Eletrodomésticos", "Móveis e decoração", "Casa e jardim", "Materiais de construção",
+    "Roupa e calçado", "Bolsas e acessórios", "Relógios e joalharia", "Cosmética e beleza",
+    "Bebés e crianças", "Brinquedos e jogos", "Livros e material escolar", "Instrumentos musicais",
+    "Alimentação e bebidas", "Produtos artesanais", "Arte e antiguidades", "Equipamentos desportivos",
+    "Peças e acessórios", "Produtos usados", "Outros produtos"
+  ],
+  Hospedagem: [
+    "Hotéis", "Apart-hotéis", "Pensões e residenciais", "Hostels", "Quartos para hóspedes",
+    "Casas de férias", "Moradias turísticas", "Apartamentos turísticos", "Alojamento rural",
+    "Alojamento de longa duração", "Espaços de campismo", "Outras hospedagens"
+  ],
+  Profissionais: [
+    "Eletricistas", "Canalizadores e picheleiros", "Pedreiros e alvenaria", "Pintores",
+    "Carpinteiros e marceneiros", "Serralheiros e soldadores", "Técnicos de frio e ar condicionado",
+    "Mecânicos e eletricistas auto", "Arquitetos", "Engenheiros", "Topógrafos",
+    "Advogados e solicitadores", "Contabilistas", "Consultores", "Designers e web developers",
+    "Fotógrafos e videógrafos", "Tradutores", "Professores e explicadores", "Cabeleireiros e barbeiros",
+    "Esteticistas", "Cozinheiros e catering", "Jardineiros", "Limpeza doméstica", "Outros profissionais"
+  ],
+  Empresas: [
+    "Comércio e lojas", "Supermercados e minimercados", "Restaurantes", "Cafés e bares",
+    "Hotéis e alojamento", "Agências de viagens", "Imobiliárias", "Oficinas e centros auto",
+    "Construção civil", "Transportes e logística", "Agricultura e pesca", "Indústria e produção",
+    "Tecnologia e informática", "Marketing e comunicação", "Saúde e bem-estar", "Educação e formação",
+    "Serviços financeiros", "Associações e organizações", "Distribuidores e fornecedores", "Outras empresas"
+  ],
+  Serviços: [
+    "Limpeza doméstica e empresarial", "Manutenção e reparações", "Construção e remodelação",
+    "Canalização e eletricidade", "Pintura e decoração", "Mudanças e transporte de carga",
+    "Transporte de passageiros", "Táxi e transfer", "Aluguer de equipamentos", "Assistência informática",
+    "Reparação de telemóveis e computadores", "Instalação de câmaras e redes", "Marketing e publicidade",
+    "Design e criação de conteúdos", "Contabilidade e apoio administrativo", "Consultoria empresarial",
+    "Serviços jurídicos", "Aulas e explicações", "Formação profissional", "Cuidados ao domicílio",
+    "Beleza e estética", "Organização de eventos", "Catering e festas", "Jardinagem e paisagismo",
+    "Lavandaria e engomadoria", "Entregas e estafetas", "Outros serviços"
+  ],
+  "Turismo e Experiências": [
+    "Passeios e excursões", "Visitas guiadas", "Tours culturais e históricos", "Trilhos e caminhadas",
+    "Excursões à natureza", "Atividades marítimas", "Passeios de barco", "Pesca desportiva",
+    "Mergulho e snorkeling", "Surf e desportos aquáticos", "Aluguer de caiaques",
+    "Aluguer de equipamentos", "Experiências gastronómicas", "Experiências culturais",
+    "Observação da natureza", "Transferes turísticos", "Outras experiências"
+  ],
+  "Agricultura e Pecuária": [
+    "Produtos agrícolas", "Frutas e legumes", "Sementes e plantas", "Animais de criação",
+    "Gado bovino", "Caprinos e ovinos", "Aves e criação", "Rações e alimentação animal",
+    "Equipamentos agrícolas", "Tratores e alfaias", "Terrenos agrícolas", "Serviços agrícolas",
+    "Pesca e produtos do mar", "Outros produtos e serviços rurais"
+  ],
+  "Máquinas e Equipamentos": [
+    "Máquinas industriais", "Equipamentos de construção", "Máquinas agrícolas",
+    "Ferramentas profissionais", "Equipamentos de oficina", "Equipamentos de restauração",
+    "Equipamentos de escritório", "Equipamentos informáticos", "Geradores e energia",
+    "Equipamentos de frio", "Equipamentos médicos", "Aluguer de máquinas",
+    "Peças e acessórios", "Outras máquinas e equipamentos"
+  ],
+  "Desporto e Lazer": [
+    "Bicicletas", "Equipamentos de ginásio", "Material desportivo", "Pesca e campismo",
+    "Atividades ao ar livre", "Música e entretenimento", "Jogos e colecionismo",
+    "Aulas e clubes desportivos", "Aluguer de equipamentos de lazer", "Outros desportos e lazer"
+  ],
+  "Oportunidades": [
+    "Emprego", "Ofertas de trabalho", "Procura de emprego", "Trabalho temporário",
+    "Estágios", "Formação e bolsas", "Parcerias comerciais", "Representações e distribuição",
+    "Franchising", "Investimentos e projetos", "Negócios à venda", "Sociedades e participações",
+    "Voluntariado", "Outras oportunidades"
+  ],
 };
 
 const LOCATIONS: Record<string, string[]> = {
