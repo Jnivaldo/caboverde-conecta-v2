@@ -120,10 +120,6 @@ export default async function handler(request: Request): Promise<Response> {
   }).process?.env ?? {};
   const accountId = env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = env.CLOUDFLARE_API_TOKEN;
-  if (!accountId || !apiToken) {
-    return json({ error: "O assistente está a ser configurado. Voltaremos em breve!" }, 503);
-  }
-
   const length = Number(request.headers.get("content-length") || 0);
   if (length > 12_000) return json({ error: "A mensagem é demasiado grande. Reduza o texto e tente novamente." }, 413);
 
@@ -158,6 +154,10 @@ export default async function handler(request: Request): Promise<Response> {
 
   const knownReply = buildKnownReply(messages[messages.length - 1].content);
   if (knownReply) return json({ reply: knownReply });
+
+  if (!accountId || !apiToken) {
+    return json({ error: "O assistente está a ser configurado. Voltaremos em breve!" }, 503);
+  }
 
   try {
     const upstream = await fetch(
