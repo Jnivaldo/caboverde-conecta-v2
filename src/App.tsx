@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 type ListingStatus = "pending" | "published" | "rejected" | "suspended";
 type PaymentStatus = "pending" | "confirmed" | "rejected";
@@ -56,6 +56,19 @@ const LOCATIONS: Record<string, string[]> = {
 
 const INITIAL_LISTINGS: Listing[] = [];
 
+const PREVIEW_LISTINGS_KEY = "caboverde-conecta-v2:preview:listings";
+const PREVIEW_AUDIT_KEY = "caboverde-conecta-v2:preview:audit";
+
+function readPreviewStorage<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 const QUICK_PROMPTS = [
   "Como funcionam as 50 vagas gratuitas?",
   "Quanto custa após as 50 vagas e como pagar?",
@@ -64,8 +77,21 @@ const QUICK_PROMPTS = [
 
 export default function App() {
   const [tab, setTab] = useState<"home" | "publish" | "account" | "admin">("home");
-  const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
-  const [auditLogs, setAuditLogs] = useState<string[]>([]);
+  const [listings, setListings] = useState<Listing[]>(() =>
+    readPreviewStorage<Listing[]>(PREVIEW_LISTINGS_KEY, INITIAL_LISTINGS)
+  );
+  const [auditLogs, setAuditLogs] = useState<string[]>(() =>
+    readPreviewStorage<string[]>(PREVIEW_AUDIT_KEY, [])
+  );
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(PREVIEW_LISTINGS_KEY, JSON.stringify(listings));
+      window.localStorage.setItem(PREVIEW_AUDIT_KEY, JSON.stringify(auditLogs));
+    } catch {
+      // A pré-visualização continua utilizável mesmo se o navegador bloquear o armazenamento.
+    }
+  }, [listings, auditLogs]);
 
   // Filtros públicos (apenas anúncios publicados)
   const [query, setQuery] = useState("");
@@ -707,8 +733,8 @@ export default function App() {
             <span style={eyebrowStyle("#38D6A0")}>ÁREA DO ANUNCIANTE</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>Minha Conta</h1>
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
-              Esta pré-visualização não tem autenticação nem gravação permanente. Os registos abaixo existem apenas nesta sessão do navegador.
-              Estados de pagamento e publicação só terão validade depois da ligação segura ao servidor.
+              Esta área de demonstração guarda os registos localmente neste navegador, mesmo após atualizar a página. Os dados não são enviados ao servidor, não ficam disponíveis noutros dispositivos e não representam anúncios reais publicados.
+              Estados de pagamento e publicação só terão validade depois da ativação do serviço oficial.
             </p>
 
             <div style={{ display: "grid", gap: "0.85rem" }}>
@@ -758,7 +784,7 @@ export default function App() {
               Painel Administrativo
             </h1>
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
-              Área administrativa de demonstração local. As vagas, anúncios e ações de moderação ainda não estão ligados ao servidor e não representam dados reais.
+              Painel de demonstração com dados guardados apenas neste navegador. As vagas, anúncios e ações de moderação não são partilhados com outros utilizadores nem enviados ao servidor.
             </p>
 
             <div style={{ display: "grid", gap: "0.9rem", marginBottom: "1.5rem" }}>
