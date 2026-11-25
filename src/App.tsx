@@ -167,12 +167,24 @@ export default function App() {
   ]);
 
   const totalFreeSlots = 50;
-  const usedFreeSlots = useMemo(
-    () => listings.filter((item) => item.slotNumber !== undefined).length,
-    [listings]
-  );
+  const [usedFreeSlots, setUsedFreeSlots] = useState(0);
   const freeSlotsRemaining = Math.max(0, totalFreeSlots - usedFreeSlots);
   const canClaimFreeSlot = freeSlotsRemaining > 0;
+
+  useEffect(() => {
+    let active = true;
+    async function loadCampaignStatus() {
+      const { data, error } = await supabase.rpc("get_launch_campaign_status");
+      if (!active) return;
+      if (error) {
+        console.error("Falha ao consultar as vagas da campanha:", error.message);
+        return;
+      }
+      setUsedFreeSlots(Number(data?.used ?? 0));
+    }
+    loadCampaignStatus();
+    return () => { active = false; };
+  }, [listings]);
 
   const publicListings = useMemo(
     () =>
@@ -293,38 +305,36 @@ export default function App() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("listings")
-      .insert({
-        owner_id: authUser.id,
-        owner_email: authUser.email ?? ownerEmail.trim(),
-        title: title.trim(),
-        category: pubCategory,
-        subcategory: pubSubcategory,
-        island: pubIsland,
-        municipality: pubMunicipality,
-        price: price.trim(),
-        description: description.trim(),
-        whatsapp: cleanWhatsApp,
-        phone: cleanPhone,
-        image_url: imageUrl.trim(),
-        listing_status: "pending",
-        payment_status: "pending",
-        payment_method: "free_launch",
-        proof_ref: null,
-        slot_number: null,
-      })
-      .select("*")
-      .single();
+    if (!canClaimFreeSlot) {
+      setFeedback("As 50 vagas gratuitas já foram preenchidas. O pagamento seguro ainda não está ativo; por isso, não é possível submeter novos anúncios.");
+      return;
+    }
+
+    const { data, error } = await supabase.rpc("submit_listing", {
+      p_title: title.trim(),
+      p_category: pubCategory,
+      p_subcategory: pubSubcategory,
+      p_island: pubIsland,
+      p_municipality: pubMunicipality,
+      p_price: price.trim(),
+      p_description: description.trim(),
+      p_whatsapp: cleanWhatsApp,
+      p_phone: cleanPhone,
+      p_image_url: imageUrl.trim(),
+    });
 
     if (error) {
-      setFeedback("Não foi possível enviar o anúncio ao servidor: " + error.message);
+      const message = error.message.includes("CAMPAIGN_FULL_PAYMENT_NOT_AVAILABLE")
+        ? "As 50 vagas gratuitas já foram preenchidas. O pagamento seguro ainda não está ativo."
+        : "Não foi possível enviar o anúncio ao servidor: " + error.message;
+      setFeedback(message);
       return;
     }
 
     const newAd = mapDatabaseListing(data as Record<string, unknown>);
     setListings((prev) => [newAd, ...prev]);
-    addAudit(`Anúncio ${newAd.id} enviado para análise pelo utilizador autenticado.`);
+    setUsedFreeSlots((current) => Math.max(current, newAd.slotNumber ?? current));
+    addAudit(`Anúncio ${newAd.id} enviado ao servidor e recebeu a vaga gratuita #${newAd.slotNumber}.`);
     setTitle("");
     setPrice("");
     setDescription("");
