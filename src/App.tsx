@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 
 type ListingStatus = "pending" | "published" | "rejected" | "suspended";
 type PaymentStatus = "pending" | "confirmed" | "rejected";
-type PaymentMethod = "free_launch" | "bca_transfer" | "bcn_transfer" | "hotmart_visa";
+type PaymentMethod = "free_launch" | "bca_transfer" | "bcn_transfer";
 
 interface Listing {
   id: string;
@@ -31,10 +31,8 @@ interface ChatMessage {
   text: string;
 }
 
-const ADMIN_EMAIL = "jnivaldoliveira@gmail.com";
 const OFFICIAL_WHATSAPP = "2389361197";
 const OFFICIAL_PHONE_DISPLAY = "+238 936 11 97";
-const HOTMART_VISA_CHECKOUT_URL = "https://pay.hotmart.com/caboverde-conecta-1500cve";
 
 const BANK_ACCOUNTS = {
   bca: {
@@ -73,68 +71,7 @@ const LOCATIONS: Record<string, string[]> = {
   Brava: ["Nova Sintra"],
 };
 
-const INITIAL_LISTINGS: Listing[] = [
-  {
-    id: "CV-101",
-    title: "Moradia T3 com Terraço no Tarrafal",
-    category: "Imóveis",
-    subcategory: "Moradias",
-    island: "Santiago",
-    municipality: "Tarrafal",
-    price: "45.000 CVE",
-    description: "Espaço amplo, vista desafogada e acesso rápido à zona central do Tarrafal.",
-    whatsapp: OFFICIAL_WHATSAPP,
-    phone: OFFICIAL_PHONE_DISPLAY,
-    image:
-      "https://encrypted-tbn3.gstatic.com/licensed-image?q=tbn:ANd9GcQ602_V6Bm-Sl0wTIbkSfMH_xE6oWXMmWQmoJUNks6tn018PYVmnD4Dp5SGPpyNRPmwUspVrrwcMO6sbbs",
-    ownerEmail: ADMIN_EMAIL,
-    listingStatus: "published",
-    paymentStatus: "confirmed",
-    paymentMethod: "free_launch",
-    slotNumber: 1,
-    createdAt: "2026-11-20",
-  },
-  {
-    id: "CV-102",
-    title: "Viatura Económica Pronta a Circular",
-    category: "Viaturas",
-    subcategory: "Carros",
-    island: "São Vicente",
-    municipality: "Mindelo",
-    price: "890.000 CVE",
-    description: "Manutenção em dia e documentação regularizada para uso diário.",
-    whatsapp: OFFICIAL_WHATSAPP,
-    phone: OFFICIAL_PHONE_DISPLAY,
-    image:
-      "https://encrypted-tbn2.gstatic.com/licensed-image?q=tbn:ANd9GcQi_dB4Y9u1poR5cakQFiNRUHiAoOLlstTrY4Ebbg-UyZlJX-z1lKm5sq2VLvwEbEOold0yo61T8_lrfjI",
-    ownerEmail: ADMIN_EMAIL,
-    listingStatus: "published",
-    paymentStatus: "confirmed",
-    paymentMethod: "free_launch",
-    slotNumber: 2,
-    createdAt: "2026-11-21",
-  },
-  {
-    id: "CV-103",
-    title: "Serviços Elétricos e Manutenção Técnica",
-    category: "Profissionais",
-    subcategory: "Eletricidade e Canalização",
-    island: "Sal",
-    municipality: "Santa Maria",
-    price: "Sob consulta",
-    description: "Instalações, quadros elétricos e reparações rápidas com contacto direto.",
-    whatsapp: OFFICIAL_WHATSAPP,
-    phone: OFFICIAL_PHONE_DISPLAY,
-    image:
-      "https://encrypted-tbn1.gstatic.com/licensed-image?q=tbn:ANd9GcTJUnycCcXeCLv0rfkfUG9pPTZ3C3WprYvvkyJoS37Bb3a7p_2yy56MqaTCRagT7HuyfHUo6bCV29_blUU",
-    ownerEmail: ADMIN_EMAIL,
-    listingStatus: "published",
-    paymentStatus: "confirmed",
-    paymentMethod: "free_launch",
-    slotNumber: 3,
-    createdAt: "2026-11-22",
-  },
-];
+const INITIAL_LISTINGS: Listing[] = [];
 
 const QUICK_PROMPTS = [
   "Como funcionam as 50 vagas gratuitas?",
@@ -145,9 +82,7 @@ const QUICK_PROMPTS = [
 export default function App() {
   const [tab, setTab] = useState<"home" | "publish" | "account" | "admin">("home");
   const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
-  const [auditLogs, setAuditLogs] = useState<string[]>([
-    "Sistema iniciado: campanha de 50 vagas gratuitas ativa (3 ocupadas).",
-  ]);
+  const [auditLogs, setAuditLogs] = useState<string[]>([]);
 
   // Filtros públicos (apenas anúncios publicados)
   const [query, setQuery] = useState("");
@@ -165,10 +100,10 @@ export default function App() {
   const [pubMunicipality, setPubMunicipality] = useState("Tarrafal");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
-  const [ownerEmail, setOwnerEmail] = useState(ADMIN_EMAIL);
-  const [whatsapp, setWhatsapp] = useState(OFFICIAL_WHATSAPP);
-  const [phone, setPhone] = useState(OFFICIAL_PHONE_DISPLAY);
-  const [imageUrl, setImageUrl] = useState(INITIAL_LISTINGS[0].image);
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [phone, setPhone] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bca_transfer");
   const [proofRef, setProofRef] = useState("");
   const [feedback, setFeedback] = useState<string>("");
@@ -224,10 +159,10 @@ export default function App() {
       return `A campanha de lançamento oferece 50 vagas gratuitas. Neste momento restam ${freeSlotsRemaining} de ${totalFreeSlots} vagas. Após o limite de 50 anúncios, cada publicação passa a ter o valor padrão de 1.500 CVE.`;
     }
     if (t.includes("1.500") || t.includes("1500") || t.includes("pagar") || t.includes("bca") || t.includes("bcn") || t.includes("hotmart") || t.includes("visa")) {
-      return `O valor padrão após as 50 vagas gratuitas é 1.500 CVE. Pode pagar por transferência bancária para BCA (conta ${BANK_ACCOUNTS.bca.account}, NIB ${BANK_ACCOUNTS.bca.nib}) ou BCN (conta ${BANK_ACCOUNTS.bcn.account}) indicando o comprovativo, ou por cartão Visa via Hotmart. O comprovativo não publica sozinho: a publicação depende da confirmação do administrador (${ADMIN_EMAIL}).`;
+      return `O valor padrão após as 50 vagas gratuitas é 1.500 CVE. Pode pagar por transferência bancária para BCA (conta ${BANK_ACCOUNTS.bca.account}, NIB ${BANK_ACCOUNTS.bca.nib}) ou BCN (conta ${BANK_ACCOUNTS.bcn.account}) indicando o comprovativo, ou por cartão Visa via Hotmart. O comprovativo não publica sozinho: a publicação depende da análise da equipa responsável.`;
     }
     if (t.includes("suporte") || t.includes("contacto") || t.includes("whatsapp") || t.includes("telefone")) {
-      return `O contacto oficial do CaboVerde Conecta é WhatsApp / telefone ${OFFICIAL_PHONE_DISPLAY} (${OFFICIAL_WHATSAPP}) e o e-mail de administração é ${ADMIN_EMAIL}. No portal, o contacto entre interessados e anunciantes é direto.`;
+      return `O contacto entre interessados e anunciantes é direto através dos dados indicados em cada anúncio. Para assuntos da plataforma, utilize os canais oficiais apresentados na página de contacto.`;
     }
     if (t.includes("estado") || t.includes("pendente") || t.includes("publicar")) {
       return "Os estados de pagamento (pending, confirmed, rejected) e de anúncio (pending, published, rejected, suspended) são separados. Novos anúncios entram em análise até confirmação e publicação no painel administrativo.";
@@ -260,12 +195,12 @@ export default function App() {
     e.preventDefault();
     setFeedback("");
 
-    if (!title.trim() || !price.trim()) {
-      setFeedback("Preencha pelo menos o título e o valor/preço do anúncio.");
+    if (!title.trim() || !price.trim() || !pubIsland || !pubMunicipality || !ownerEmail.trim()) {
+      setFeedback("Preencha o título, o preço, a localização e o email de contacto.");
       return;
     }
 
-    const usingFreeSlot = paymentMethod === "free_launch" && canClaimFreeSlot;
+    const usingFreeSlot = false; // A vaga só pode ser reservada após integração transacional com o servidor.
     if (paymentMethod === "free_launch" && !canClaimFreeSlot) {
       setFeedback("As 50 vagas gratuitas já foram preenchidas. Selecione uma opção de 1.500 CVE.");
       return;
@@ -285,11 +220,11 @@ export default function App() {
       island: pubIsland,
       municipality: pubMunicipality,
       price: price.trim(),
-      description: description.trim() || "Anúncio publicado no CaboVerde Conecta.",
-      whatsapp: whatsapp.trim() || OFFICIAL_WHATSAPP,
-      phone: phone.trim() || OFFICIAL_PHONE_DISPLAY,
-      image: imageUrl.trim() || INITIAL_LISTINGS[0].image,
-      ownerEmail: ownerEmail.trim() || ADMIN_EMAIL,
+      description: description.trim(),
+      whatsapp: whatsapp.trim(),
+      phone: phone.trim(),
+      image: imageUrl.trim(),
+      ownerEmail: ownerEmail.trim(),
       listingStatus: "pending",
       paymentStatus: usingFreeSlot ? "confirmed" : "pending",
       paymentMethod: usingFreeSlot ? "free_launch" : paymentMethod,
@@ -309,11 +244,7 @@ export default function App() {
     setPrice("");
     setDescription("");
     setProofRef("");
-    setFeedback(
-      usingFreeSlot
-        ? `Anúncio registado na vaga gratuita #${nextSlot} e enviado para revisão do administrador.`
-        : "Pedido de 1.500 CVE registado como PAGAMENTO PENDENTE e ANÚNCIO PENDENTE. A publicação ocorre apenas após confirmação do administrador."
-    );
+    setFeedback("Pré-registo criado apenas nesta sessão do navegador. Ainda não foi enviado ao servidor, não reservou uma vaga gratuita e não constitui comprovativo nem pagamento. A publicação ficará disponível quando a ligação segura ao servidor estiver ativa.");
   }
 
   function updatePaymentAndListing(
@@ -329,7 +260,7 @@ export default function App() {
       )
     );
     addAudit(
-      `Admin (${ADMIN_EMAIL}) atualizou ${id}: pagamento=${nextPayment}, anúncio=${nextListing}.`
+      `Ação administrativa local em ${id}: pagamento=${nextPayment}, anúncio=${nextListing}.`
     );
   }
 
@@ -377,7 +308,6 @@ export default function App() {
               { key: "home", label: "Início" },
               { key: "publish", label: "Publicar Anúncio" },
               { key: "account", label: "Minha Conta" },
-              { key: "admin", label: "Painel Admin" },
             ].map((item) => {
               const active = tab === item.key;
               return (
@@ -728,7 +658,6 @@ export default function App() {
                   )}
                   <option value="bca_transfer">Transferência Bancária BCA — 1.500 CVE (com comprovativo)</option>
                   <option value="bcn_transfer">Transferência Bancária BCN — 1.500 CVE (com comprovativo)</option>
-                  <option value="hotmart_visa">Checkout Hotmart (Cartão Visa) — 1.500 CVE</option>
                 </select>
 
                 {(paymentMethod === "bca_transfer" || paymentMethod === "bcn_transfer") && (
@@ -746,29 +675,6 @@ export default function App() {
                       value={proofRef}
                       onChange={(e) => setProofRef(e.target.value)}
                       placeholder="Referência ou número do comprovativo de 1.500 CVE"
-                      style={{ ...inputStyle, marginTop: "0.55rem", width: "100%" }}
-                    />
-                  </div>
-                )}
-
-                {paymentMethod === "hotmart_visa" && (
-                  <div style={{ fontSize: "0.85rem", color: "#B5C3D8", lineHeight: 1.55 }}>
-                    <div>
-                      Pagamento por cartão Visa via Hotmart (1.500 CVE):{" "}
-                      <a
-                        href={HOTMART_VISA_CHECKOUT_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: "#38D6A0", fontWeight: 600 }}
-                      >
-                        Abrir Checkout Hotmart
-                      </a>
-                    </div>
-                    <input
-                      type="text"
-                      value={proofRef}
-                      onChange={(e) => setProofRef(e.target.value)}
-                      placeholder="Código da compra Hotmart (opcional antes da confirmação)"
                       style={{ ...inputStyle, marginTop: "0.55rem", width: "100%" }}
                     />
                   </div>
@@ -830,7 +736,7 @@ export default function App() {
           <section style={panelStyle}>
             <span style={eyebrowStyle("#EC4899")}>GOVERNANÇA E MODERAÇÃO</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>
-              Painel Admin ({ADMIN_EMAIL})
+              Painel Administrativo
             </h1>
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
               Vagas gratuitas ocupadas: <strong style={{ color: "#38D6A0" }}>{usedFreeSlots}/{totalFreeSlots}</strong> ·
