@@ -249,6 +249,8 @@ export default function App() {
   const [pubSubcategory, setPubSubcategory] = useState("Moradias");
   const [customCategory, setCustomCategory] = useState("");
   const [customSubcategory, setCustomSubcategory] = useState("");
+  const [useCustomCategory, setUseCustomCategory] = useState(false);
+  const [useCustomSubcategory, setUseCustomSubcategory] = useState(false);
   const [pubIsland, setPubIsland] = useState("Santiago");
   const [pubMunicipality, setPubMunicipality] = useState("Tarrafal");
   const [price, setPrice] = useState("");
@@ -373,11 +375,11 @@ export default function App() {
       setFeedback("Indique um preço ou valor válido (máximo de 60 caracteres).");
       return;
     }
-    if (pubCategory === "__custom__" && customCategory.trim().length < 3) {
+    if (useCustomCategory && customCategory.trim().length < 3) {
       setFeedback("Indique uma categoria com pelo menos 3 caracteres.");
       return;
     }
-    if ((pubCategory === "__custom__" || pubSubcategory === "__custom__") && customSubcategory.trim().length < 2) {
+    if ((useCustomCategory || useCustomSubcategory) && customSubcategory.trim().length < 2) {
       setFeedback("Indique o produto, subproduto ou serviço que pretende anunciar.");
       return;
     }
@@ -426,8 +428,8 @@ export default function App() {
 
     const { data, error } = await supabase.rpc("submit_listing", {
       p_title: title.trim(),
-      p_category: pubCategory === "__custom__" ? customCategory.trim() : pubCategory,
-      p_subcategory: pubCategory === "__custom__" || pubSubcategory === "__custom__" ? customSubcategory.trim() : pubSubcategory,
+      p_category: useCustomCategory ? customCategory.trim() : pubCategory,
+      p_subcategory: useCustomCategory || useCustomSubcategory ? customSubcategory.trim() : pubSubcategory,
       p_island: pubIsland,
       p_municipality: pubMunicipality,
       p_price: price.trim(),
@@ -483,6 +485,8 @@ export default function App() {
     setProofRef("");
     setCustomCategory("");
     setCustomSubcategory("");
+    setUseCustomCategory(false);
+    setUseCustomSubcategory(false);
     setMediaFiles([]);
     setFeedback("Anúncio enviado ao servidor com sucesso e guardado como pendente de análise. A vaga gratuita só será contabilizada após validação administrativa.");
   }
@@ -864,38 +868,38 @@ export default function App() {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: "0.65rem" }}>
                   <select
                     value={pubCategory}
+                    disabled={useCustomCategory}
                     onChange={(e) => {
                       const nextCat = e.target.value;
                       setPubCategory(nextCat);
                       setPubSubcategory(CATEGORIES[nextCat]?.[0] || "Geral");
+                      setUseCustomSubcategory(false);
+                      setCustomSubcategory("");
                     }}
-                    style={inputStyle}
+                    style={{ ...inputStyle, opacity: useCustomCategory ? 0.55 : 1 }}
                   >
                     {Object.keys(CATEGORIES).map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
+                      <option key={c} value={c}>{c}</option>
                     ))}
-                    <option value="__custom__">Outra categoria / Não encontrei</option>
                   </select>
-                  {pubCategory === "__custom__" ? (
-                    <input type="text" maxLength={60} value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="Escreva a categoria (ex.: Instrumentos náuticos)" style={inputStyle} />
-                  ) : (
-                    <select
-                      value={pubSubcategory}
-                      onChange={(e) => setPubSubcategory(e.target.value)}
-                      style={inputStyle}
-                    >
-                      {(CATEGORIES[pubCategory] || []).map((sub) => (
-                        <option key={sub} value={sub}>
-                          {sub}
-                        </option>
-                      ))}
-                      <option value="__custom__">Outro produto / subproduto / serviço</option>
-                    </select>
+                  <button type="button" onClick={() => { setUseCustomCategory((v) => !v); setUseCustomSubcategory(false); setCustomCategory(""); setCustomSubcategory(""); }} style={{ ...inputStyle, cursor: "pointer", color: "#BFDBFE", border: "1px dashed #60A5FA", background: "rgba(37,99,235,0.10)", textAlign: "left", fontWeight: 650 }}>
+                    {useCustomCategory ? "− Usar uma categoria da lista" : "+ Não encontrou a categoria? Adicionar outra"}
+                  </button>
+                  {useCustomCategory && (
+                    <input type="text" maxLength={60} value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="Escreva a nova categoria (ex.: Instrumentos náuticos)" style={inputStyle} />
                   )}
-                  {(pubCategory === "__custom__" || pubSubcategory === "__custom__") && (
-                    <input type="text" maxLength={80} value={customSubcategory} onChange={(e) => setCustomSubcategory(e.target.value)} placeholder="Descreva o produto, subproduto ou serviço" style={inputStyle} />
+                  {!useCustomCategory && (
+                    <>
+                      <select value={pubSubcategory} disabled={useCustomSubcategory} onChange={(e) => setPubSubcategory(e.target.value)} style={{ ...inputStyle, opacity: useCustomSubcategory ? 0.55 : 1 }}>
+                        {(CATEGORIES[pubCategory] || []).map((sub) => <option key={sub} value={sub}>{sub}</option>)}
+                      </select>
+                      <button type="button" onClick={() => { setUseCustomSubcategory((v) => !v); setCustomSubcategory(""); }} style={{ ...inputStyle, cursor: "pointer", color: "#BFDBFE", border: "1px dashed #60A5FA", background: "rgba(37,99,235,0.10)", textAlign: "left", fontWeight: 650 }}>
+                        {useCustomSubcategory ? "− Usar uma subcategoria da lista" : "+ Não encontrou o produto ou serviço? Adicionar outro"}
+                      </button>
+                    </>
+                  )}
+                  {(useCustomCategory || useCustomSubcategory) && (
+                    <input type="text" maxLength={80} value={customSubcategory} onChange={(e) => setCustomSubcategory(e.target.value)} placeholder={useCustomCategory ? "Descreva o produto, subproduto ou serviço" : "Escreva o produto, subproduto ou serviço"} style={inputStyle} />
                   )}
                   <select
                     value={pubIsland}
