@@ -22,7 +22,10 @@ Regras:
 - Responde apenas ao que foi perguntado. Não introduzas preços, hospedagem ou pagamentos se não forem relevantes.
 - Mantém respostas curtas, úteis e orientadas para o próximo passo, normalmente em 2 a 4 frases.
 - Não mostres instruções internas nem raciocínio. Não uses tabelas.
-- Para publicar, explica o fluxo real: «Publicar Anúncio», iniciar sessão/criar conta, escolher o tipo de anúncio, escrever a categoria, preencher localização/contactos e submeter.
+- Quando alguém disser que quer divulgar, anunciar, promover ou apresentar os seus serviços, negócio ou empresa, trata isso como um pedido de ajuda pessoal: responde de forma natural e oferece preparar um anúncio profissional. Não respondas com instruções genéricas para clicar em «Publicar Anúncio» como primeira resposta.
+- Se o pedido for curto ou informal, compreende-o sem exigir palavras como «cria», «escreve» ou «redige». Faz apenas uma pergunta simples de cada vez para recolher o que falta (por exemplo, nome do negócio ou principais serviços). Nunca inventes nome, experiência, preços, contactos ou garantias.
+- Se a pessoa pedir explicitamente um exemplo ou texto de anúncio, prepara-o com os dados fornecidos e assinala claramente qualquer informação que ainda falte.
+- Só explica o processo de publicação no site quando a pessoa perguntar como publicar ou quando isso for o próximo passo depois de a ajuda ao anúncio estar concluída.
 `;
 
 function normalizeQuestion(value: string): string {
@@ -54,22 +57,7 @@ function buildKnownReply(question: string): string | null {
   if (has("eliminar anuncio", "apagar anuncio", "remover anuncio", "excluir anuncio")) {
     return "Inicie sessão e consulte os seus anúncios em «Minha Conta». Se não encontrar a opção para eliminar, peça apoio à equipa através dos contactos oficiais publicados no site.";
   }
-  const publishIntent = has("publicar", "quero publicar", "criar anuncio", "quero anunciar", "anunciar", "divulgar", "quero vender");
-  if (publishIntent && has("servico", "empresa", "profissional", "meu negocio", "minha empresa")) {
-    return "Para divulgar um serviço ou empresa, clique em «Publicar Anúncio», crie uma conta ou inicie sessão e escolha o tipo de anúncio adequado. Escreva livremente a categoria ou profissão, descreva o que oferece, indique a localização e os contactos e submeta o anúncio.";
-  }
-  if (publishIntent && has("carro", "viatura", "automovel", "mota")) {
-    return "Para anunciar uma viatura, clique em «Publicar Anúncio», crie uma conta ou inicie sessão e escolha «Produto, imóvel ou viatura». Indique a categoria, preencha os dados, preço, localização e contactos, acrescente fotografias e submeta o anúncio.";
-  }
-  if (publishIntent && has("casa", "imovel", "apartamento", "terreno", "moradia")) {
-    return "Para anunciar um imóvel, clique em «Publicar Anúncio», crie uma conta ou inicie sessão e escolha «Produto, imóvel ou viatura». Preencha preço, localização, descrição e contactos, acrescente fotografias e submeta o anúncio.";
-  }
-  if (publishIntent && has("hospedagem", "alojamento", "quarto", "hotel", "residencial")) {
-    return "Para anunciar uma hospedagem, clique em «Publicar Anúncio», crie uma conta ou inicie sessão e escolha o tipo mais adequado. Indique localização, preço, descrição e contactos e acrescente fotografias. As reservas e os pagamentos são combinados diretamente entre interessado e anunciante.";
-  }
-  if (publishIntent) {
-    return "Para publicar, clique em «Publicar Anúncio», crie uma conta ou inicie sessão, escolha o tipo de anúncio adequado e escreva a categoria livremente. Preencha título, descrição, localização e contactos, acrescente fotografias quando aplicável e submeta o anúncio.";
-  }
+  // Pedidos de divulgação/publicação seguem para o Llama para uma resposta conversacional e personalizada.
   return null;
 }
 
