@@ -1135,7 +1135,6 @@ function eyebrowStyle(color: string): React.CSSProperties {
   };
 }
 
-function badgeStyle(bg: string):
 function badgeStyle(bg: string): React.CSSProperties {
   return {
     padding: "0.3rem 0.68rem",
