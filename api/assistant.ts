@@ -6,8 +6,8 @@ const SYSTEM_GUIDANCE = `
 És o Conecta Assistente, o apoio virtual oficial do CaboVerde Conecta, uma plataforma de classificados e serviços em Cabo Verde.
 Responde em português claro, simpático e profissional. Se o utilizador escrever noutra língua, acompanha-o nessa língua.
 Informações confirmadas:
-- A plataforma reúne anúncios de imóveis, viaturas, produtos, hospedagem, profissionais, empresas, serviços e oportunidades em Cabo Verde.
-- As primeiras 50 publicações aprovadas/publicadas na campanha são gratuitas; a partir da 51.ª, a taxa anunciada é 1.500 CVE por anúncio.
+- A campanha de lançamento oferece gratuidade aos primeiros 50 anúncios aprovados e publicados na plataforma, no total, independentemente de quem os publica. Cada anúncio ocupa uma única vaga global; não são 50 anúncios gratuitos por utilizador nem 50 vagas para cada anunciante.
+- Depois de preenchidas as 50 vagas globais, cada novo anúncio fica sujeito à taxa de publicação anunciada de 1.500 CVE por anúncio.
 - Novos anúncios podem ficar pendentes de análise. O envio de comprovativo não significa pagamento confirmado; a equipa verifica a entrada do dinheiro.
 - A plataforma não processa reservas nem pagamentos de hospedagem. O interessado contacta diretamente o anunciante e combina os detalhes.
 - Os visitantes podem pesquisar por categoria, texto, ilha e concelho no próprio site.
@@ -33,17 +33,17 @@ Regras:
 
 function normalizeQuestion(value: string): string {
   return value.toLocaleLowerCase("pt").normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ").trim();
+    .replace(/\\p{Diacritic}/gu, "")
+    .replace(/[^\\p{L}\\p{N}\\s]/gu, " ")
+    .replace(/\\s+/g, " ").trim();
 }
 
 function buildKnownReply(question: string): string | null {
   const q = normalizeQuestion(question);
   const has = (...phrases: string[]) => phrases.some((phrase) => q.includes(normalizeQuestion(phrase)));
 
-  if (has("quanto custa", "qual o preco", "preco para publicar", "custo de publicar", "anuncio e gratuito", "quanto pago")) {
-    return "As primeiras 50 publicações aprovadas na campanha são gratuitas. A partir da 51.ª publicação, a taxa anunciada é de 1.500 CVE por anúncio.";
+  if (has("50 vagas", "cinquenta vagas", "campanha de lancamento", "primeiras 50 publicacoes", "quanto custa", "qual o preco", "preco para publicar", "custo de publicar", "anuncio e gratuito", "quanto pago")) {
+    return "A campanha oferece gratuidade aos primeiros 50 anúncios aprovados e publicados no CaboVerde Conecta, no total, independentemente de quem os publica. Cada anúncio ocupa uma única vaga global — não são 50 anúncios gratuitos por utilizador. Depois de preenchidas as 50 vagas, cada novo anúncio fica sujeito à taxa de 1.500 CVE por anúncio.";
   }
   if (has("denunciar anuncio", "fazer denuncia", "como denuncio", "anuncio suspeito", "reportar anuncio")) {
     return "Abra os detalhes do anúncio e utilize o formulário «Denunciar anúncio». Descreva o motivo com clareza para a equipa de moderação poder analisar.";
@@ -65,13 +65,13 @@ function buildKnownReply(question: string): string | null {
 }
 
 function cleanReply(raw: string): string {
-  let value = raw.replace(/\r/g, "").trim();
-  const finalAnswer = value.match(/resposta\s+final\s*:\s*([\s\S]*)$/i);
+  let value = raw.replace(/\\r/g, "").trim();
+  const finalAnswer = value.match(/resposta\\s+final\\s*:\\s*([\\s\\S]*)$/i);
   if (finalAnswer?.[1]) value = finalAnswer[1].trim();
-  value = value.replace(/<\/?[A-Z_]{4,}>/g, "")
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/[ \t]+/g, " ")
-    .replace(/\n{3,}/g, "\n\n").trim();
+  value = value.replace(/<\\/?[A-Z_]{4,}>/g, "")
+    .replace(/\\*\\*([^*]+)\\*\\*/g, "$1")
+    .replace(/[ \\t]+/g, " ")
+    .replace(/\\n{3,}/g, "\\n\\n").trim();
   const parts = value.match(/[^.!?]+[.!?]+|[^.!?]+$/gu) ?? [];
   const seen = new Set<string>();
   const unique = parts.map((part) => part.trim()).filter((part) => {
@@ -143,7 +143,7 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   const latestQuestion = messages[messages.length - 1].content;
-  const asksForGeneratedContent = /\b(cria|criar|escreve|escrever|redige|redigir|elabora|elaborar|prepara|preparar|gera|gerar|desenvolve|desenvolver|exemplo|modelo de anuncio|texto profissional|anuncio profissional)\b/i.test(normalizeQuestion(latestQuestion));
+  const asksForGeneratedContent = /\\b(cria|criar|escreve|escrever|redige|redigir|elabora|elaborar|prepara|preparar|gera|gerar|desenvolve|desenvolver|exemplo|modelo de anuncio|texto profissional|anuncio profissional)\\b/i.test(normalizeQuestion(latestQuestion));
   const knownReply = asksForGeneratedContent ? null : buildKnownReply(latestQuestion);
   if (knownReply) return json({ reply: knownReply });
 
