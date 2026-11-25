@@ -1136,3 +1136,25 @@ function eyebrowStyle(color: string): React.CSSProperties {
 }
 
 function badgeStyle(bg: string):
+function badgeStyle(bg: string): React.CSSProperties {
+  return {
+    padding: "0.3rem 0.68rem",
+    borderRadius: 999,
+    backgroundColor: bg,
+    color: "#F8FAFC",
+    fontWeight: 600,
+  };
+}
+
+function actionBtnStyle(bg: string): React.CSSProperties {
+  return {
+    padding: "0.5rem 0.85rem",
+    borderRadius: 8,
+    border: "none",
+    backgroundColor: bg,
+    color: "#F8FAFC",
+    cursor: "pointer",
+    fontWeight: 600,
+    fontSize: "0.82rem",
+  };
+}
