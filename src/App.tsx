@@ -716,12 +716,18 @@ export default function App() {
                 <div key={item.id} style={rowCardStyle}>
                   <div style={{ display: "flex", gap: "0.9rem", alignItems: "center", flexWrap: "wrap" }}>
                     <div style={{ width: 96, aspectRatio: "4 / 3", borderRadius: 10, overflow: "hidden", backgroundColor: "#10182A" }}>
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        onClick={() => setLightbox({ src: item.image, title: item.title })}
-                        style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in", display: "block" }}
-                      />
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          onClick={() => setLightbox({ src: item.image, title: item.title })}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in", display: "block" }}
+                        />
+                      ) : (
+                        <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", color: "#B5C3D8", fontSize: "0.72rem" }}>
+                          Sem imagem enviada
+                        </div>
+                      )}
                     </div>
                     <div>
                       <strong style={{ fontSize: "1rem" }}>
