@@ -15,6 +15,8 @@ export interface Listing {
   phone: string;
   image: string;
   ownerEmail: string;
+  /** Local preview ownership identifier; not a verified account identity. */
+  ownerAccountId?: string;
   listingStatus: ListingStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
@@ -53,6 +55,7 @@ function isStoredListing(value: unknown): value is Listing {
     typeof item.phone === "string" &&
     typeof item.image === "string" &&
     typeof item.ownerEmail === "string" &&
+    (item.ownerAccountId === undefined || typeof item.ownerAccountId === "string") &&
     ["pending", "published", "rejected", "suspended"].includes(item.listingStatus || "") &&
     ["pending", "confirmed", "rejected"].includes(item.paymentStatus || "") &&
     item.paymentMethod === "free_launch" &&
@@ -62,7 +65,7 @@ function isStoredListing(value: unknown): value is Listing {
 
 export function normalizeStoredListings(value: unknown): Listing[] {
   if (!Array.isArray(value)) return [];
-  return value.filter(isStoredListing).slice(0, 500);
+  return value.filter(isStoredListing).map((item) => ({\n    ...item,\n    ownerAccountId: item.ownerAccountId || `preview-email:${item.ownerEmail.trim().toLowerCase()}`,\n  })).slice(0, 500);
 }
 
 export function normalizeStoredAudit(value: unknown): string[] {
