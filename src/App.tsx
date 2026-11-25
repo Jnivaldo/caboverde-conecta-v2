@@ -687,7 +687,7 @@ export default function App() {
                 style={inputStyle}
               >
                 <option value="">Todas as categorias</option>
-                {Object.keys(CATEGORIES).map((c) => (
+                {Array.from(new Set([...Object.keys(CATEGORIES), ...listings.map((item) => item.category).filter(Boolean)])).map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>
@@ -700,7 +700,7 @@ export default function App() {
                 style={inputStyle}
               >
                 <option value="">Todas as subcategorias</option>
-                {(category ? CATEGORIES[category] || [] : []).map((sub) => (
+                {(category ? Array.from(new Set([...(CATEGORIES[category] || []), ...listings.filter((item) => item.category === category).map((item) => item.subcategory).filter(Boolean)])) : []).map((sub) => (
                   <option key={sub} value={sub}>
                     {sub}
                   </option>
