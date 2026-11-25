@@ -233,11 +233,6 @@ export default function App() {
       return;
     }
 
-    if ((paymentMethod === "bca_transfer" || paymentMethod === "bcn_transfer") && !proofRef.trim()) {
-      setFeedback("Indique a referência ou comprovativo da transferência bancária (1.500 CVE).");
-      return;
-    }
-
     const nextSlot = usingFreeSlot ? usedFreeSlots + 1 : undefined;
     const newAd: Listing = {
       id: `CV-${Math.floor(200 + Math.random() * 800)}`,
