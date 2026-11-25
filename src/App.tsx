@@ -80,6 +80,7 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState<string[]>([]);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [canAdmin, setCanAdmin] = useState(false);
   const [accountEmail, setAccountEmail] = useState("");
   const [editingListingId, setEditingListingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<EditableListingFields | null>(null);
@@ -105,6 +106,7 @@ export default function App() {
   useEffect(() => {
     setAccountEmail(authUser?.email ?? "");
     setOwnerEmail(authUser?.email ?? "");
+    setCanAdmin(false);
     let active = true;
     async function loadSharedListings() {
       const { data, error } = await supabase
@@ -118,7 +120,18 @@ export default function App() {
       }
       setListings((data ?? []).map((row) => mapDatabaseListing(row as Record<string, unknown>)));
     }
+    async function loadAccountRole() {
+      if (!authUser) return;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role, account_state")
+        .eq("id", authUser.id)
+        .maybeSingle();
+      if (!active || error || !data) return;
+      setCanAdmin(data.account_state === "active" && ["master", "moderator"].includes(data.role));
+    }
     loadSharedListings();
+    loadAccountRole();
     return () => { active = false; };
   }, [authUser]);
 
@@ -400,11 +413,20 @@ export default function App() {
     setEditFeedback("Alterações guardadas no servidor.");
   }
 
-  function updatePaymentAndListing(
+  async function updatePaymentAndListing(
     id: string,
     nextPayment: PaymentStatus,
     nextListing: ListingStatus
   ) {
+    if (!authUser || !canAdmin) return;
+    const { error } = await supabase.from("listings").update({
+      payment_status: nextPayment,
+      listing_status: nextListing,
+    }).eq("id", id);
+    if (error) {
+      setFeedback("Ação administrativa não concluída: " + error.message);
+      return;
+    }
     setListings((prev) =>
       prev.map((item) =>
         item.id === id
@@ -412,9 +434,14 @@ export default function App() {
           : item
       )
     );
-    addAudit(
-      `Ação administrativa local em ${id}: pagamento=${nextPayment}, anúncio=${nextListing}.`
-    );
+    const action = `payment=${nextPayment}; listing=${nextListing}`;
+    await supabase.from("audit_logs").insert({
+      actor_id: authUser.id,
+      listing_id: id,
+      action: "listing_moderation",
+      details: { payment_status: nextPayment, listing_status: nextListing },
+    });
+    addAudit(`Ação administrativa gravada no servidor em ${id}: ${action}.`);
   }
 
   return (
@@ -461,6 +488,7 @@ export default function App() {
               { key: "home", label: "Início" },
               { key: "publish", label: "Publicar Anúncio" },
               { key: "account", label: "Minha Conta" },
+              ...(canAdmin ? [{ key: "admin", label: "Administração" }] : []),
             ].map((item) => {
               const active = tab === item.key;
               return (
@@ -1001,7 +1029,7 @@ export default function App() {
               Painel Administrativo
             </h1>
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
-              Painel de demonstração com dados guardados apenas neste navegador. As vagas, anúncios e ações de moderação não são partilhados com outros utilizadores nem enviados ao servidor.
+              Painel ligado à base de dados partilhada. As ações de moderação são validadas pelo servidor e registadas na auditoria.
             </p>
 
             <div style={{ display: "grid", gap: "0.9rem", marginBottom: "1.5rem" }}>
