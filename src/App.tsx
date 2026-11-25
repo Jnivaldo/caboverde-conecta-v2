@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 
 type ListingStatus = "pending" | "published" | "rejected" | "suspended";
 type PaymentStatus = "pending" | "confirmed" | "rejected";
-type PaymentMethod = "free_launch" | "bca_transfer" | "bcn_transfer";
+type PaymentMethod = "free_launch";
 
 interface Listing {
   id: string;
@@ -485,13 +485,21 @@ export default function App() {
               })}
             </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(275px, 1fr))",
-                gap: "1.2rem",
-              }}
-            >
+            {publicListings.length === 0 ? (
+              <div style={{ ...panelStyle, textAlign: "center", color: "#B5C3D8" }}>
+                <strong style={{ color: "#F8FAFC" }}>Ainda não existem anúncios publicados.</strong>
+                <p style={{ margin: "0.45rem 0 0", fontSize: "0.9rem", lineHeight: 1.5 }}>
+                  Os anúncios só aparecerão aqui depois de submetidos, analisados e publicados pela plataforma.
+                </p>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(275px, 1fr))",
+                  gap: "1.2rem",
+                }}
+              >
               {publicListings.map((ad) => (
                 <article key={ad.id} style={cardStyle}>
                   <div style={imageFrameStyle}>
@@ -531,7 +539,8 @@ export default function App() {
                   </div>
                 </article>
               ))}
-            </div>
+              </div>
+            )}
           </>
         )}
 
@@ -698,9 +707,8 @@ export default function App() {
             <span style={eyebrowStyle("#38D6A0")}>ÁREA DO ANUNCIANTE</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>Minha Conta</h1>
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
-              Estados separados com clareza: <strong>Pagamento</strong> (<em>pending</em>, <em>confirmed</em>,{" "}
-              <em>rejected</em>) e <strong>Anúncio</strong> (<em>pending</em>, <em>published</em>, <em>rejected</em>,{" "}
-              <em>suspended</em>).
+              Esta pré-visualização não tem autenticação nem gravação permanente. Os registos abaixo existem apenas nesta sessão do navegador.
+              Estados de pagamento e publicação só terão validade depois da ligação segura ao servidor.
             </p>
 
             <div style={{ display: "grid", gap: "0.85rem" }}>
@@ -744,9 +752,7 @@ export default function App() {
               Painel Administrativo
             </h1>
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
-              Vagas gratuitas ocupadas: <strong style={{ color: "#38D6A0" }}>{usedFreeSlots}/{totalFreeSlots}</strong> ·
-              Anúncios publicados: <strong style={{ color: "#F8FAFC" }}>{publicListings.length}</strong> · Contacto oficial:{" "}
-              <strong>—</strong>.
+              Área administrativa de demonstração local. As vagas, anúncios e ações de moderação ainda não estão ligados ao servidor e não representam dados reais.
             </p>
 
             <div style={{ display: "grid", gap: "0.9rem", marginBottom: "1.5rem" }}>
