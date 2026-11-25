@@ -115,7 +115,7 @@ export default function App() {
     {
       id: "welcome",
       sender: "assistant",
-      text: "Olá! Sou o assistente do CaboVerde Conecta. Posso esclarecer dúvidas sobre vagas gratuitas, pagamento de 1.500 CVE (BCA, BCN ou Hotmart Visa), publicação de anúncios e contacto direto.",
+      text: "Olá! Sou o assistente do CaboVerde Conecta. Posso esclarecer dúvidas sobre a campanha de lançamento, pagamento por transferência bancária, publicação de anúncios e contacto direto.",
     },
   ]);
 
@@ -156,10 +156,10 @@ export default function App() {
   function buildAssistantReply(rawText: string): string {
     const t = rawText.toLowerCase();
     if (t.includes("gratuit") || t.includes("50") || t.includes("vaga")) {
-      return `A campanha de lançamento oferece 50 vagas gratuitas. Neste momento restam ${freeSlotsRemaining} de ${totalFreeSlots} vagas. Após o limite de 50 anúncios, cada publicação passa a ter o valor padrão de 1.500 CVE.`;
+      return `A campanha de lançamento oferece 50 vagas gratuitas. A disponibilidade das vagas é confirmada pelo servidor no momento da submissão. Depois de esgotada a campanha, cada publicação custa 1.500 CVE.`;
     }
     if (t.includes("1.500") || t.includes("1500") || t.includes("pagar") || t.includes("bca") || t.includes("bcn") || t.includes("hotmart") || t.includes("visa")) {
-      return `O valor padrão após as 50 vagas gratuitas é 1.500 CVE. Pode pagar por transferência bancária para BCA (conta ${BANK_ACCOUNTS.bca.account}, NIB ${BANK_ACCOUNTS.bca.nib}) ou BCN (conta ${BANK_ACCOUNTS.bcn.account}) indicando o comprovativo, ou por cartão Visa via Hotmart. O comprovativo não publica sozinho: a publicação depende da análise da equipa responsável.`;
+      return `O valor padrão após as 50 vagas gratuitas é 1.500 CVE. Pode pagar por transferência bancária para BCA (conta ${BANK_ACCOUNTS.bca.account}, NIB ${BANK_ACCOUNTS.bca.nib}) ou BCN (conta ${BANK_ACCOUNTS.bcn.account}) indicando o comprovativo, O comprovativo não publica sozinho: a publicação depende da análise da equipa responsável. O pagamento por cartão ainda não está ativo.`;
     }
     if (t.includes("suporte") || t.includes("contacto") || t.includes("whatsapp") || t.includes("telefone")) {
       return `O contacto entre interessados e anunciantes é direto através dos dados indicados em cada anúncio. Para assuntos da plataforma, utilize os canais oficiais apresentados na página de contacto.`;
@@ -167,7 +167,7 @@ export default function App() {
     if (t.includes("estado") || t.includes("pendente") || t.includes("publicar")) {
       return "Os estados de pagamento (pending, confirmed, rejected) e de anúncio (pending, published, rejected, suspended) são separados. Novos anúncios entram em análise até confirmação e publicação no painel administrativo.";
     }
-    return `O CaboVerde Conecta reúne classificados, serviços, imóveis, viaturas, hospedagem e oportunidades nas 9 ilhas de Cabo Verde. Restam ${freeSlotsRemaining} vagas gratuitas de 50, após as quais o valor é 1.500 CVE. Contacto oficial: ${OFFICIAL_PHONE_DISPLAY}.`;
+    return `O CaboVerde Conecta reúne classificados, serviços, imóveis, viaturas, hospedagem e oportunidades nas 9 ilhas de Cabo Verde. A campanha prevê até 50 anúncios gratuitos; a disponibilidade será confirmada pelo servidor. Depois da campanha, o valor é 1.500 CVE. Contacto oficial: ${OFFICIAL_PHONE_DISPLAY}.`;
   }
 
   function sendChatMessage(customText?: string) {
@@ -299,7 +299,7 @@ export default function App() {
               CaboVerde Conecta
             </strong>
             <div style={{ fontSize: "0.82rem", color: "#38D6A0", fontWeight: 600 }}>
-              {freeSlotsRemaining} vagas gratuitas restantes ({usedFreeSlots}/{totalFreeSlots}) · Após 50: 1.500 CVE
+              Campanha de lançamento: até 50 anúncios gratuitos · Após campanha: 1.500 CVE
             </div>
           </div>
 
@@ -521,7 +521,7 @@ export default function App() {
               <span style={eyebrowStyle("#8B5CF6")}>SUBMISSÃO DE ANÚNCIO</span>
               <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>Publicar Anúncio</h1>
               <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.92rem", lineHeight: 1.5 }}>
-                Primeiros 50 anúncios gratuitos ({freeSlotsRemaining} restantes). Valor padrão após campanha:{" "}
+                Campanha de lançamento: até 50 anúncios gratuitos, sujeitos a confirmação do servidor. Valor padrão após campanha:{" "}
                 <strong style={{ color: "#F8FAFC" }}>1.500 CVE</strong>. O envio de comprovativo nunca publica o anúncio
                 automaticamente — depende sempre da confirmação do administrador.
               </p>
@@ -653,7 +653,7 @@ export default function App() {
                 >
                   {canClaimFreeSlot && (
                     <option value="free_launch">
-                      Campanha de Lançamento — Vaga Gratuita ({freeSlotsRemaining} de 50 restantes)
+                      Solicitar vaga gratuita na campanha (sujeita a confirmação)
                     </option>
                   )}
                   <option value="bca_transfer">Transferência Bancária BCA — 1.500 CVE (com comprovativo)</option>
