@@ -153,7 +153,7 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   const latestQuestion = messages[messages.length - 1].content;
-  const asksForGeneratedContent = /\\b(cria|criar|escreve|escrever|redige|redigir|elabora|elaborar|prepara|preparar|gera|gerar|desenvolve|desenvolver|exemplo|modelo de anuncio|texto profissional|anuncio profissional)\\b/i.test(normalizeQuestion(latestQuestion));
+  const asksForGeneratedContent = /\b(cria|criar|escreve|escrever|redige|redigir|elabora|elaborar|prepara|preparar|gera|gerar|desenvolve|desenvolver|exemplo|modelo de anuncio|texto profissional|anuncio profissional)\b/i.test(normalizeQuestion(latestQuestion));
   const knownReply = asksForGeneratedContent ? null : buildKnownReply(latestQuestion);
   if (knownReply) return json({ reply: knownReply });
 
