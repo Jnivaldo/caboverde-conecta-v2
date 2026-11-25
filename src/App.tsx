@@ -871,16 +871,26 @@ export default function App() {
                     disabled={useCustomCategory}
                     onChange={(e) => {
                       const nextCat = e.target.value;
+                      if (nextCat === "__custom_category__") {
+                        setUseCustomCategory(true);
+                        setUseCustomSubcategory(false);
+                        setCustomCategory("");
+                        setCustomSubcategory("");
+                        return;
+                      }
+                      setUseCustomCategory(false);
+                      setCustomCategory("");
                       setPubCategory(nextCat);
                       setPubSubcategory(CATEGORIES[nextCat]?.[0] || "Geral");
                       setUseCustomSubcategory(false);
                       setCustomSubcategory("");
                     }}
-                    style={{ ...inputStyle, opacity: useCustomCategory ? 0.55 : 1 }}
+                    style={{ ...inputStyle, opacity: 1 }}
                   >
                     {Object.keys(CATEGORIES).map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
+                    <option value="__custom_category__">＋ Outra categoria — escrever</option>
                   </select>
                   <button type="button" onClick={() => { setUseCustomCategory((v) => !v); setUseCustomSubcategory(false); setCustomCategory(""); setCustomSubcategory(""); }} style={{ ...inputStyle, cursor: "pointer", color: "#BFDBFE", border: "1px dashed #60A5FA", background: "rgba(37,99,235,0.10)", textAlign: "left", fontWeight: 650 }}>
                     {useCustomCategory ? "− Usar uma categoria da lista" : "+ Não encontrou a categoria? Adicionar outra"}
