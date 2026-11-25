@@ -192,7 +192,7 @@ const inputStyle: React.CSSProperties = {
 const passwordFieldStyle: React.CSSProperties = { position: "relative", display: "flex", alignItems: "center" };
 const passwordInputStyle: React.CSSProperties = { ...inputStyle, paddingRight: "5.5rem" };
 const eyeButtonStyle: React.CSSProperties = { position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: 0, background: "transparent", color: "#93C5FD", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", padding: "0.3rem" };
-const googleButtonStyle: React.CSSProperties = { ...buttonStyle, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.65rem", width: "100%", background: "#F8FAFC", color: "#111827", border: "1px solid #CBD5E1", minHeight: 44 };
+const googleButtonStyle: React.CSSProperties = { padding: "0.6rem 0.9rem", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.65rem", width: "100%", background: "#F8FAFC", color: "#111827", border: "1px solid #CBD5E1", minHeight: 44, cursor: "pointer", fontWeight: 700 };
 
 const labelStyle: React.CSSProperties = {
   display: "grid",
