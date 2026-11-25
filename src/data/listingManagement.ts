@@ -1,4 +1,4 @@
-import type { Listing } from "./listingRepository";
+import type { Listing, ListingStatus } from "./listingRepository";
 import type { AccountScope } from "./accountModel";
 import { canManageListing } from "./accountModel";
 
@@ -7,6 +7,23 @@ export function getAccountListings(listings: Listing[], account: AccountScope | 
   if (!account || account.state !== "active") return [];
   if (account.role === "master" || account.role === "moderator") return [...listings];
   return listings.filter((listing) => listing.ownerAccountId === account.accountId);
+}
+
+/** Local preview fallback: identify listings by email, not an authenticated account. */
+export function getPreviewListingsByEmail(listings: Listing[], email: string): Listing[] {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return [];
+  const id = `preview-email:${normalized}`;
+  return listings.filter((listing) =>
+    listing.ownerAccountId === id || listing.ownerEmail.trim().toLowerCase() === normalized
+  );
+}
+
+export function countListingsByStatus(listings: Listing[]): Record<ListingStatus, number> {
+  return listings.reduce((counts, listing) => {
+    counts[listing.listingStatus] += 1;
+    return counts;
+  }, { pending: 0, published: 0, rejected: 0, suspended: 0 });
 }
 
 export function canDeleteListing(listing: Listing, account: AccountScope | null | undefined): boolean {
