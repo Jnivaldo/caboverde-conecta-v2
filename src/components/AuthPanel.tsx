@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 
@@ -13,8 +14,10 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [recoveryMode, setRecoveryMode] = useState(() => typeof window !== "undefined" && window.location.hash.includes("type=recovery"));
+  const [newPassword, setNewPassword] = useState("");
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setFeedback("");
@@ -46,6 +49,35 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
     }
   }
 
+  async function sendRecovery() {
+    if (!email.trim()) {
+      setFeedback("Indique primeiro o email da sua conta.");
+      return;
+    }
+    setLoading(true);
+    setFeedback("");
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: window.location.origin,
+    });
+    setLoading(false);
+    setFeedback(error ? error.message : "Enviámos um link de recuperação para o seu email.");
+  }
+
+  async function updateRecoveredPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setLoading(false);
+    if (error) {
+      setFeedback(error.message);
+      return;
+    }
+    setRecoveryMode(false);
+    setNewPassword("");
+    setFeedback("Palavra-passe atualizada com sucesso.");
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
   async function signOut() {
     setLoading(true);
     const { error } = await supabase.auth.signOut();
@@ -56,6 +88,21 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
     }
     setFeedback("Sessão terminada.");
     onSignedOut();
+  }
+
+  if (user && recoveryMode) {
+    return (
+      <div style={{ display: "grid", gap: "0.65rem" }}>
+        <form onSubmit={updateRecoveredPassword} style={{ display: "grid", gap: "0.65rem" }}>
+          <label style={labelStyle}>
+            Nova palavra-passe
+            <input type="password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="Mínimo de 8 caracteres" style={inputStyle} />
+          </label>
+          <button type="submit" disabled={loading} style={activeButtonStyle}>{loading ? "Aguarde..." : "Guardar nova palavra-passe"}</button>
+        </form>
+        {feedback && <p role="status" style={messageStyle}>{feedback}</p>}
+      </div>
+    );
   }
 
   if (user) {
@@ -95,6 +142,11 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
         <button type="submit" disabled={loading} style={activeButtonStyle}>
           {loading ? "Aguarde..." : mode === "signup" ? "Criar conta" : "Entrar na minha conta"}
         </button>
+        {mode === "signin" && (
+          <button type="button" disabled={loading} onClick={sendRecovery} style={{ ...buttonStyle, textAlign: "left" }}>
+            Esqueci a palavra-passe
+          </button>
+        )}
       </form>
       {feedback && <p role="status" style={messageStyle}>{feedback}</p>}
       <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.78rem", lineHeight: 1.45 }}>
