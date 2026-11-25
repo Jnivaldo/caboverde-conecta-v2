@@ -27,9 +27,9 @@ Regras:
 
 function normalizeQuestion(value: string): string {
   return value.toLocaleLowerCase("pt").normalize("NFD")
-    .replace(/\\p{Diacritic}/gu, "")
-    .replace(/[^\\p{L}\\p{N}\\s]/gu, " ")
-    .replace(/\\s+/g, " ").trim();
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ").trim();
 }
 
 function buildKnownReply(question: string): string | null {
@@ -74,14 +74,14 @@ function buildKnownReply(question: string): string | null {
 }
 
 function cleanReply(raw: string): string {
-  let value = raw.replace(/\\r/g, "").trim();
-  const finalAnswer = value.match(/resposta\\s+final\\s*:\\s*([\\s\\S]*)$/i);
+  let value = raw.replace(/\r/g, "").trim();
+  const finalAnswer = value.match(/resposta\s+final\s*:\s*([\s\S]*)$/i);
   if (finalAnswer?.[1]) value = finalAnswer[1].trim();
-  value = value.replace(/<\\/?[A-Z_]{4,}>/g, "")
-    .replace(/^\\s*[-*+]\\s+/gm, "")
-    .replace(/^\\s{0,3}#{1,6}\\s+/gm, "")
-    .replace(/\\*\\*([^*]+)\\*\\*/g, "$1")
-    .replace(/\\s+/g, " ").trim();
+  value = value.replace(/<\/?[A-Z_]{4,}>/g, "")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\s+/g, " ").trim();
   const parts = value.match(/[^.!?]+[.!?]+|[^.!?]+$/gu) ?? [];
   const seen = new Set<string>();
   const unique = parts.map((part) => part.trim()).filter((part) => {
