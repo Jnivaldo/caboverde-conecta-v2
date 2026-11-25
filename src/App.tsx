@@ -59,7 +59,7 @@ function mapDatabaseListing(row: Record<string, unknown>): Listing {
     ownerEmail: String(row.owner_email ?? ""),
     ownerAccountId: String(row.owner_id ?? ""),
     listingStatus: row.listing_status as ListingStatus,
-    paymentStatus: row.payment_status as PaymentStatus,
+    paymentStatus: (row.payment_status ?? "pending") as PaymentStatus,
     paymentMethod: "free_launch",
     proofRef: row.proof_ref ? String(row.proof_ref) : undefined,
     slotNumber: typeof row.slot_number === "number" ? row.slot_number : undefined,
@@ -108,7 +108,7 @@ export default function App() {
     let active = true;
     async function loadSharedListings() {
       const { data, error } = await supabase
-        .from("listings")
+        .from(authUser ? "listings" : "public_listings")
         .select("*")
         .order("created_at", { ascending: false });
       if (!active) return;
