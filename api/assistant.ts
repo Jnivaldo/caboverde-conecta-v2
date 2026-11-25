@@ -33,9 +33,9 @@ Regras:
 
 function normalizeQuestion(value: string): string {
   return value.toLocaleLowerCase("pt").normalize("NFD")
-    .replace(/\\p{Diacritic}/gu, "")
-    .replace(/[^\\p{L}\\p{N}\\s]/gu, " ")
-    .replace(/\\s+/g, " ").trim();
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ").trim();
 }
 
 function buildKnownReply(question: string): string | null {
@@ -65,13 +65,13 @@ function buildKnownReply(question: string): string | null {
 }
 
 function cleanReply(raw: string): string {
-  let value = raw.replace(/\\r/g, "").trim();
-  const finalAnswer = value.match(/resposta\\s+final\\s*:\\s*([\\s\\S]*)$/i);
+  let value = raw.replace(/\r/g, "").trim();
+  const finalAnswer = value.match(/resposta\s+final\s*:\s*([\s\S]*)$/i);
   if (finalAnswer?.[1]) value = finalAnswer[1].trim();
-  value = value.replace(/<\\/?[A-Z_]{4,}>/g, "")
-    .replace(/\\*\\*([^*]+)\\*\\*/g, "$1")
-    .replace(/[ \\t]+/g, " ")
-    .replace(/\\n{3,}/g, "\\n\\n").trim();
+  value = value.replace(/<\/?[A-Z_]{4,}>/g, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n").trim();
   const parts = value.match(/[^.!?]+[.!?]+|[^.!?]+$/gu) ?? [];
   const seen = new Set<string>();
   const unique = parts.map((part) => part.trim()).filter((part) => {
@@ -143,7 +143,7 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   const latestQuestion = messages[messages.length - 1].content;
-  const asksForGeneratedContent = /\\b(cria|criar|escreve|escrever|redige|redigir|elabora|elaborar|prepara|preparar|gera|gerar|desenvolve|desenvolver|exemplo|modelo de anuncio|texto profissional|anuncio profissional)\\b/i.test(normalizeQuestion(latestQuestion));
+  const asksForGeneratedContent = /\b(cria|criar|escreve|escrever|redige|redigir|elabora|elaborar|prepara|preparar|gera|gerar|desenvolve|desenvolver|exemplo|modelo de anuncio|texto profissional|anuncio profissional)\b/i.test(normalizeQuestion(latestQuestion));
   const knownReply = asksForGeneratedContent ? null : buildKnownReply(latestQuestion);
   if (knownReply) return json({ reply: knownReply });
 
