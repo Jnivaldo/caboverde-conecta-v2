@@ -124,7 +124,7 @@ export default function App() {
     {
       id: "welcome",
       sender: "assistant",
-      text: "Olá! Sou o assistente do CaboVerde Conecta. Posso esclarecer dúvidas sobre a campanha de lançamento, pagamento por transferência bancária, publicação de anúncios e contacto direto.",
+      text: "Olá! Sou o assistente do CaboVerde Conecta. Posso esclarecer dúvidas sobre a campanha de lançamento, publicação de anúncios e contacto direto. Nesta pré-visualização, os pagamentos e o suporte ainda não estão ativos.",
     },
   ]);
 
@@ -165,7 +165,7 @@ export default function App() {
   function buildAssistantReply(rawText: string): string {
     const t = rawText.toLowerCase();
     if (t.includes("gratuit") || t.includes("50") || t.includes("vaga")) {
-      return `A campanha de lançamento oferece 50 vagas gratuitas. A disponibilidade das vagas é confirmada pelo servidor no momento da submissão. Depois de esgotada a campanha, cada publicação custa 1.500 CVE.`;
+      return `A campanha de lançamento oferece 50 vagas gratuitas. Nesta pré-visualização não é possível consultar a disponibilidade real nem reservar uma vaga: o formulário guarda apenas um pré-registo local. Depois da campanha, o preço previsto é 1.500 CVE por anúncio.`;
     }
     if (t.includes("1.500") || t.includes("1500") || t.includes("pagar") || t.includes("bca") || t.includes("bcn") || t.includes("hotmart") || t.includes("visa")) {
       return "Após a campanha, o preço previsto é 1.500 CVE por anúncio. O pagamento ainda não está ativo nesta versão de pré-lançamento. Não faça transferências nem envie comprovativos através desta pré-visualização.";
@@ -280,8 +280,8 @@ export default function App() {
 
     setListings((prev) => [newAd, ...prev]);
     addAudit(
-      `Novo anúncio ${newAd.id} ("${newAd.title}") criado em estado pendente (${
-        usingFreeSlot ? `vaga gratuita #${nextSlot}` : "1.500 CVE pendente de confirmação"
+      `Novo anúncio ${newAd.id} ("${newAd.title}") guardado como pré-registo local (${
+        usingFreeSlot ? `vaga gratuita #${nextSlot}` : "sem pagamento nem reserva de vaga"
       }).`
     );
 
