@@ -252,11 +252,21 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
+    let receivedAuthEvent = false;
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      receivedAuthEvent = true;
       if (!active) return;
       setAuthUser(session?.user ?? null);
       setAuthLoading(false);
     });
+
+    void supabase.auth.getSession().then(({ data, error }) => {
+      if (!active || receivedAuthEvent) return;
+      if (error) console.error("Falha ao recuperar sessão:", error.message);
+      setAuthUser(data.session?.user ?? null);
+      setAuthLoading(false);
+    });
+
     return () => {
       active = false;
       listener.subscription.unsubscribe();
@@ -1509,7 +1519,7 @@ export default function App() {
               {authLoading ? (
                 <span style={{ color: "#B5C3D8", fontSize: "0.88rem" }}>A verificar sessão segura...</span>
               ) : (
-                <AuthPanel user={authUser} onSignedOut={() => { setAccountEmail(""); setListings([]); }} />
+                <AuthPanel user={authUser} onSignedIn={(user) => { setAuthUser(user); setAccountEmail(user.email ?? ""); }} onSignedOut={() => { setAuthUser(null); setAccountEmail(""); setListings([]); }} />
               )}
             </div>
 
