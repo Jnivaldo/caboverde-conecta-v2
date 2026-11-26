@@ -1294,6 +1294,9 @@ export default function App() {
                   placeholder="Título do anúncio (ex.: Moradia T2 no Tarrafal)"
                   style={inputStyle}
                 />
+                <div style={{ display: "flex", justifyContent: "flex-end", color: "#94A3B8", fontSize: ".74rem", marginTop: "-.55rem" }}>
+                  {title.length}/100 caracteres
+                </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: "0.65rem" }}>
                   <select
@@ -1452,9 +1455,6 @@ export default function App() {
                 />
                 <div style={{ display: "flex", justifyContent: "flex-end", color: "#94A3B8", fontSize: ".74rem", marginTop: "-.55rem" }}>
                   {description.length}/3000 caracteres
-                </div>
-                <div style={{ display: "flex", justifyContent: "flex-end", color: "#94A3B8", fontSize: ".74rem", marginTop: "-.55rem" }}>
-                  {title.length}/100 caracteres
                 </div>
                 {/* The preview is informational; server-side validation remains authoritative. */}
               </div>
