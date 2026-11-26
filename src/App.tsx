@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./responsive.css";import type { User } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
 import AuthPanel from "./components/AuthPanel";
@@ -437,6 +437,7 @@ export default function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const chatMessagesEndRef = useRef<HTMLDivElement | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
@@ -444,6 +445,10 @@ export default function App() {
       text: "Olá! 👋 Bem-vindo ao CaboVerde Conecta. Sou o assistente virtual e estou aqui para ajudar a divulgar os seus anúncios e serviços, esclarecer dúvidas sobre a campanha de lançamento e explicar como encontrar ou contactar anunciantes. Como posso ajudar hoje?",
     },
   ]);
+
+  useEffect(() => {
+    if (chatOpen) chatMessagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, chatLoading, chatOpen]);
 
   const totalFreeSlots = 50;
   const [usedFreeSlots, setUsedFreeSlots] = useState(0);
@@ -516,8 +521,9 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: history }),
+        signal: AbortSignal.timeout(30_000),
       });
-      const result = await response.json() as { reply?: string; error?: string };
+      const result = await response.json().catch(() => ({})) as { reply?: string; error?: string };
       if (!response.ok || typeof result.reply !== "string" || !result.reply.trim()) {
         throw new Error(result.error || "Não foi possível obter uma resposta neste momento.");
       }
@@ -527,9 +533,11 @@ export default function App() {
         text: result.reply!.trim(),
       }]);
     } catch (error) {
-      const message = error instanceof Error
-        ? error.message
-        : "O assistente está temporariamente indisponível. Tente novamente.";
+      const message = error instanceof Error && error.name === "TimeoutError"
+        ? "A resposta está a demorar mais do que o esperado. Verifique a ligação e tente novamente."
+        : error instanceof Error && error.message
+          ? error.message
+          : "O assistente está temporariamente indisponível. Verifique a ligação e tente novamente.";
       setMessages((previous) => [...previous, {
         id: `a-${Date.now()}`,
         sender: "assistant",
@@ -1740,7 +1748,7 @@ export default function App() {
 
             <div
               style={{
-                maxHeight: 270,
+                maxHeight: "min(52vh, 420px)",
                 overflowY: "auto",
                 padding: "0.85rem",
                 display: "flex",
@@ -1772,6 +1780,7 @@ export default function App() {
               ))}
 
               {chatLoading && <div role="status" aria-live="polite" style={{ alignSelf: "flex-start", color: "#8EF0C8", fontSize: "0.78rem", padding: "0.25rem 0.2rem" }}>O assistente está a preparar a resposta…</div>}
+              <div ref={chatMessagesEndRef} aria-hidden="true" />
               <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginTop: "0.2rem" }}>
                 {QUICK_PROMPTS.map((q) => (
                   <button
@@ -1811,6 +1820,8 @@ export default function App() {
             >
               <input
                 type="text"
+                maxLength={1000}
+                aria-label="Escreva a sua mensagem ao assistente"
                 value={chatInput}
                 disabled={chatLoading}
                 onChange={(e) => setChatInput(e.target.value)}
