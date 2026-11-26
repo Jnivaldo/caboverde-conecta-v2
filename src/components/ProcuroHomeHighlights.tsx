@@ -43,7 +43,7 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }
     <section aria-label="Pedidos Procuro & Ofereço em destaque" style={{ margin: "0 auto 1.6rem", padding: "clamp(1rem, 2.5vw, 1.35rem)", borderRadius: 18, border: "1px solid rgba(56,214,160,.28)", background: "linear-gradient(135deg,#10182A 0%,#12243A 100%)", boxShadow: "0 14px 32px rgba(0,0,0,.16)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".8rem", flexWrap: "wrap", marginBottom: "1rem" }}>
         <div>
-          <span style={{ color: "#38D6A0", fontSize: ".72rem", fontWeight: 850, letterSpacing: ".13em" }}>PROCuro & OFEREÇO</span>
+          <span style={{ color: "#38D6A0", fontSize: ".72rem", fontWeight: 850, letterSpacing: ".13em" }}>PROCURO & OFEREÇO</span>
           <h2 style={{ margin: ".25rem 0 0", color: "#F8FAFC", fontSize: "clamp(1.2rem,2.6vw,1.55rem)" }}>O que as pessoas procuram</h2>
           <p style={{ margin: ".3rem 0 0", color: "#B5C3D8", fontSize: ".86rem" }}>Pedidos recentes aprovados pela nossa equipa.</p>
         </div>
