@@ -935,61 +935,67 @@ export default function App() {
               );
             })}
           </nav>
-          <div
-            role="status"
-            aria-live="polite"
-            title={authUser ? "A sua conta está autenticada" : "Ainda não iniciou sessão"}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.48rem",
-              padding: "0.48rem 0.72rem",
-              borderRadius: 999,
-              border: authUser ? "1px solid rgba(56,214,160,.42)" : "1px solid rgba(181,195,216,.2)",
-              background: authUser ? "rgba(16,185,129,.12)" : "rgba(21,31,51,.72)",
-              color: authUser ? "#6EE7B7" : "#B5C3D8",
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              whiteSpace: "nowrap",
-            }}
-          >
-            <span
-              aria-hidden="true"
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: authLoading ? "#94A3B8" : authUser ? "#34D399" : "#94A3B8",
-                boxShadow: authUser && !authLoading ? "0 0 0 3px rgba(52,211,153,.14)" : "none",
-              }}
-            />
-            {authLoading ? "A verificar sessão..." : authUser ? "Sessão iniciada" : "Não autenticado"}
-          </div>
-          {authUser && !authLoading && (
-            <button
-              type="button"
-              onClick={handleHeaderSignOut}
-              disabled={signingOut}
-              aria-label="Terminar sessão"
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.55rem", flex: "0 0 auto", flexWrap: "nowrap", minWidth: 0, position: "relative", zIndex: 30 }}>
+            <div
+              role="status"
+              aria-live="polite"
+              title={authUser ? "A sua conta está autenticada" : "Ainda não iniciou sessão"}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                justifyContent: "center",
-                gap: "0.4rem",
-                padding: "0.5rem 0.85rem",
-                borderRadius: 10,
-                border: "1px solid rgba(248,113,113,.5)",
-                background: "rgba(127,29,29,.22)",
-                color: "#FCA5A5",
-                cursor: signingOut ? "wait" : "pointer",
-                fontSize: "0.82rem",
-                fontWeight: 750,
-                opacity: signingOut ? 0.7 : 1,
+                gap: "0.48rem",
+                padding: "0.48rem 0.72rem",
+                borderRadius: 999,
+                border: authUser ? "1px solid rgba(56,214,160,.42)" : "1px solid rgba(181,195,216,.2)",
+                background: authUser ? "rgba(16,185,129,.12)" : "rgba(21,31,51,.72)",
+                color: authUser ? "#6EE7B7" : "#B5C3D8",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                whiteSpace: "nowrap",
               }}
             >
-              {signingOut ? "A sair..." : "Sair"}
-            </button>
-          )}
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: authLoading ? "#94A3B8" : authUser ? "#34D399" : "#94A3B8",
+                  boxShadow: authUser && !authLoading ? "0 0 0 3px rgba(52,211,153,.14)" : "none",
+                }}
+              />
+              {authLoading ? "A verificar sessão..." : authUser ? "Sessão iniciada" : "Não autenticado"}
+            </div>
+            {authUser && (
+              <button
+                type="button"
+                onClick={handleHeaderSignOut}
+                disabled={signingOut}
+                aria-label="Terminar sessão"
+                style={{
+                  display: "inline-flex",
+                  flex: "0 0 auto",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.4rem",
+                  padding: "0.55rem 1rem",
+                  minHeight: 40,
+                  borderRadius: 10,
+                  border: "1px solid #F87171",
+                  background: "#7F1D1D",
+                  color: "#FFFFFF",
+                  cursor: signingOut ? "wait" : "pointer",
+                  fontSize: "0.84rem",
+                  fontWeight: 800,
+                  whiteSpace: "nowrap",
+                  opacity: signingOut ? 0.7 : 1,
+                  visibility: "visible",
+                }}
+              >
+                {signingOut ? "A sair..." : "Sair"}
+              </button>
+            )}
+          </div>
         </div>
         {signOutFeedback && (
           <div role="status" aria-live="polite" style={{ maxWidth: 1200, margin: "0.55rem auto 0", color: signOutFeedback.startsWith("Não foi") ? "#FCA5A5" : "#6EE7B7", fontSize: "0.8rem" }}>
