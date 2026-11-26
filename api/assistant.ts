@@ -144,7 +144,17 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
     if (q.length > 2) return "Entendido! Vamos preparar esse anúncio. Pode dizer-me um pouco mais sobre o que está a oferecer ou divulgar?";
   }
 
-  // Continuidade do anúncio de profissionais e serviços: recolhe o nome e a atividade sem reiniciar.\n  const previousPrompt = normalizeQuestion(previousAssistant);\n  if (previousPrompt.includes("qual e o nome profissional ou da empresa") && q.length > 1 && q.length <= 100) {\n    return "Obrigado. Que serviços presta ou que especialidade devemos destacar no anúncio?";\n  }\n  if ((previousPrompt.includes("que servicos presta") || previousPrompt.includes("que servicos devemos destacar") || previousPrompt.includes("que servico presta")) && q.length > 2) {\n    const businessName = userHistory.length >= 2 ? userHistory[userHistory.length - 2].trim().replace(/[.!?]+$/g, "") : "";\n    const nameLine = businessName ? "Nome profissional ou comercial: " + businessName : "Nome profissional ou comercial: A indicar pelo anunciante";\n    return "Rascunho do anúncio\\n\\nTítulo: Serviços de " + (businessName || "profissional/empresa") + "\\nCategoria: «Serviços»\\n\\nDescrição:\\n" + nameLine + "\\nServiços prestados: " + question.trim().replace(/[.!?]+$/g, "") + "\\nÁrea de atuação: A indicar pelo anunciante\\nContactos: A indicar pelo anunciante\\n\\nEste texto é apenas um rascunho; ainda não foi publicado. Quer corrigir ou acrescentar alguma informação?";\n  }\n  if (has("quero vender o meu carro", "quero vender meu carro", "quero vender carro", "pretendo vender o carro", "quero anunciar o meu carro", "quero vender a minha viatura", "quero vender uma viatura", "vender automovel")) {
+  // Continuidade do anúncio de profissionais e serviços: recolhe o nome e a atividade sem reiniciar.
+  const previousPrompt = normalizeQuestion(previousAssistant);
+  if (previousPrompt.includes("qual e o nome profissional ou da empresa") && q.length > 1 && q.length <= 100) {
+    return "Obrigado. Que serviços presta ou que especialidade devemos destacar no anúncio?";
+  }
+  if ((previousPrompt.includes("que servicos presta") || previousPrompt.includes("que servicos devemos destacar") || previousPrompt.includes("que servico presta")) && q.length > 2) {
+    const businessName = userHistory.length >= 2 ? userHistory[userHistory.length - 2].trim().replace(/[.!?]+$/g, "") : "";
+    const nameLine = businessName ? "Nome profissional ou comercial: " + businessName : "Nome profissional ou comercial: A indicar pelo anunciante";
+    return "Rascunho do anúncio\n\nTítulo: Serviços de " + (businessName || "profissional/empresa") + "\nCategoria: «Serviços»\n\nDescrição:\n" + nameLine + "\nServiços prestados: " + question.trim().replace(/[.!?]+$/g, "") + "\nÁrea de atuação: A indicar pelo anunciante\nContactos: A indicar pelo anunciante\n\nEste texto é apenas um rascunho; ainda não foi publicado. Quer corrigir ou acrescentar alguma informação?";
+  }
+  if (has("quero vender o meu carro", "quero vender meu carro", "quero vender carro", "pretendo vender o carro", "quero anunciar o meu carro", "quero vender a minha viatura", "quero vender uma viatura", "vender automovel")) {
     return "Claro que sim! 🚗 O CaboVerde Conecta é um ótimo lugar para divulgar o seu carro. Vamos preparar um anúncio apelativo na categoria «Viaturas». Para começar, qual é a marca e o modelo do carro?";
   }
   if (has("50 vagas", "cinquenta vagas", "campanha de lancamento", "primeiras 50 publicacoes", "quanto custa", "qual o preco", "preco para publicar", "custo de publicar", "anuncio e gratuito", "quanto pago")) {
