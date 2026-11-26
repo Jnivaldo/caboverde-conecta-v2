@@ -935,7 +935,7 @@ export default function App() {
               );
             })}
           </nav>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.55rem", flex: "0 0 auto", flexWrap: "nowrap", minWidth: 0, position: "relative", zIndex: 30 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.7rem", flex: "1 1 100%", width: "100%", minHeight: 52, paddingTop: "0.55rem", borderTop: "1px solid rgba(181,195,216,0.14)", flexWrap: "nowrap", minWidth: 0, position: "relative", zIndex: 50 }}>
             <div
               role="status"
               aria-live="polite"
@@ -978,8 +978,9 @@ export default function App() {
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "0.4rem",
-                  padding: "0.55rem 1rem",
-                  minHeight: 40,
+                  padding: "0.62rem 1.25rem",
+                  minHeight: 44,
+                  minWidth: 112,
                   borderRadius: 10,
                   border: "1px solid #F87171",
                   background: "#7F1D1D",
