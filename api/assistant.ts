@@ -126,6 +126,24 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
     return "Claro! Vamos preparar o seu anúncio. 😊 O que pretende divulgar? Pode ser um imóvel, viatura, produto, serviço ou outra coisa.";
   }
 
+  // Continuidade do fluxo de anúncio: aproveita a resposta à pergunta sobre o que pretende divulgar.
+  const previous = normalizeQuestion(previousAssistant);
+  if ((previous.includes("o que pretende divulgar") || previous.includes("o que quer anunciar") || previous.includes("o que pretende anunciar")) && q.length <= 120) {
+    const vehicle = /\\b(carro|viatura|automovel|mota|motociclo|carrinha|jipe|camiao|barco)\\b/.test(q);
+    const property = /\\b(casa|apartamento|moradia|terreno|predio|imovel|loja|armazem)\\b/.test(q);
+    const professional = /\\b(eletricista|canalizador|pintor|pedreiro|mecanico|jardineiro|costureira|limpeza|servico|servicos|profissional)\\b/.test(q);
+    const accommodation = /\\b(hospedagem|alojamento|quarto|hotel|pousada|casa de ferias|estadia)\\b/.test(q);
+    const product = /\\b(produto|telemovel|telefone|computador|roupa|mobilia|frigorifico|sofa|bicicleta)\\b/.test(q);
+    const tourism = /\\b(passeio|excursao|turismo|experiencia|mergulho|caiaque|pesca desportiva)\\b/.test(q);
+    if (vehicle) return "Perfeito! Vamos preparar o anúncio na categoria «Viaturas». Qual é a marca e o modelo?";
+    if (property) return "Entendido. Vamos preparar o anúncio na categoria «Imóveis». Pretende vender ou arrendar?";
+    if (accommodation) return "Muito bem. Vamos preparar o anúncio na categoria «Hospedagem». Em que ilha e concelho fica o alojamento?";
+    if (professional) return "Perfeito. Vamos divulgar esse serviço na categoria «Profissionais» ou «Serviços», conforme o caso. Qual é o nome profissional ou da empresa que devemos apresentar?";
+    if (tourism) return "Ótimo. Vamos preparar o anúncio em «Turismo e Experiências». Qual é o nome da atividade ou do negócio?";
+    if (product) return "Certo! Vamos preparar o anúncio na categoria «Produtos». Qual é o produto que pretende divulgar e, se souber, qual é a marca ou modelo?";
+    if (q.length > 2) return "Entendido! Vamos preparar esse anúncio. Pode dizer-me um pouco mais sobre o que está a oferecer ou divulgar?";
+  }
+
   if (has("quero vender o meu carro", "quero vender meu carro", "quero vender carro", "pretendo vender o carro", "quero anunciar o meu carro", "quero vender a minha viatura", "quero vender uma viatura", "vender automovel")) {
     return "Claro que sim! 🚗 O CaboVerde Conecta é um ótimo lugar para divulgar o seu carro. Vamos preparar um anúncio apelativo na categoria «Viaturas». Para começar, qual é a marca e o modelo do carro?";
   }
