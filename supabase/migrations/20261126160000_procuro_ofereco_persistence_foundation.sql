@@ -102,17 +102,6 @@ create policy procurement_offers_participant_select
   );
 
 drop policy if exists procurement_offers_supplier_insert on public.procurement_offers;
-create policy procurement_offers_supplier_insert
-  on public.procurement_offers for insert to authenticated
-  with check (
-    supplier_id = (select auth.uid())
-    and moderation_status = 'pending'
-    and (select private.can_offer_to_procurement_request(request_id))
-    and exists (
-      select 1 from public.profiles p
-      where p.id = (select auth.uid()) and p.account_state = 'active'
-    )
-  );
 
 -- Only moderators/master admins can approve or reject supplier offers.
 drop policy if exists procurement_offers_admin_update on public.procurement_offers;
