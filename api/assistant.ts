@@ -121,8 +121,17 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
     return "Claro! Estou aqui para ajudar. 😊 Pretende procurar alguma coisa, publicar um anúncio ou esclarecer uma dúvida sobre a plataforma?";
   }
 
-  // Pedido explícito de divulgação: iniciar a preparação do anúncio sem despejar categorias ou instruções.
+  // Pedido explícito de divulgação: reconhecer a categoria quando já vem indicada na primeira mensagem.
   if (has("quero anunciar", "pretendo anunciar", "quero publicar um anuncio", "pretendo publicar um anuncio", "quero divulgar", "pretendo divulgar", "quero colocar um anuncio", "ajuda para anunciar", "ajuda me a anunciar", "ajude me a anunciar", "quero vender algo", "quero vender uma coisa")) {
+    if (/\\b(casa|apartamento|moradia|terreno|predio|imovel|imoveis|loja|armazem)\\b/.test(q)) {
+      return "Claro! Vamos preparar o anúncio na categoria «Imóveis». Pretende vender ou arrendar?";
+    }
+    if (/\\b(carro|viatura|automovel|mota|motociclo|carrinha|jipe|camiao|barco)\\b/.test(q)) {
+      return "Claro! Vamos preparar o anúncio na categoria «Viaturas». Qual é a marca e o modelo?";
+    }
+    if (/\\b(produto|telemovel|telefone|computador|roupa|mobilia|frigorifico|sofa|bicicleta)\\b/.test(q)) {
+      return "Claro! Vamos preparar o anúncio na categoria «Produtos». Qual é o produto que pretende divulgar e, se souber, qual é a marca ou modelo?";
+    }
     return "Claro! Vamos preparar o seu anúncio. 😊 O que pretende divulgar? Pode ser um imóvel, viatura, produto, serviço ou outra coisa.";
   }
 
@@ -145,7 +154,7 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
   }
 
   // Continuidade determinística para anúncios de Imóveis.
-  if (previous.includes("pretende vender ou arrendar")) {
+  if (previous.includes("pretende vender ou arrendar") || previous.includes("venda ou arrendamento")) {
     const transaction = /arrend|alug/.test(q) ? "Arrendamento" : /vend/.test(q) ? "Venda" : "";
     if (transaction) return "Perfeito. É para " + transaction.toLowerCase() + ". Que tipo de imóvel é e em que ilha e concelho fica?";
   }
