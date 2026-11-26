@@ -1506,7 +1506,26 @@ export default function App() {
               <div style={subCardStyle}>
                 <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>3. Modalidade e Pagamento (1.500 CVE)</strong>
                 <div style={{ fontSize: "0.85rem", color: "#B5C3D8", lineHeight: 1.55 }}>
-                  Esta pré-visualização ainda não processa pagamentos. Não faça transferências bancárias nem envie comprovativos. Os dados de pagamento só serão apresentados quando o fluxo seguro estiver ativo.
+                  Estamos a preparar os pagamentos por transferência bancária. A conta BCA já foi registada para configurar esta modalidade, mas ainda não deve efetuar transferências nem enviar comprovativos. O pagamento só será disponibilizado quando o processo de submissão, validação e confirmação estiver ativo.
+                </div>
+                <div style={{ border: "1px solid rgba(96,165,250,.34)", borderRadius: 12, padding: "1rem", background: "linear-gradient(145deg,rgba(17,29,49,.92),rgba(16,24,42,.92))", display: "grid", gap: ".5rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
+                    <strong style={{ color: "#F8FAFC", fontSize: ".95rem" }}>Banco Comercial do Atlântico (BCA)</strong>
+                    <span style={{ border: "1px solid rgba(251,191,36,.4)", borderRadius: 999, padding: ".2rem .55rem", color: "#FDE68A", fontSize: ".7rem", fontWeight: 800 }}>EM PREPARAÇÃO</span>
+                  </div>
+                  <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Titular da conta</div>
+                  <strong style={{ color: "#F8FAFC", fontSize: ".9rem" }}>José Nivaldo G. Oliveira</strong>
+                  <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>IBAN</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: ".5rem", flexWrap: "wrap" }}>
+                    <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums", overflowWrap: "anywhere" }}>CV64 0003 0000 7050 3384 1017 6</strong>
+                    <button type="button" onClick={() => { void navigator.clipboard?.writeText("CV64000300007050338410176"); }} style={{ ...secondaryBtnStyle, padding: ".35rem .55rem", fontSize: ".74rem" }}>Copiar IBAN</button>
+                  </div>
+                  <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>NIB</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: ".5rem", flexWrap: "wrap" }}>
+                    <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums", overflowWrap: "anywhere" }}>000300007050338410176</strong>
+                    <button type="button" onClick={() => { void navigator.clipboard?.writeText("000300007050338410176"); }} style={{ ...secondaryBtnStyle, padding: ".35rem .55rem", fontSize: ".74rem" }}>Copiar NIB</button>
+                  </div>
+                  <p style={{ margin: ".2rem 0 0", color: "#FDE68A", fontSize: ".76rem", lineHeight: 1.45 }}>Não efetue pagamentos nesta fase. Esta informação é apenas uma preparação; a opção de transferência será ativada depois de concluirmos o registo do pagamento e a validação segura pelo administrador.</p>
                 </div>
 
                 <select
