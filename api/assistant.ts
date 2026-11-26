@@ -143,6 +143,26 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
                           : null;
     if (!category) return "Claro! Posso orientar a sua pesquisa. O que procura exatamente — um produto, imóvel, viatura, alojamento, profissional ou outro serviço? Assim ajudo a escolher a categoria certa.";
     if (!hasArea) return "Percebi que procura na categoria «" + category + "». Em que ilha e concelho pretende pesquisar? Assim poderá aplicar os filtros de localização no site.";
+    const previous = normalizeQuestion(previousAssistant);
+    const shortFollowUp = q.length > 1 && q.length <= 80;
+    if (hasArea && shortFollowUp && /ilha|concelho|localizacao|onde pretende|em que zona/.test(previous)) {
+      const place = question.trim().replace(/[.!?]+$/g, "");
+      const nextQuestion = category === "Imóveis" ? "Procura comprar ou arrendar?"
+        : category === "Hospedagem" ? "Que tipo de alojamento procura?"
+        : category === "Viaturas" ? "Tem alguma marca ou modelo em mente?"
+        : category === "Profissionais" ? "Que especialidade ou serviço precisa?"
+        : category === "Empresas e Serviços" ? "Que serviço ou atividade procura?"
+        : category === "Turismo e Experiências" ? "Que tipo de experiência gostaria de encontrar?"
+        : category === "Agricultura e Pecuária" ? "Que produto ou animal procura?"
+        : category === "Máquinas e Equipamentos" ? "Que tipo de máquina ou equipamento precisa?"
+        : category === "Desporto e Lazer" ? "Que artigo ou atividade procura?"
+        : category === "Oportunidades" ? "Que tipo de oportunidade procura?"
+        : "Que produto ou característica procura?";
+      return "Perfeito, «" + place + "». Vou considerar essa localização. " + nextQuestion;
+    }
+    if (shortFollowUp && /orcamento|preco|valor|quanto pretende gastar/.test(previous)) {
+      return "Entendido: «" + question.trim().replace(/[.!?]+$/g, "") + "». Pode usar esse valor como referência na pesquisa e ajustar o filtro de preço, se estiver disponível. Quer acrescentar alguma característica importante?";
+    }
     if (category === "Viaturas" && /\bpraia\b/.test(context)) {
       if (/marca ou modelo|marca.*modelo/.test(normalizeQuestion(previousAssistant)) && q.length > 1 && q.length <= 60) {
         return "Boa, " + question.trim().replace(/[.!?]+$/g, "") + ". Tem preferência por algum ano ou orçamento aproximado?";
