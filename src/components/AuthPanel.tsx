@@ -3,7 +3,9 @@ import type { FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 
-const AUTH_REDIRECT_URL = "https://caboverde-conecta-v2-git-feat-legac-1b7fb4-jnivaldoliveira-3917.vercel.app";
+function getAuthRedirectUrl() {
+  return window.location.origin;
+}
 
 interface AuthPanelProps {
   user: User | null;
@@ -30,7 +32,7 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
-          options: { emailRedirectTo: AUTH_REDIRECT_URL },
+          options: { emailRedirectTo: getAuthRedirectUrl() },
         });
         if (error) throw error;
         setFeedback(
@@ -56,12 +58,14 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
   async function signInWithGoogle() {
     setLoading(true);
     setFeedback("");
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: AUTH_REDIRECT_URL },
-    });
-    if (error) {
-      setFeedback(error.message);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: getAuthRedirectUrl() },
+      });
+      if (error) throw error;
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "Não foi possível iniciar a ligação ao Google.");
       setLoading(false);
     }
   }
@@ -74,7 +78,7 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
     setLoading(true);
     setFeedback("");
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: AUTH_REDIRECT_URL,
+      redirectTo: getAuthRedirectUrl(),
     });
     setLoading(false);
     setFeedback(error ? error.message : "Enviámos um link de recuperação para o seu email.");
