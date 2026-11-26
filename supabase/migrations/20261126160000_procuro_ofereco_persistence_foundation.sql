@@ -77,6 +77,7 @@ create policy procurement_requests_owner_insert
     and moderation_status = 'pending'
     and status = 'active'
     and expires_at > now()
+    and expires_at <= now() + interval '30 days'
     and exists (
       select 1 from public.profiles p
       where p.id = (select auth.uid()) and p.account_state = 'active'
