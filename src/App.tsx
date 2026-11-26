@@ -473,6 +473,10 @@ export default function App() {
   const canClaimFreeSlot = freeSlotsRemaining > 0;
 
   useEffect(() => {
+    setPaymentMethod(canClaimFreeSlot ? "free_launch" : "bank_transfer");
+  }, [canClaimFreeSlot]);
+
+  useEffect(() => {
     let active = true;
     async function loadCampaignStatus() {
       const { data, error } = await supabase.rpc("get_launch_campaign_status");
@@ -702,18 +706,17 @@ export default function App() {
       }
     }
 
-    if (paymentMethod !== "free_launch") {
-      setFeedback("Os pagamentos por transferência ainda não estão ativos nesta versão. Não faça transferências nem envie comprovativos. Aguarde a ativação do pagamento seguro.");
+    if (paymentMethod === "free_launch" && !canClaimFreeSlot) {
+      setFeedback("As 50 vagas gratuitas já foram preenchidas. Atualize a página para consultar a modalidade de pagamento.");
       return;
     }
-
-    if (!canClaimFreeSlot) {
-      setFeedback("As 50 vagas gratuitas já foram preenchidas. O pagamento seguro ainda não está ativo; por isso, não é possível submeter novos anúncios.");
+    if (paymentMethod === "bank_transfer" && canClaimFreeSlot) {
+      setFeedback("Ainda existem vagas gratuitas disponíveis. A publicação deve utilizar a campanha gratuita.");
       return;
     }
 
     setIsSubmitting(true);
-    const { data, error } = await supabase.rpc("submit_listing", {
+    const submitArgs = {
       p_title: title.trim(),
       p_category: useCustomCategory ? customCategory.trim() : pubCategory,
       p_subcategory: useCustomCategory || useCustomSubcategory ? customSubcategory.trim() : pubSubcategory,
@@ -724,12 +727,17 @@ export default function App() {
       p_whatsapp: cleanWhatsApp,
       p_phone: cleanPhone,
       p_image_url: imageUrl.trim(),
-    });
+    };
+    const { data, error } = paymentMethod === "free_launch"
+      ? await supabase.rpc("submit_listing", submitArgs)
+      : await supabase.rpc("submit_paid_listing", submitArgs);
 
     if (error) {
       const message = error.message.includes("CAMPAIGN_FULL_PAYMENT_NOT_AVAILABLE")
-        ? "As 50 vagas gratuitas já foram preenchidas. O pagamento seguro ainda não está ativo."
-        : "Não foi possível enviar o anúncio ao servidor: " + error.message;
+        ? "As 50 vagas gratuitas já foram preenchidas. Atualize a página para continuar com o pagamento."
+        : error.message.includes("FREE_CAMPAIGN_STILL_AVAILABLE")
+          ? "Ainda existem vagas gratuitas. A campanha deve ser aplicada automaticamente."
+          : "Não foi possível enviar o anúncio ao servidor: " + error.message;
       setFeedback(message);
       setIsSubmitting(false);
       return;
@@ -767,8 +775,12 @@ export default function App() {
       }
     }
     setListings((prev) => [newAd, ...prev]);
-    setUsedFreeSlots((current) => Math.max(current, newAd.slotNumber ?? current));
-    addAudit(`Anúncio ${newAd.id} enviado ao servidor e recebeu a vaga gratuita #${newAd.slotNumber}.`);
+    if (paymentMethod === "free_launch") {
+      setUsedFreeSlots((current) => Math.max(current, newAd.slotNumber ?? current));
+      addAudit(`Anúncio ${newAd.id} enviado ao servidor e recebeu a vaga gratuita #${newAd.slotNumber}.`);
+    } else {
+      addAudit(`Anúncio ${newAd.id} submetido com pagamento por transferência pendente de validação.`);
+    }
     setTitle("");
     setPrice("");
     setDescription("");
@@ -1315,7 +1327,7 @@ export default function App() {
                 <div style={{ position: "relative", zIndex: 1, animation: "conecta-success-pop .45s ease-out both" }}>
                   <div style={{ fontSize: "2.5rem", marginBottom: 5 }}>🎉</div>
                   <strong style={{ display: "block", color: "#F8FAFC", fontSize: "1.18rem", marginBottom: 7 }}>Anúncio submetido com sucesso!</strong>
-                  <p style={{ margin: "0 auto 0.9rem", maxWidth: 520, color: "#D7E6F4", lineHeight: 1.55, fontSize: "0.92rem" }}>Recebemos os seus dados e fotografias. O anúncio está <strong style={{ color: "#FBBF24" }}>PENDENTE DE APROVAÇÃO</strong> e só ficará visível ao público depois da validação do administrador.</p>
+                  <p style={{ margin: "0 auto 0.9rem", maxWidth: 520, color: "#D7E6F4", lineHeight: 1.55, fontSize: "0.92rem" }}>{paymentMethod === "free_launch" ? "Recebemos os seus dados e fotografias. O anúncio está PENDENTE DE APROVAÇÃO e só ficará visível ao público depois da validação do administrador." : "Recebemos os dados do anúncio. Para concluir o pagamento de 1.500 CVE, entre em Minha Conta, abra Pagamento por transferência e envie o comprovativo. O anúncio só será publicado depois da validação do pagamento e da aprovação do conteúdo."}</p>
                   <button type="button" onClick={() => setSubmissionSuccess(false)} style={{ ...secondaryBtnStyle, borderColor: "rgba(56,214,160,0.55)" }}>Continuar</button>
                 </div>
               </div>
@@ -1507,7 +1519,7 @@ export default function App() {
               <div style={subCardStyle}>
                 <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>3. Modalidade e Pagamento (1.500 CVE)</strong>
                 <div style={{ fontSize: "0.85rem", color: "#B5C3D8", lineHeight: 1.55 }}>
-                  Estamos a preparar os pagamentos por transferência bancária. A conta BCA já foi registada para configurar esta modalidade, mas ainda não deve efetuar transferências nem enviar comprovativos. O pagamento só será disponibilizado quando o processo de submissão, validação e confirmação estiver ativo.
+                  {canClaimFreeSlot ? `Campanha de lançamento: ainda existem ${freeSlotsRemaining} vagas gratuitas. Enquanto houver vagas, não é necessário efetuar qualquer transferência.` : "Campanha gratuita concluída. O valor por anúncio é 1.500 CVE. Depois de submeter, aceda a Minha Conta para escolher BCA ou BCN e enviar o comprovativo para validação."}
                 </div>
                 <div style={{ border: "1px solid rgba(96,165,250,.34)", borderRadius: 12, padding: "1rem", background: "linear-gradient(145deg,rgba(17,29,49,.92),rgba(16,24,42,.92))", display: "grid", gap: ".5rem" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
@@ -1525,7 +1537,7 @@ export default function App() {
                     <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums", overflowWrap: "anywhere" }}>000300007050338410176</strong>
                     <button type="button" onClick={() => { void navigator.clipboard?.writeText("000300007050338410176"); }} style={{ ...secondaryBtnStyle, padding: ".35rem .55rem", fontSize: ".74rem" }}>Copiar NIB</button>
                   </div>
-                  <p style={{ margin: ".2rem 0 0", color: "#FDE68A", fontSize: ".76rem", lineHeight: 1.45 }}>Não efetue pagamentos nesta fase. Esta informação é apenas uma preparação; a opção de transferência será ativada depois de concluirmos o registo do pagamento e a validação segura pelo administrador.</p>
+                  <p style={{ margin: ".2rem 0 0", color: "#FDE68A", fontSize: ".76rem", lineHeight: 1.45 }}>{canClaimFreeSlot ? "Não efetue pagamentos enquanto houver vagas gratuitas disponíveis. A campanha aplica automaticamente a gratuidade." : "Transfira apenas depois de submeter um anúncio pago. Envie o comprovativo em Minha Conta e aguarde a confirmação administrativa."}</p>
                   <div style={{ borderTop: "1px solid rgba(181,195,216,.14)", marginTop: ".35rem", paddingTop: ".85rem", display: "grid", gap: ".5rem" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
                       <strong style={{ color: "#F8FAFC", fontSize: ".95rem" }}>Banco Cabo-verdiano de Negócios (BCN)</strong>
@@ -1546,14 +1558,12 @@ export default function App() {
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
                   style={inputStyle}
-                  disabled={!canClaimFreeSlot}
+                  disabled
                 >
                   {canClaimFreeSlot ? (
-                    <option value="free_launch">
-                      Solicitar vaga gratuita na campanha (sujeita a confirmação)
-                    </option>
+                    <option value="free_launch">Campanha de lançamento — publicação gratuita</option>
                   ) : (
-                    <option value="free_launch">Campanha gratuita esgotada — pagamentos ainda indisponíveis</option>
+                    <option value="bank_transfer">Pagamento por transferência — 1.500 CVE</option>
                   )}
                 </select>
               </div>
