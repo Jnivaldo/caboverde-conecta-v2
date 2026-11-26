@@ -164,22 +164,6 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
     await loadData();
   }
 
-  async function moderateRequest(id: string, decision: "approved" | "rejected") {
-    if (!canAdmin) return;
-    const { error } = await supabase.from("procurement_requests").update({ moderation_status: decision }).eq("id", id);
-    if (error) { setNotice("Não foi possível moderar o pedido: " + error.message); return; }
-    setNotice(decision === "approved" ? "Pedido aprovado e publicado." : "Pedido rejeitado.");
-    await loadData();
-  }
-
-  async function moderateOffer(id: string, decision: "approved" | "rejected") {
-    if (!canAdmin) return;
-    const { error } = await supabase.from("procurement_offers").update({ moderation_status: decision }).eq("id", id);
-    if (error) { setNotice("Não foi possível moderar a proposta: " + error.message); return; }
-    setNotice(decision === "approved" ? "Proposta aprovada." : "Proposta rejeitada.");
-    await loadData();
-  }
-
   function waLink(phone: string, message: string) {
     const number = cleanPhone(phone);
     return number ? `https://wa.me/${number}?text=${encodeURIComponent(message)}` : "";
@@ -249,7 +233,6 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
               <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap", marginTop: ".8rem" }}>
                 {item.moderation_status === "approved" && item.status !== "completed" && !isOwner && <button type="button" onClick={() => { if (!user) { setNotice("Entre na sua conta para apresentar uma proposta."); onAuthClick(); return; } setActiveOffer(activeOffer === item.id ? null : item.id); }} style={{ ...btnStyle, background: "#2563EB", color: "white" }}>Enviar uma proposta</button>}
                 {isOwner && item.status !== "completed" && <button type="button" onClick={() => void updateRequestStatus(item, "completed")} style={{ border: "1px solid rgba(181,195,216,.25)", borderRadius: 9, padding: ".6rem .75rem", background: "transparent", color: "#B5C3D8", cursor: "pointer" }}>Marcar como concluído</button>}
-                {canAdmin && item.moderation_status === "pending" && <><button type="button" onClick={() => void moderateRequest(item.id, "approved")} style={{ ...btnStyle, padding: ".55rem .7rem" }}>Aprovar pedido</button><button type="button" onClick={() => void moderateRequest(item.id, "rejected")} style={{ ...btnStyle, padding: ".55rem .7rem", background: "#7F1D1D", color: "white" }}>Rejeitar</button></>}
               </div>
               {activeOffer === item.id && <form onSubmit={(event) => void submitOffer(event, item.id)} style={{ marginTop: ".85rem", padding: ".9rem", borderRadius: 11, border: "1px solid rgba(96,165,250,.35)", background: "#111D31", display: "grid", gap: ".7rem" }}>
                 <strong style={{ color: "#93C5FD" }}>Apresentar proposta para: {item.title}</strong>
