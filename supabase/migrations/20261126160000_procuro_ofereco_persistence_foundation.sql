@@ -202,7 +202,7 @@ language sql
 stable
 security definer
 set search_path = ''
-as $
+as $function$
   select exists (
     select 1
     from public.procurement_requests r
@@ -212,7 +212,7 @@ as $
       and r.status in ('active', 'negotiating')
       and r.expires_at > now()
   );
-$;
+$function$;
 
 revoke all on function private.can_offer_to_procurement_request(uuid) from public, anon;
 grant execute on function private.can_offer_to_procurement_request(uuid) to authenticated;
