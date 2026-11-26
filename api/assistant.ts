@@ -151,8 +151,13 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
   }
   if ((previousPrompt.includes("que servicos presta") || previousPrompt.includes("que servicos devemos destacar") || previousPrompt.includes("que servico presta")) && q.length > 2) {
     const businessName = userHistory.length >= 2 ? userHistory[userHistory.length - 2].trim().replace(/[.!?]+$/g, "") : "";
+    const serviceDescription = question.trim().replace(/[.!?]+$/g, "");
+    const historyText = userHistory.join(" ");
+    const placeMatch = historyText.match(/\b(Tarrafal|Praia|Assomada|Pedra Badejo|Santa Catarina|São Domingos|São Filipe|Mosteiros|Mindelo|Ribeira Grande|Porto Novo|Ponta do Sol|Sal Rei|Espargos|Santa Maria|Cova Figueira|Nova Sintra)\b/i);
+    const serviceArea = placeMatch ? placeMatch[0] : "A indicar pelo anunciante";
     const nameLine = businessName ? "Nome profissional ou comercial: " + businessName : "Nome profissional ou comercial: A indicar pelo anunciante";
-    return "Rascunho do anúncio\n\nTítulo: Serviços de " + (businessName || "profissional/empresa") + "\nCategoria: «Serviços»\n\nDescrição:\n" + nameLine + "\nServiços prestados: " + question.trim().replace(/[.!?]+$/g, "") + "\nÁrea de atuação: A indicar pelo anunciante\nContactos: A indicar pelo anunciante\n\nEste texto é apenas um rascunho; ainda não foi publicado. Quer corrigir ou acrescentar alguma informação?";
+    const title = "Serviços de " + serviceDescription.slice(0, 65);
+    return "Rascunho do anúncio\n\nTítulo: " + title + "\nCategoria: «Profissionais e Serviços»\n\nDescrição:\n" + nameLine + "\nServiços prestados: " + serviceDescription + "\nÁrea de atuação: " + serviceArea + "\nContactos: A indicar pelo anunciante\n\nEste texto é apenas um rascunho; ainda não foi publicado. Quer corrigir ou acrescentar alguma informação?";
   }
   if (has("quero vender o meu carro", "quero vender meu carro", "quero vender carro", "pretendo vender o carro", "quero anunciar o meu carro", "quero vender a minha viatura", "quero vender uma viatura", "vender automovel")) {
     return "Claro que sim! 🚗 O CaboVerde Conecta é um ótimo lugar para divulgar o seu carro. Vamos preparar um anúncio apelativo na categoria «Viaturas». Para começar, qual é a marca e o modelo do carro?";
