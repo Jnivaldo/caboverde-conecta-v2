@@ -20,7 +20,12 @@ type PaymentRow = {
   admin_note: string | null;
   created_at: string;
 };
-type Props = { userId: string | null; listings: ListingItem[]; canAdmin: boolean };
+type Props = {
+  userId: string | null;
+  listings: ListingItem[];
+  canAdmin: boolean;
+  onPaymentReviewed?: (listingId: string, decision: "approved" | "rejected") => void;
+};
 const card: React.CSSProperties = {
   display: "grid", gap: ".7rem", padding: "1rem", borderRadius: 13,
   border: "1px solid rgba(96,165,250,.28)", background: "rgba(15,27,46,.88)"
@@ -38,7 +43,7 @@ const statusLabel = (status: PaymentRow["status"]) =>
   status === "approved" ? "Aprovado" : status === "rejected" ? "Rejeitado" : "Em análise";
 const dateLabel = (value: string) => new Date(value).toLocaleString("pt-PT");
 
-export default function ListingPaymentsPanel({ userId, listings, canAdmin }: Props) {
+export default function ListingPaymentsPanel({ userId, listings, canAdmin, onPaymentReviewed }: Props) {
   const [rows, setRows] = useState<PaymentRow[]>([]);
   const [titles, setTitles] = useState<Record<string, string>>({});
   const [bankByListing, setBankByListing] = useState<Record<string, "BCA" | "BCN">>({});
@@ -109,7 +114,10 @@ export default function ListingPaymentsPanel({ userId, listings, canAdmin }: Pro
       p_payment_id: row.id, p_decision: decision, p_admin_note: null
     });
     if (error) setFeedback("Não foi possível rever o pagamento: " + error.message);
-    else setFeedback(decision === "approved" ? "Pagamento aprovado. O estado do pagamento foi atualizado." : "Pagamento rejeitado.");
+    else {
+      setFeedback(decision === "approved" ? "Pagamento aprovado. O anúncio segue para a análise de conteúdo." : "Comprovativo rejeitado. O anunciante pode enviar um comprovativo corrigido.");
+      onPaymentReviewed?.(row.listing_id, decision);
+    }
     await load(); setBusy(null);
   }
 
