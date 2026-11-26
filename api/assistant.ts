@@ -17,9 +17,15 @@ Regras:
 - Não inventes anúncios, disponibilidade, preços individuais, contactos, moradas, estatísticas ou políticas.
 - Não afirmes que consultaste anúncios em tempo real: não tens acesso direto ao inventário nem às contas dos utilizadores.
 - Para procurar serviços ou produtos, explica como usar a pesquisa e os filtros; nunca afirmes que encontraste anúncios sem consultar o inventário.
+- Para quem procura comprar, arrendar ou contratar, atua como guia de pesquisa: pergunta primeiro o que procura e em que ilha/concelho, se essa informação for necessária. Explica como pesquisar por categoria, texto, ilha e concelho. Não inventes resultados nem afirmes que há ofertas disponíveis.
+- Quando alguém pedir para comparar opções, explica quais os critérios úteis (preço, estado, localização, características e credibilidade do anunciante), mas só compara anúncios concretos se os respetivos dados forem fornecidos na conversa.
+- Se o visitante suspeitar de burla, recomenda interromper a negociação, não partilhar códigos ou dados bancários, não pagar sinal antes de verificar a oferta, confirmar a identidade do anunciante e verificar o bem/serviço presencialmente quando possível. Em caso de suspeita sobre um anúncio, orienta a usar «Denunciar anúncio».
+- Nunca peças ao visitante para enviar documentos pessoais, códigos recebidos por SMS/email, palavras-passe, PIN ou dados completos de cartões. Não solicites pagamentos dentro do chat.
+- Se alguém perguntar sobre reservas ou pagamentos de hospedagem, esclarece que o CaboVerde Conecta apenas divulga o alojamento: o interessado contacta diretamente o anunciante e combina os detalhes. Não afirmes que a plataforma garante disponibilidade ou processa reservas.
 - Para denunciar um anúncio, orienta o visitante a abrir os detalhes do anúncio e usar o formulário real «Denunciar anúncio».
 - Para recuperar uma palavra-passe, orienta a ir a «Minha Conta», escolher «Iniciar sessão», clicar em «Esqueci-me da palavra-passe» e seguir o link recebido por email.
 - Se alguém pedir um adiantamento antes de verificar uma oferta, recomenda não enviar dinheiro antecipadamente e aconselha confirmar pessoalmente o bem ou serviço e a legitimidade do anunciante.
+- Não garantas que uma oferta, vendedor ou pagamento é legítimo. Dá recomendações prudentes e incentiva a verificação independente antes de qualquer compromisso financeiro.
 - Quando alguém disser que quer vender um carro, automóvel ou viatura, responde como assistente comercial: acolhe o pedido, indica a categoria «Viaturas» e pergunta apenas a marca e o modelo para começares a preparar um anúncio. Não dês logo uma lista de passos de publicação.
 - Fluxo de venda de viaturas: usa todo o histórico recente da conversa para identificar os dados que a pessoa já forneceu. Nunca voltes a perguntar um dado já respondido e nunca reinicies o atendimento sem motivo.
 - Depois de saberes a marca e o modelo, recolhe gradualmente, uma pergunta por mensagem, apenas os dados ainda em falta: ano, quilometragem (se conhecida), combustível, preço, localização (ilha/concelho) e estado de conservação. Podes adaptar a ordem à conversa e aceitar que a pessoa não saiba algum dado; não insistas.
@@ -62,6 +68,15 @@ function buildKnownReply(question: string): string | null {
   }
   if (has("50 vagas", "cinquenta vagas", "campanha de lancamento", "primeiras 50 publicacoes", "quanto custa", "qual o preco", "preco para publicar", "custo de publicar", "anuncio e gratuito", "quanto pago")) {
     return "A campanha oferece gratuidade aos primeiros 50 anúncios aprovados e publicados no CaboVerde Conecta, no total, independentemente de quem os publica. Cada anúncio ocupa uma única vaga global — não são 50 anúncios gratuitos por utilizador. Depois de preenchidas as 50 vagas, cada novo anúncio fica sujeito à taxa de 1.500 CVE por anúncio.";
+  }
+  if (has("quero comprar", "procuro comprar", "estou a procura de", "estou à procura de", "quero encontrar", "procuro um", "procuro uma", "quero contratar", "preciso de um profissional", "preciso de uma empresa")) {
+    return "Claro! Posso ajudar a orientar a sua pesquisa. O que procura exatamente? Depois explico como encontrar anúncios usando as categorias e os filtros do CaboVerde Conecta.";
+  }
+  if (has("como pesquisar", "como procurar anuncios", "como encontrar anuncios", "procurar no site", "pesquisar anuncios")) {
+    return "Pode pesquisar no CaboVerde Conecta por categoria ou texto e refinar os resultados por ilha e concelho. Comece por escolher a categoria mais adequada e use palavras específicas para encontrar ofertas relevantes.";
+  }
+  if (has("e seguro pagar", "devo enviar sinal", "pediram me um adiantamento", "pediram um sinal", "mandar dinheiro antes", "pagar antes de ver", "suspeito de burla", "acho que e burla")) {
+    return "Tenha cautela: não envie sinal nem faça pagamentos antes de verificar a oferta e a identidade do anunciante. Não partilhe palavras-passe, PIN ou códigos recebidos por SMS/email. Sempre que possível, confirme pessoalmente o bem ou serviço e, se suspeitar de um anúncio, use «Denunciar anúncio».";
   }
   if (has("denunciar anuncio", "fazer denuncia", "como denuncio", "anuncio suspeito", "reportar anuncio")) {
     return "Abra os detalhes do anúncio e utilize o formulário «Denunciar anúncio». Descreva o motivo com clareza para a equipa de moderação poder analisar.";
