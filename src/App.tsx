@@ -960,11 +960,11 @@ export default function App() {
             />
             {authLoading ? "A verificar sessão..." : authUser ? "Sessão iniciada" : "Não autenticado"}
           </div>
-          {authUser && !authLoading && (
+          {(
             <button
               type="button"
               onClick={handleHeaderSignOut}
-              disabled={signingOut}
+              disabled={authLoading || signingOut}
               aria-label="Terminar sessão"
               style={{
                 display: "inline-flex",
@@ -982,7 +982,7 @@ export default function App() {
                 opacity: signingOut ? 0.7 : 1,
               }}
             >
-              {signingOut ? "A sair..." : "Sair"}
+              {authLoading ? "A verificar..." : signingOut ? "A sair..." : "Sair"}
             </button>
           )}
         </div>
