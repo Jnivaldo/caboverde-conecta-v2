@@ -134,7 +134,7 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
       >
         <svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></svg>
         Avisos
-        {unreadCount > 0 && <span style={{ minWidth: 19, height: 19, display: "grid", placeItems: "center", padding: "0 4px", borderRadius: 99, background: "#EF4444", color: "#fff", fontSize: ".68rem", fontWeight: 900 }}>{unreadCount > 99 ? "99+" : unreadCount}</span>}
+        {unreadCount > 0 && <span style={{ minWidth: 19, height: 19, display: "grid", placeItems: "center", padding: "0 4px", borderRadius: 99, background: "#FACC15", color: "#172033", fontSize: ".68rem", fontWeight: 900, boxShadow: "0 0 0 2px #15233A" }}>{unreadCount > 99 ? "99+" : unreadCount}</span>}
       </button>
 
       {open && (
