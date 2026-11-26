@@ -107,17 +107,10 @@ create policy procurement_offers_supplier_insert
   with check (
     supplier_id = (select auth.uid())
     and moderation_status = 'pending'
+    and (select private.can_offer_to_procurement_request(request_id))
     and exists (
       select 1 from public.profiles p
       where p.id = (select auth.uid()) and p.account_state = 'active'
-    )
-    and exists (
-      select 1 from public.procurement_requests r
-      where r.id = request_id
-        and r.requester_id <> (select auth.uid())
-        and r.moderation_status = 'approved'
-        and r.status in ('active', 'negotiating')
-        and r.expires_at > now()
     )
   );
 
@@ -208,40 +201,40 @@ where o.moderation_status = 'approved'
   and r.status in ('active', 'negotiating')
   and r.expires_at > now();
 
--- Private, minimal projection used only by authenticated RLS checks.
--- It avoids exposing requester_id through the public feed while preventing suppliers
--- from submitting offers to their own requests.
+-- Private helper is callable by authenticated users only. It returns a boolean,
+-- never the requester's UUID, and checks that the request is public and not self-owned.
 create schema if not exists private;
 revoke all on schema private from public, anon;
 grant usage on schema private to authenticated;
 
-create or replace view private.procurement_request_offer_targets
-with (security_barrier = true)
-as
-select id, requester_id
-from public.procurement_requests
-where moderation_status = 'approved'
-  and status in ('active', 'negotiating')
-  and expires_at > now();
+create or replace function private.can_offer_to_procurement_request(p_request_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $
+  select exists (
+    select 1
+    from public.procurement_requests r
+    where r.id = p_request_id
+      and r.requester_id <> (select auth.uid())
+      and r.moderation_status = 'approved'
+      and r.status in ('active', 'negotiating')
+      and r.expires_at > now()
+  );
+$;
 
-revoke all on private.procurement_request_offer_targets from public, anon;
-grant select on private.procurement_request_offer_targets to authenticated;
+revoke all on function private.can_offer_to_procurement_request(uuid) from public, anon;
+grant execute on function private.can_offer_to_procurement_request(uuid) to authenticated;
 
--- Supplier insert validation uses the public projection plus a private ownership check.
 drop policy if exists procurement_offers_supplier_insert_public_request on public.procurement_offers;
 create policy procurement_offers_supplier_insert_public_request
   on public.procurement_offers for insert to authenticated
   with check (
     supplier_id = (select auth.uid())
     and moderation_status = 'pending'
-    and exists (
-      select 1 from public.public_procurement_requests pr
-      where pr.id = request_id
-    )
-    and exists (
-      select 1 from private.procurement_request_offer_targets t
-      where t.id = request_id and t.requester_id <> (select auth.uid())
-    )
+    and (select private.can_offer_to_procurement_request(request_id))
     and exists (
       select 1 from public.profiles p
       where p.id = (select auth.uid()) and p.account_state = 'active'
