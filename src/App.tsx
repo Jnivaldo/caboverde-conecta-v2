@@ -4,6 +4,7 @@ import { supabase } from "./lib/supabase";
 import AuthPanel from "./components/AuthPanel";
 import ListingMediaPicker from "./components/ListingMediaPicker";
 import ListingMediaManager from "./components/ListingMediaManager";
+import ProcuroOfereco from "./components/ProcuroOfereco";
 
 import {
   type Listing,
@@ -235,7 +236,7 @@ function ListingDescription({ description }: { description: string }) {
 }
 
 export default function App() {
-  const [tab, setTab] = useState<"home" | "publish" | "account" | "admin">("home");
+  const [tab, setTab] = useState<"home" | "publish" | "account" | "admin" | "requests">("home");
   const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
   const [auditLogs, setAuditLogs] = useState<string[]>([]);
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -908,6 +909,7 @@ export default function App() {
             {[
               { key: "home", label: "Início" },
               { key: "publish", label: "Publicar Anúncio" },
+              { key: "requests", label: "Procuro & Ofereço" },
               { key: "account", label: "Minha Conta" },
               ...(canAdmin ? [{ key: "admin", label: "Administração" }] : []),
             ].map((item) => {
@@ -1280,6 +1282,10 @@ export default function App() {
               </div>
             )}
           </>
+        )}
+
+        {tab === "requests" && (
+          <ProcuroOfereco onOfferClick={() => setTab("publish")} />
         )}
 
         {tab === "publish" && (
