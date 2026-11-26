@@ -152,7 +152,7 @@ function mapDatabaseListing(row: Record<string, unknown>): Listing {
     ownerAccountId: String(row.owner_id ?? ""),
     listingStatus: row.listing_status as ListingStatus,
     paymentStatus: (row.payment_status ?? "pending") as PaymentStatus,
-    paymentMethod: "free_launch",
+    paymentMethod: (row.payment_method ?? "free_launch") as PaymentMethod,
     proofRef: row.proof_ref ? String(row.proof_ref) : undefined,
     slotNumber: typeof row.slot_number === "number" ? row.slot_number : undefined,
     createdAt: String(row.created_at ?? "").slice(0, 10),
