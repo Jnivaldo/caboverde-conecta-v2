@@ -9,6 +9,7 @@ import ProcuroHomeHighlights from "./components/ProcuroHomeHighlights";
 import ProcuroAdminPanel from "./components/ProcuroAdminPanel";
 import NotificationCenter from "./components/NotificationCenter";
 import MonetizationPanel from "./components/MonetizationPanel";
+import ListingPaymentsPanel from "./components/ListingPaymentsPanel";
 
 import {
   type Listing,
@@ -1595,6 +1596,7 @@ export default function App() {
 
         {tab === "account" && (
           <section style={panelStyle}>
+            {authUser && <ListingPaymentsPanel userId={authUser.id} listings={accountListings} canAdmin={false} />}
             <span style={eyebrowStyle("#38D6A0")}>ÁREA DO ANUNCIANTE</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>Minha Conta</h1>
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
@@ -1763,6 +1765,7 @@ export default function App() {
         {tab === "admin" && (
           <section style={panelStyle}>
             <MonetizationPanel canAdmin={canAdmin} />
+            <ListingPaymentsPanel userId={authUser?.id ?? null} listings={accountListings} canAdmin={canAdmin} />
             <ProcuroAdminPanel canAdmin={canAdmin} />
             <span style={eyebrowStyle("#EC4899")}>GOVERNANÇA E MODERAÇÃO</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>
