@@ -62,7 +62,7 @@ alter table public.procurement_offers enable row level security;
 revoke all on public.procurement_requests from anon;
 revoke all on public.procurement_offers from anon;
 grant select, insert, update on public.procurement_requests to authenticated;
-grant select, insert on public.procurement_offers to authenticated;
+grant select, insert, update on public.procurement_offers to authenticated;
 
 drop policy if exists procurement_requests_owner_select on public.procurement_requests;
 create policy procurement_requests_owner_select
@@ -120,6 +120,13 @@ create policy procurement_offers_supplier_insert
         and r.expires_at > now()
     )
   );
+
+-- Only moderators/master admins can approve or reject supplier offers.
+drop policy if exists procurement_offers_admin_update on public.procurement_offers;
+create policy procurement_offers_admin_update
+  on public.procurement_offers for update to authenticated
+  using ((select public.is_conecta_admin()))
+  with check ((select public.is_conecta_admin()));
 
 create or replace function public.procurement_set_updated_at()
 returns trigger
