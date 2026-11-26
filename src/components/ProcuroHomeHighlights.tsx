@@ -29,6 +29,16 @@ function getRequestHighlight(title: string) {
   return { label: match[1], title: title.trim().replace(match[0], "").trim() };
 }
 
+const requestPalettes = [
+  { badge: "#B91C1C", text: "#FCA5A5", border: "rgba(248,113,113,.55)", glow: "rgba(239,68,68,.2)", surface: "linear-gradient(120deg,rgba(127,29,29,.48),rgba(7,11,24,.76))" },
+  { badge: "#0369A1", text: "#7DD3FC", border: "rgba(56,189,248,.55)", glow: "rgba(14,165,233,.2)", surface: "linear-gradient(120deg,rgba(7,89,133,.48),rgba(7,11,24,.76))" },
+  { badge: "#047857", text: "#6EE7B7", border: "rgba(52,211,153,.55)", glow: "rgba(16,185,129,.2)", surface: "linear-gradient(120deg,rgba(6,78,59,.48),rgba(7,11,24,.76))" },
+  { badge: "#6D28D9", text: "#C4B5FD", border: "rgba(167,139,250,.58)", glow: "rgba(139,92,246,.2)", surface: "linear-gradient(120deg,rgba(76,29,149,.48),rgba(7,11,24,.76))" },
+  { badge: "#B45309", text: "#FCD34D", border: "rgba(251,191,36,.58)", glow: "rgba(245,158,11,.2)", surface: "linear-gradient(120deg,rgba(120,53,15,.48),rgba(7,11,24,.76))" },
+  { badge: "#BE185D", text: "#F9A8D4", border: "rgba(244,114,182,.58)", glow: "rgba(236,72,153,.2)", surface: "linear-gradient(120deg,rgba(131,24,67,.48),rgba(7,11,24,.76))" },
+  { badge: "#4D7C0F", text: "#BEF264", border: "rgba(163,230,53,.58)", glow: "rgba(132,204,22,.2)", surface: "linear-gradient(120deg,rgba(54,83,20,.48),rgba(7,11,24,.76))" },
+];
+
 export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }) {
   const [items, setItems] = useState<PublicRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,17 +73,16 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }
     return () => window.clearInterval(timer);
   }, [items.length]);
 
+  useEffect(() => {
+    if (activeIndex >= items.length) setActiveIndex(0);
+  }, [activeIndex, items.length]);
+
   if (loading || items.length === 0) return null;
 
   const item = items[activeIndex] ?? items[0];
   const highlight = getRequestHighlight(item.title);
-  const palette = highlight.label === "OFEREÇO" || highlight.label === "DISPONÍVEL"
-    ? { badge: "#047857", glow: "rgba(16,185,129,.18)", text: "#6EE7B7", border: "rgba(52,211,153,.42)", surface: "linear-gradient(120deg,rgba(6,78,59,.42),rgba(7,11,24,.72))" }
-    : highlight.label === "VENDE-SE" || highlight.label === "ARRRENDA-SE" || highlight.label === "ARRENDA-SE" || highlight.label === "ALUGA-SE"
-    ? { badge: "#B45309", glow: "rgba(245,158,11,.18)", text: "#FCD34D", border: "rgba(251,191,36,.42)", surface: "linear-gradient(120deg,rgba(120,53,15,.42),rgba(7,11,24,.72))" }
-    : highlight.label === "PRECISO DE" || highlight.label === "NECESSITO DE" || highlight.label === "PROCURA-SE" || highlight.label === "PROCURO"
-    ? { badge: "#B91C1C", glow: "rgba(239,68,68,.2)", text: "#FCA5A5", border: "rgba(248,113,113,.48)", surface: "linear-gradient(120deg,rgba(127,29,29,.42),rgba(7,11,24,.72))" }
-    : { badge: "#1D4ED8", glow: "rgba(59,130,246,.18)", text: "#93C5FD", border: "rgba(96,165,250,.42)", surface: "linear-gradient(120deg,rgba(30,58,138,.4),rgba(7,11,24,.72))" };
+  // Cycle through a varied palette by slide position, so consecutive ads never look identical.
+  const palette = requestPalettes[activeIndex % requestPalettes.length];
 
   const move = (direction: number) => {
     setActiveIndex((current) => (current + direction + items.length) % items.length);
@@ -93,17 +102,17 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }
         <button type="button" onClick={onOpen} style={{ border: "1px solid rgba(96,165,250,.45)", borderRadius: 10, padding: ".65rem .9rem", background: "#2563EB", color: "#fff", fontWeight: 750, cursor: "pointer" }}>Ver todos os pedidos</button>
       </div>
 
-      <article key={item.id} aria-live="polite" style={{ minWidth: 0, padding: "clamp(1rem,3vw,1.4rem)", borderRadius: 14, border: `1px solid ${palette.border}`, background: palette.surface, boxShadow: `0 12px 30px ${palette.glow}`, animation: "procuroSlideIn 1.05s cubic-bezier(.18,.78,.22,1) both" }}>
+      <article key={item.id} aria-live="polite" style={{ minWidth: 0, padding: "clamp(1rem,3vw,1.4rem)", borderRadius: 14, border: `1px solid ${palette.border}`, background: palette.surface, boxShadow: `0 12px 30px ${palette.glow}`, animation: "procuroSlideIn .9s cubic-bezier(.18,.78,.22,1) both", willChange: "transform, opacity, filter" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".6rem", flexWrap: "wrap" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", padding: ".28rem .62rem", borderRadius: 6, background: palette.badge, color: "#FFFFFF", fontSize: ".72rem", fontWeight: 900, letterSpacing: ".08em", boxShadow: "0 2px 8px rgba(185,28,28,.3)" }}>{highlight.label}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", padding: ".28rem .62rem", borderRadius: 6, background: palette.badge, color: "#FFFFFF", fontSize: ".72rem", fontWeight: 900, letterSpacing: ".08em", boxShadow: `0 3px 12px ${palette.glow}` }}>{highlight.label}</span>
           <span style={{ color: "#8EF0C8", fontSize: ".78rem", fontWeight: 750 }}>{item.category}</span>
           <span style={{ color: "#8FA2BD", fontSize: ".75rem" }}>{item.municipality}, {item.island}</span>
         </div>
         <h3 style={{ margin: ".8rem 0 .45rem", color: palette.text, fontSize: "clamp(1.18rem,2.8vw,1.55rem)", lineHeight: 1.3, fontWeight: 850 }}>{highlight.title || item.title}</h3>
-        <p style={{ margin: 0, color: "#B5C3D8", fontSize: ".9rem", lineHeight: 1.6, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 3, overflow: "hidden" }}>{item.description}</p>
+        <p style={{ margin: 0, color: "#D0D9E7", fontSize: ".9rem", lineHeight: 1.6, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 3, overflow: "hidden" }}>{item.description}</p>
         {item.budget && <strong style={{ display: "block", marginTop: ".65rem", color: "#F8FAFC", fontSize: ".88rem" }}>Orçamento: {item.budget}</strong>}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".8rem", flexWrap: "wrap", marginTop: "1rem" }}>
-          <button type="button" onClick={onOpen} style={{ padding: ".62rem .9rem", border: "1px solid rgba(147,197,253,.35)", borderRadius: 9, background: "rgba(37,99,235,.16)", color: "#BFDBFE", fontWeight: 800, cursor: "pointer" }}>Ver pedido e responder →</button>
+          <button type="button" onClick={onOpen} style={{ padding: ".62rem .9rem", border: `1px solid ${palette.border}`, borderRadius: 9, background: palette.glow, color: palette.text, fontWeight: 800, cursor: "pointer" }}>Ver pedido e responder →</button>
           <span style={{ color: "#9AABC2", fontSize: ".78rem", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>Pedido {activeIndex + 1} de {items.length}</span>
         </div>
       </article>
@@ -119,7 +128,7 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }
           <button type="button" aria-label="Próximo pedido" onClick={() => move(1)} style={{ width: 36, height: 36, borderRadius: 999, border: "1px solid rgba(181,195,216,.28)", background: "rgba(255,255,255,.06)", color: "#F8FAFC", fontSize: "1.15rem", cursor: "pointer" }}>›</button>
         </div>
       )}
-      <style>{`@keyframes procuroSlideIn { from { opacity: 0; transform: translateX(54px) scale(.975); filter: blur(2px); } to { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); } } @media (prefers-reduced-motion: reduce) { article { animation: none !important; } }`}</style>
+      <style>{`@keyframes procuroSlideIn { 0% { opacity: 0; transform: translate3d(64px,0,0) scale(.96); filter: blur(3px); } 65% { opacity: 1; transform: translate3d(-5px,0,0) scale(1.005); filter: blur(0); } 100% { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: none; } }`}</style>
     </section>
   );
 }
