@@ -201,6 +201,24 @@ where o.moderation_status = 'approved'
   and r.status in ('active', 'negotiating')
   and r.expires_at > now();
 
+-- Supplier insert validation uses the safe public projection (the base request table
+-- intentionally remains private to its owner/admin).
+drop policy if exists procurement_offers_supplier_insert_public_request on public.procurement_offers;
+create policy procurement_offers_supplier_insert_public_request
+  on public.procurement_offers for insert to authenticated
+  with check (
+    supplier_id = (select auth.uid())
+    and moderation_status = 'pending'
+    and exists (
+      select 1 from public.public_procurement_requests pr
+      where pr.id = request_id
+    )
+    and exists (
+      select 1 from public.profiles p
+      where p.id = (select auth.uid()) and p.account_state = 'active'
+    )
+  );
+
 grant select on public.public_procurement_requests to anon, authenticated;
 grant select on public.public_procurement_offers to anon, authenticated;
 
