@@ -5,6 +5,7 @@ type ChatMessage = { role: "user" | "assistant"; content: string };
 const SYSTEM_GUIDANCE = `
 És o Conecta Assistente, o apoio virtual oficial do CaboVerde Conecta, uma plataforma de classificados e serviços em Cabo Verde.
 Responde em português claro, simpático e profissional. Se o utilizador escrever noutra língua, acompanha-o nessa língua.
+Fala como um atendente humano e próximo, com português natural usado em Cabo Verde, sem imitar nem exagerar gírias. Prefere frases curtas e calorosas, reconhece o que a pessoa já disse e avança a conversa sem repetir instruções. Evita elogios automáticos, linguagem publicitária, introduções longas e listas quando uma frase simples resolve. Faz no máximo uma pergunta útil de cada vez. Usa emojis com moderação e só quando combinarem com o momento.
 Informações confirmadas:
 - As categorias principais oficiais são: Imóveis, Viaturas, Produtos, Hospedagem, Profissionais, Empresas, Serviços, Turismo e Experiências, Agricultura e Pecuária, Máquinas e Equipamentos, Desporto e Lazer e Oportunidades. Usa sempre estes nomes exatos; nunca substituas «Viaturas» por «Veículos».
 - Em Viaturas existem subcategorias como Carros ligeiros, Motas e scooters, Carrinhas e comerciais, Pick-ups, Jipes e todo-o-terreno, Camiões e pesados, Autocarros e minibus, Táxis e transporte coletivo, Barcos e embarcações, Peças e acessórios e outras.
@@ -88,6 +89,10 @@ function normalizeQuestion(value: string): string {
     .replace(/\b(procuro|prokuro|busco)\b/g, " procuro ")
     .replace(/\b(precizu|presiso|presizo)\b/g, " preciso ")
     .replace(/\b(karro|caru)\b/g, " carro ")
+    .replace(/\b(dum)\b/g, " de um ")
+    .replace(/\b(duma)\b/g, " de uma ")
+    .replace(/\b(numa)\b/g, " em uma ")
+    .replace(/\b(num)\b/g, " em um ")
     .replace(/\b(caza)\b/g, " casa ")
     .replace(/\b(aluga|alugar|aluguer)\b/g, " arrendar ")
     .replace(/\b(tenho interesse em|estou interessado em|estou interessada em)\b/g, " procuro ")
@@ -107,7 +112,8 @@ function buildKnownReply(question: string, userHistory: string[] = []): string |
     return "A campanha oferece gratuidade aos primeiros 50 anúncios aprovados e publicados no CaboVerde Conecta, no total, independentemente de quem os publica. Cada anúncio ocupa uma única vaga global — não são 50 anúncios gratuitos por utilizador. Depois de preenchidas as 50 vagas, cada novo anúncio fica sujeito à taxa de 1.500 CVE por anúncio.";
   }
   const buyerIntent = has("quero comprar", "procuro comprar", "estou a procura de", "quero encontrar", "procuro um", "procuro uma", "quero contratar", "preciso de um profissional", "preciso de uma empresa", "procuro", "preciso de", "quero uma casa", "quero um carro", "tem casa", "tem carro", "alguem que", "alguem para", "quem faz", "quem vende", "onde encontro")
-    || /\b(procuro|preciso|quero|busco)\b.{0,55}\b(casa|apartamento|terreno|carro|viatura|mota|quarto|eletricista|canalizador|pintor|mecanico|pedreiro|produto|servico|servico|empresa|profissional|alojamento|hotel|trator|maquina|emprego)\b/.test(q)
+    || /\b(procuro|preciso|quero|busco)\b.{0,55}\b(casa|apartamento|terreno|carro|viatura|mota|quarto|eletricista|canalizador|pintor|mecanico|pedreiro|produto|servico|empresa|profissional|alojamento|hotel|trator|maquina|emprego)\b/.test(q)
+    || /\b(estou a procura de|a procura de)\b.{0,55}\b(casa|apartamento|terreno|carro|viatura|mota|quarto|eletricista|canalizador|pintor|mecanico|pedreiro|produto|empresa|profissional|alojamento|hotel|trator|maquina|emprego)\b/.test(q)
     || /\b(tem|ha|existe)\b.{0,35}\b(casa|apartamento|terreno|carro|viatura|quarto|eletricista|canalizador|pintor|mecanico|pedreiro|produto|servico|empresa|alojamento|hotel)\b/.test(q)
     || (q.length <= 90 && /quero comprar|procuro comprar|estou a procura de|quero contratar|preciso de um profissional|preciso de uma empresa|quero uma casa|quero um carro|tem casa|tem carro/.test(context));
   if (buyerIntent) {
@@ -137,6 +143,7 @@ function buildKnownReply(question: string, userHistory: string[] = []): string |
                           : null;
     if (!category) return "Claro! Posso orientar a sua pesquisa. O que procura exatamente — um produto, imóvel, viatura, alojamento, profissional ou outro serviço? Assim ajudo a escolher a categoria certa.";
     if (!hasArea) return "Percebi que procura na categoria «" + category + "». Em que ilha e concelho pretende pesquisar? Assim poderá aplicar os filtros de localização no site.";
+    if (category === "Viaturas" && /\bpraia\b/.test(context)) return "Percebi — procura um carro na Praia. Na categoria «Viaturas», pesquise por «carro» e selecione Praia na localização. Tem alguma marca ou modelo em mente?";
     const keywords = category === "Imóveis" ? "tipo de imóvel e «venda» ou «arrendamento»"
       : category === "Hospedagem" ? "tipo de alojamento e características da estadia"
       : category === "Viaturas" ? "marca, modelo e tipo de viatura"
