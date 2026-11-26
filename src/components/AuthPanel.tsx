@@ -9,10 +9,11 @@ function getAuthRedirectUrl() {
 
 interface AuthPanelProps {
   user: User | null;
+  onSignedIn: (user: User) => void;
   onSignedOut: () => void;
 }
 
-export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
+export default function AuthPanel({ user, onSignedIn, onSignedOut }: AuthPanelProps) {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,17 +36,19 @@ export default function AuthPanel({ user, onSignedOut }: AuthPanelProps) {
           options: { emailRedirectTo: getAuthRedirectUrl() },
         });
         if (error) throw error;
+        if (data.session?.user) onSignedIn(data.session.user);
         setFeedback(
           data.session
             ? "Conta criada e sessão iniciada."
             : "Conta criada. Verifique o seu email e confirme o endereço antes de iniciar sessão."
         );
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
         });
         if (error) throw error;
+        if (data.user) onSignedIn(data.user);
         setFeedback("Sessão iniciada com sucesso.");
       }
     } catch (error) {
