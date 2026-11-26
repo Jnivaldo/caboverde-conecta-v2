@@ -405,6 +405,9 @@ export default function App() {
   const [subcategory, setSubcategory] = useState("");
   const [island, setIsland] = useState("");
   const [municipality, setMunicipality] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [sortOrder, setSortOrder] = useState("newest");
   const [lightbox, setLightbox] = useState<{ src: string; title: string; images: { id: string; url: string }[]; index: number } | null>(null);
 
   useEffect(() => {
@@ -482,27 +485,42 @@ export default function App() {
     return () => { active = false; };
   }, [listings]);
 
-  const publicListings = useMemo(
-    () =>
-      listings.filter((ad) => {
-        if (ad.listingStatus !== "published") return false;
-        if (category && ad.category !== category) return false;
-        if (subcategory && ad.subcategory !== subcategory) return false;
-        if (island && ad.island !== island) return false;
-        if (municipality && ad.municipality !== municipality) return false;
-        if (query.trim()) {
-          const q = query.toLowerCase();
-          const hit =
-            ad.title.toLowerCase().includes(q) ||
-            ad.description.toLowerCase().includes(q) ||
-            ad.island.toLowerCase().includes(q) ||
-            ad.municipality.toLowerCase().includes(q);
-          if (!hit) return false;
-        }
-        return true;
-      }),
-    [listings, category, subcategory, island, municipality, query]
-  );
+  const publicListings = useMemo(() => {
+    const parsePrice = (value: string) => {
+      const digits = value.replace(/[^0-9]/g, "");
+      return digits ? Number(digits) : null;
+    };
+    const min = minPrice.trim() ? parsePrice(minPrice) : null;
+    const max = maxPrice.trim() ? parsePrice(maxPrice) : null;
+    const filtered = listings.filter((ad) => {
+      if (ad.listingStatus !== "published") return false;
+      if (category && ad.category !== category) return false;
+      if (subcategory && ad.subcategory !== subcategory) return false;
+      if (island && ad.island !== island) return false;
+      if (municipality && ad.municipality !== municipality) return false;
+      if (query.trim()) {
+        const q = query.trim().toLocaleLowerCase("pt");
+        const searchable = [ad.title, ad.description, ad.category, ad.subcategory, ad.island, ad.municipality].join(" ").toLocaleLowerCase("pt");
+        if (!searchable.includes(q)) return false;
+      }
+      const numericPrice = parsePrice(ad.price);
+      if (min !== null && (numericPrice === null || numericPrice < min)) return false;
+      if (max !== null && (numericPrice === null || numericPrice > max)) return false;
+      return true;
+    });
+    if (sortOrder === "low" || sortOrder === "high") {
+      filtered.sort((a, b) => {
+        const pa = parsePrice(a.price), pb = parsePrice(b.price);
+        if (pa === null && pb === null) return 0;
+        if (pa === null) return 1;
+        if (pb === null) return -1;
+        return sortOrder === "low" ? pa - pb : pb - pa;
+      });
+    } else {
+      filtered.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    }
+    return filtered;
+  }, [listings, category, subcategory, island, municipality, query, minPrice, maxPrice, sortOrder]);
 
   function addAudit(entry: string) {
     setAuditLogs((prev) => [`[${new Date().toLocaleTimeString()}] ${entry}`, ...prev]);
@@ -1138,6 +1156,13 @@ export default function App() {
                   </option>
                 ))}
               </select>
+              <input type="number" min="0" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} placeholder="Preço mínimo" aria-label="Preço mínimo" style={{ ...inputStyle, minWidth: 120 }} />
+              <input type="number" min="0" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="Preço máximo" aria-label="Preço máximo" style={{ ...inputStyle, minWidth: 120 }} />
+              <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} aria-label="Ordenar anúncios" style={inputStyle}>
+                <option value="newest">Mais recentes</option>
+                <option value="low">Preço mais baixo</option>
+                <option value="high">Preço mais alto</option>
+              </select>
               <button
                 type="button"
                 onClick={() => {
@@ -1146,10 +1171,13 @@ export default function App() {
                   setSubcategory("");
                   setIsland("");
                   setMunicipality("");
+                  setMinPrice("");
+                  setMaxPrice("");
+                  setSortOrder("newest");
                 }}
                 style={secondaryBtnStyle}
               >
-                Limpar
+                Limpar filtros
               </button>
             </div>
 
@@ -1183,6 +1211,7 @@ export default function App() {
               })}
             </div>
 
+            <div style={{ margin: "-0.85rem 0 1rem", color: "#9FB0C8", fontSize: "0.84rem" }} aria-live="polite">{publicListings.length} anúncio(s) encontrado(s)</div>
             {publicListings.length === 0 ? (
               <div style={{ ...panelStyle, textAlign: "center", color: "#B5C3D8" }}>
                 <strong style={{ color: "#F8FAFC" }}>Ainda não existem anúncios publicados.</strong>
