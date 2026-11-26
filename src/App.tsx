@@ -7,6 +7,7 @@ import ListingMediaManager from "./components/ListingMediaManager";
 import ProcuroOfereco from "./components/ProcuroOfereco";
 import ProcuroHomeHighlights from "./components/ProcuroHomeHighlights";
 import ProcuroAdminPanel from "./components/ProcuroAdminPanel";
+import NotificationCenter from "./components/NotificationCenter";
 
 import {
   type Listing,
@@ -958,7 +959,7 @@ export default function App() {
               />
               {authLoading ? "A verificar sessão..." : authUser ? "Sessão iniciada" : "Não autenticado"}
             </div>
-
+            <NotificationCenter userId={authUser?.id ?? null} onNavigate={(nextTab) => setTab(nextTab)} />
           </div>
         </div>
       </header>
