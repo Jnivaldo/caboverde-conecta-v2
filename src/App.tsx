@@ -441,6 +441,7 @@ export default function App() {
   const [feedback, setFeedback] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [publicationPreviewOpen, setPublicationPreviewOpen] = useState(false);
 
   // Assistente flutuante
   const [chatOpen, setChatOpen] = useState(false);
@@ -848,6 +849,12 @@ export default function App() {
     });
     addAudit(`Ação administrativa gravada no servidor em ${id}: ${action}.`);
   }
+
+  const previewCategory = useCustomCategory ? customCategory.trim() : pubCategory;
+  const previewSubcategory = useCustomCategory || useCustomSubcategory ? customSubcategory.trim() : pubSubcategory;
+  const previewTitle = title.trim() || "O título do seu anúncio aparecerá aqui";
+  const previewDescription = description.trim() || "A descrição que escrever será apresentada nesta área.";
+  const previewContacts = [whatsapp.trim() && "WhatsApp", phone.trim() && "Telefone"].filter(Boolean).join(" · ") || "Adicione um contacto";
 
   return (
     <div
@@ -1279,6 +1286,9 @@ export default function App() {
                 <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>1. Dados Principais e Localização</strong>
                 <input
                   type="text"
+                  required
+                  minLength={5}
+                  maxLength={100}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Título do anúncio (ex.: Moradia T2 no Tarrafal)"
@@ -1433,11 +1443,28 @@ export default function App() {
                 />
 
                 <textarea
-                  rows={3}
+                  rows={4}
+                  maxLength={3000}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Descreva o imóvel, viatura, produto, serviço ou oportunidade..."
                   style={inputStyle}
+                />
+                <div style={{ display: "flex", justifyContent: "flex-end", color: "#94A3B8", fontSize: ".74rem", marginTop: "-.55rem" }}>
+                  {description.length}/3000 caracteres
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", color: "#94A3B8", fontSize: ".74rem", marginTop: "-.55rem" }}>
+                  {title.length}/100 caracteres
+                </div>
+                {/* preview counters are informational; server-side validation remains authoritative */ }
+                <textarea
+                  hidden
+                  rows={4}
+                  maxLength={3000}
+                  value={description}
+                  readOnly
+                  aria-hidden="true"
+                />
                 />
               </div>
 
@@ -1466,6 +1493,35 @@ export default function App() {
                     <option value="free_launch">Campanha gratuita esgotada — pagamentos ainda indisponíveis</option>
                   )}
                 </select>
+              </div>
+
+              <div style={{ ...subCardStyle, border: "1px solid rgba(96,165,250,.38)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".8rem", flexWrap: "wrap" }}>
+                  <div>
+                    <strong style={{ color: "#F8FAFC", fontSize: ".95rem" }}>Pré-visualização do anúncio</strong>
+                    <p style={{ margin: ".25rem 0 0", color: "#AFC0D6", fontSize: ".78rem" }}>Veja como os dados principais ficarão antes de enviar para análise.</p>
+                  </div>
+                  <button type="button" onClick={() => setPublicationPreviewOpen((open) => !open)} style={{ ...secondaryBtnStyle, borderColor: "#60A5FA", color: "#BFDBFE" }}>
+                    {publicationPreviewOpen ? "Ocultar pré-visualização" : "Ver pré-visualização"}
+                  </button>
+                </div>
+                {publicationPreviewOpen && (
+                  <article style={{ border: "1px solid rgba(96,165,250,.5)", borderRadius: 13, overflow: "hidden", background: "linear-gradient(145deg,#111D31,#0B1220)", display: "grid", gap: ".7rem", padding: "1rem" }}>
+                    <div style={{ display: "flex", gap: ".4rem", flexWrap: "wrap" }}>
+                      <span style={{ ...badgeStyle("#1D4ED8"), fontSize: ".72rem" }}>{previewCategory || "Categoria"}</span>
+                      <span style={{ ...badgeStyle("#334155"), fontSize: ".72rem" }}>{previewSubcategory || "Subcategoria"}</span>
+                    </div>
+                    <h3 style={{ margin: 0, color: "#F8FAFC", fontSize: "1.12rem", lineHeight: 1.35 }}>{previewTitle}</h3>
+                    <div style={{ color: "#93C5FD", fontSize: ".82rem", fontWeight: 700 }}>{pubMunicipality}, {pubIsland}</div>
+                    <strong style={{ color: "#6EE7B7", fontSize: "1.05rem" }}>{price.trim() || "Preço a indicar"}</strong>
+                    <p style={{ margin: 0, color: "#D3DEEC", fontSize: ".86rem", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{previewDescription}</p>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap", borderTop: "1px solid rgba(181,195,216,.16)", paddingTop: ".65rem", color: "#AFC0D6", fontSize: ".78rem" }}>
+                      <span>{previewContacts}</span>
+                      <span>{mediaFiles.length} ficheiro(s) selecionado(s)</span>
+                    </div>
+                    <span style={{ color: "#FCD34D", fontSize: ".74rem", fontWeight: 750 }}>Pré-visualização privada · ainda não publicado</span>
+                  </article>
+                )}
               </div>
 
               <button type="submit" disabled={isSubmitting} style={{ ...primaryBtnStyle, opacity: isSubmitting ? 0.72 : 1, cursor: isSubmitting ? "wait" : "pointer", minHeight: 48 }}>
