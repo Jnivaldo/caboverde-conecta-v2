@@ -96,15 +96,28 @@ function buildKnownReply(question: string, userHistory: string[] = []): string |
   const buyerIntent = has("quero comprar", "procuro comprar", "estou a procura de", "estou à procura de", "quero encontrar", "procuro um", "procuro uma", "quero contratar", "preciso de um profissional", "preciso de uma empresa")
     || (q.length <= 60 && /quero comprar|procuro comprar|estou a procura de|quero contratar|preciso de um profissional|preciso de uma empresa/.test(context));
   if (buyerIntent) {
-    const specificNeed = /\b(carro|viatura|mota|motociclo|casa|apartamento|terreno|terras|quarto|hospedagem|hotel|alojamento|eletricista|canalizador|pintor|mecanico|mecânico|pedreiro|limpeza|empresa|computador|telemovel|telemóvel|telefone|frigorifico|frigorífico|sofa|sofá|mobilia|mobília|roupa|gado|cabra|porco|maquina|máquina|equipamento|barco)\b/.test(context);
-    const hasArea = /\b(santiago|sao vicente|são vicente|sal|boa vista|fogo|maio|brava|santo antao|santo antão|sao nicolau|são nicolau|tarrafal|praia|assomada|mindelo|sal rei|espargos)\b/.test(context);
-    if (specificNeed && !hasArea) {
-      return "Percebi o que procura. Em que ilha e concelho pretende encontrar essa oferta? Assim posso indicar-lhe os filtros certos para a pesquisa.";
-    }
-    if (specificNeed && hasArea) {
-      return "Já percebi o que procura e a zona pretendida. Há alguma característica essencial ou limite de orçamento que queira usar para afinar a pesquisa? Pode indicar apenas o que considerar importante.";
-    }
-    return "Claro! Posso orientar a sua pesquisa. O que procura exatamente — um produto, imóvel, alojamento ou serviço? Depois ajudo a escolher a categoria e os filtros adequados.";
+    const hasArea = /\b(santiago|sao vicente|sal|boa vista|fogo|maio|brava|santo antao|sao nicolau|tarrafal|praia|assomada|mindelo|sal rei|espargos|pedra badejo|ribeira grande|ponta do sol)\b/.test(context);
+    const category = /\b(arrendar|arrendamento|alugar casa|aluguer de casa|casa para morar|apartamento para morar)\b/.test(context)
+      ? "Imóveis"
+      : /\b(hospedagem|hotel|pousada|alojamento|estadia|passar ferias|quarto por noite)\b/.test(context)
+        ? "Hospedagem"
+        : /\b(carro|viatura|mota|motociclo|carrinha|jipe|camiao|barco)\b/.test(context)
+          ? "Viaturas"
+          : /\b(casa|apartamento|terreno|terras|predio|moradia|imovel|venda de casa)\b/.test(context)
+            ? "Imóveis"
+            : /\b(eletricista|canalizador|pintor|mecanico|pedreiro|limpeza|advogado|arquiteto|profissional)\b/.test(context)
+              ? "Profissionais"
+              : /\b(computador|telemovel|telefone|frigorifico|sofa|mobilia|roupa|gado|cabra|porco|maquina|equipamento|produto)\b/.test(context)
+                ? "Produtos"
+                : null;
+    if (!category) return "Claro! Posso orientar a sua pesquisa. O que procura exatamente — um produto, imóvel, alojamento, viatura ou serviço? Assim ajudo a escolher a categoria certa.";
+    if (!hasArea) return "Percebi que procura uma oferta na categoria «" + category + "». Em que ilha e concelho pretende pesquisar? Assim poderá aplicar os filtros de localização no site.";
+    const keywords = category === "Imóveis" ? "tipo de imóvel e «venda» ou «arrendamento»"
+      : category === "Hospedagem" ? "tipo de alojamento e características da estadia"
+      : category === "Viaturas" ? "marca, modelo e tipo de viatura"
+      : category === "Profissionais" ? "profissão e serviço pretendido"
+      : "nome do produto e características principais";
+    return "Para essa pesquisa, selecione «" + category + "», introduza palavras-chave como " + keywords + " e aplique os filtros da ilha e do concelho que indicou. Não consigo consultar os anúncios em tempo real; confirme os resultados no site e contacte diretamente o anunciante. Se quiser, pode dizer-me uma característica essencial para afinar as palavras-chave.";
   }
   if (has("como pesquisar", "como procurar anuncios", "como encontrar anuncios", "procurar no site", "pesquisar anuncios")) {
     return "Pode pesquisar no CaboVerde Conecta por categoria ou texto e refinar os resultados por ilha e concelho. Comece por escolher a categoria mais adequada e use palavras específicas para encontrar ofertas relevantes.";
