@@ -116,6 +116,16 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
     return "Até breve! Obrigado por visitar o CaboVerde Conecta."; 
   }
 
+  // Pedido genérico de ajuda: esclarecer a intenção sem assumir que a pessoa quer pesquisar.
+  if (/^(preciso de ajuda|precizo de ajuda|ajuda|pode ajudar|podes ajudar|tenho uma duvida|tenho duvida|uma duvida|quero informacao|preciso de informacao)$/.test(q)) {
+    return "Claro! Estou aqui para ajudar. 😊 Pretende procurar alguma coisa, publicar um anúncio ou esclarecer uma dúvida sobre a plataforma?";
+  }
+
+  // Pedido explícito de divulgação: iniciar a preparação do anúncio sem despejar categorias ou instruções.
+  if (has("quero anunciar", "pretendo anunciar", "quero publicar um anuncio", "pretendo publicar um anuncio", "quero divulgar", "pretendo divulgar", "quero colocar um anuncio", "ajuda para anunciar", "ajuda me a anunciar", "ajude me a anunciar", "quero vender algo", "quero vender uma coisa")) {
+    return "Claro! Vamos preparar o seu anúncio. 😊 O que pretende divulgar? Pode ser um imóvel, viatura, produto, serviço ou outra coisa.";
+  }
+
   if (has("quero vender o meu carro", "quero vender meu carro", "quero vender carro", "pretendo vender o carro", "quero anunciar o meu carro", "quero vender a minha viatura", "quero vender uma viatura", "vender automovel")) {
     return "Claro que sim! 🚗 O CaboVerde Conecta é um ótimo lugar para divulgar o seu carro. Vamos preparar um anúncio apelativo na categoria «Viaturas». Para começar, qual é a marca e o modelo do carro?";
   }
