@@ -155,9 +155,9 @@ function mapDatabaseListing(row: Record<string, unknown>): Listing {
 
 
 const QUICK_PROMPTS = [
-  "Como funcionam as 50 vagas gratuitas?",
-  "Quanto custa após as 50 vagas e como pagar?",
-  "Como falar com o suporte oficial?",
+  "Quero vender ou divulgar algo",
+  "Procuro um produto ou serviço",
+  "Como evitar burlas e anúncios falsos?",
 ];
 
 type ListingGalleryProps = {
@@ -1727,23 +1727,45 @@ export default function App() {
             >
               <div>
                 <strong style={{ fontSize: "0.95rem" }}>Assistente CaboVerde Conecta</strong>
-                <div style={{ fontSize: "0.75rem", color: "#38D6A0" }}>Ajuda sobre vagas, 1.500 CVE e anúncios</div>
+                <div style={{ fontSize: "0.75rem", color: "#38D6A0" }}>Apoio a compradores, vendedores e anunciantes</div>
               </div>
-              <button
-                type="button"
-                onClick={() => setChatOpen(false)}
-                style={{
-                  background: "transparent",
-                  border: "1px solid rgba(181,195,216,0.2)",
-                  color: "#F8FAFC",
-                  borderRadius: 8,
-                  padding: "0.25rem 0.55rem",
-                  cursor: "pointer",
-                  fontSize: "0.8rem",
-                }}
-              >
-                Fechar
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMessages([{ id: "welcome", sender: "assistant", text: "Olá! 👋 Bem-vindo ao CaboVerde Conecta. Sou o assistente virtual e estou aqui para ajudar a divulgar os seus anúncios e serviços, esclarecer dúvidas sobre a campanha de lançamento e explicar como encontrar ou contactar anunciantes. Como posso ajudar hoje?" }]);
+                    setChatInput("");
+                  }}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(181,195,216,0.2)",
+                    color: "#B5C3D8",
+                    borderRadius: 8,
+                    padding: "0.25rem 0.5rem",
+                    cursor: "pointer",
+                    fontSize: "0.75rem",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Nova conversa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChatOpen(false)}
+                  aria-label="Fechar assistente"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(181,195,216,0.2)",
+                    color: "#F8FAFC",
+                    borderRadius: 8,
+                    padding: "0.25rem 0.55rem",
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  Fechar
+                </button>
+              </div>
             </div>
 
             <div
