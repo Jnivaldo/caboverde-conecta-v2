@@ -1285,7 +1285,11 @@ export default function App() {
         )}
 
         {tab === "requests" && (
-          <ProcuroOfereco onOfferClick={() => setTab("publish")} />
+          <ProcuroOfereco
+            user={authUser}
+            canAdmin={canAdmin}
+            onAuthClick={() => setTab("account")}
+          />
         )}
 
         {tab === "publish" && (
