@@ -18,6 +18,7 @@ Regras:
 - Não afirmes que consultaste anúncios em tempo real: não tens acesso direto ao inventário nem às contas dos utilizadores.
 - Para procurar serviços ou produtos, explica como usar a pesquisa e os filtros; nunca afirmes que encontraste anúncios sem consultar o inventário.
 - Para quem procura comprar, arrendar ou contratar, atua como guia de pesquisa: pergunta primeiro o que procura e em que ilha/concelho, se essa informação for necessária. Explica como pesquisar por categoria, texto, ilha e concelho. Não inventes resultados nem afirmes que há ofertas disponíveis.
+- Interpretação de linguagem natural: aceita português informal usado em Cabo Verde, frases curtas, abreviaturas e erros ortográficos comuns (por exemplo «tou à procura», «kero», «precizu», «pra», «pa», «karro»). Interpreta a intenção pelo significado e pelo contexto, sem corrigir nem envergonhar o visitante. Trata expressões como «tem casa?», «procuro um karro», «preciso eletricista» ou «quem faz canalização?» como possíveis pedidos de pesquisa quando o contexto confirmar essa intenção. Se a mensagem for ambígua, faz uma pergunta breve para esclarecer, sem assumir uma categoria ou inventar resultados. Esta adaptação não significa compreensão garantida de todas as expressões em Kriolu.
 - Fluxo de apoio ao comprador: usa o histórico da conversa e nunca voltes a perguntar algo que já foi respondido. Identifica primeiro o tipo de bem, imóvel, alojamento ou serviço pretendido; depois recolhe gradualmente, uma pergunta de cada vez, os critérios realmente úteis (por exemplo, marca/modelo ou características, orçamento aproximado quando o utilizador quiser indicar, ilha e concelho). Não transformes o atendimento num formulário nem exijas orçamento.
 - Quando já compreenderes o que a pessoa procura, resume os critérios em linguagem simples e orienta-a para pesquisar no site: selecionar a categoria oficial adequada, introduzir palavras-chave específicas e aplicar os filtros de ilha e concelho. Se não souber qual categoria escolher, ajuda a identificá-la.
 - Se a pesquisa depender de disponibilidade, stock ou anúncios atuais, esclarece com naturalidade que o assistente não consulta o inventário em tempo real; convida a pessoa a confirmar os resultados diretamente no site e a contactar o anunciante. Nunca inventes links, anúncios, preços ou contactos.
@@ -78,6 +79,18 @@ Regras:
 function normalizeQuestion(value: string): string {
   return value.toLocaleLowerCase("pt").normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
+    .replace(/\b(tou|to|tô)\b/g, " estou ")
+    .replace(/\b(ta|tao|tá)\b/g, " esta ")
+    .replace(/\b(pra|pa)\b/g, " para ")
+    .replace(/\b(pro|p[oó]r[oó])\b/g, " para o ")
+    .replace(/\b(p\/|p\.)\b/g, " para ")
+    .replace(/\b(ker[oó]|kero|kr[oó])\b/g, " quero ")
+    .replace(/\b(procuro|prokuro|busco)\b/g, " procuro ")
+    .replace(/\b(precizu|presiso|presizo)\b/g, " preciso ")
+    .replace(/\b(karro|caru)\b/g, " carro ")
+    .replace(/\b(caza)\b/g, " casa ")
+    .replace(/\b(aluga|alugar|aluguer)\b/g, " arrendar ")
+    .replace(/\b(tenho interesse em|estou interessado em|estou interessada em)\b/g, " procuro ")
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .replace(/\s+/g, " ").trim();
 }
@@ -93,8 +106,10 @@ function buildKnownReply(question: string, userHistory: string[] = []): string |
   if (has("50 vagas", "cinquenta vagas", "campanha de lancamento", "primeiras 50 publicacoes", "quanto custa", "qual o preco", "preco para publicar", "custo de publicar", "anuncio e gratuito", "quanto pago")) {
     return "A campanha oferece gratuidade aos primeiros 50 anúncios aprovados e publicados no CaboVerde Conecta, no total, independentemente de quem os publica. Cada anúncio ocupa uma única vaga global — não são 50 anúncios gratuitos por utilizador. Depois de preenchidas as 50 vagas, cada novo anúncio fica sujeito à taxa de 1.500 CVE por anúncio.";
   }
-  const buyerIntent = has("quero comprar", "procuro comprar", "estou a procura de", "estou à procura de", "quero encontrar", "procuro um", "procuro uma", "quero contratar", "preciso de um profissional", "preciso de uma empresa")
-    || (q.length <= 60 && /quero comprar|procuro comprar|estou a procura de|quero contratar|preciso de um profissional|preciso de uma empresa/.test(context));
+  const buyerIntent = has("quero comprar", "procuro comprar", "estou a procura de", "quero encontrar", "procuro um", "procuro uma", "quero contratar", "preciso de um profissional", "preciso de uma empresa", "procuro", "preciso de", "quero uma casa", "quero um carro", "tem casa", "tem carro", "alguem que", "alguem para", "quem faz", "quem vende", "onde encontro")
+    || /\b(procuro|preciso|quero|busco)\b.{0,55}\b(casa|apartamento|terreno|carro|viatura|mota|quarto|eletricista|canalizador|pintor|mecanico|pedreiro|produto|servico|servico|empresa|profissional|alojamento|hotel|trator|maquina|emprego)\b/.test(q)
+    || /\b(tem|ha|existe)\b.{0,35}\b(casa|apartamento|terreno|carro|viatura|quarto|eletricista|canalizador|pintor|mecanico|pedreiro|produto|servico|empresa|alojamento|hotel)\b/.test(q)
+    || (q.length <= 90 && /quero comprar|procuro comprar|estou a procura de|quero contratar|preciso de um profissional|preciso de uma empresa|quero uma casa|quero um carro|tem casa|tem carro/.test(context));
   if (buyerIntent) {
     const hasArea = /\b(santiago|sao vicente|sal|boa vista|fogo|maio|brava|santo antao|sao nicolau|tarrafal|praia|assomada|mindelo|sal rei|espargos|pedra badejo|ribeira grande|ponta do sol)\b/.test(context);
     const category = /\b(arrendar|arrendamento|alugar casa|aluguer de casa|casa para morar|apartamento para morar|comprar casa|comprar apartamento|terreno|moradia|imovel|imóveis|imoveis|predio|prédio)\b/.test(context)
