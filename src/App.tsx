@@ -250,13 +250,14 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getUser().then(({ data, error }) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!active) return;
-      if (!error) setAuthUser(data.user);
+      setAuthUser(session?.user ?? null);
       setAuthLoading(false);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!active || error) return;
+      setAuthUser(data.session?.user ?? null);
       setAuthLoading(false);
     });
     return () => {
@@ -1199,7 +1200,7 @@ export default function App() {
                       <div style={{ display: "flex", gap: "0.5rem", marginTop: "auto" }}>
                       {ad.whatsapp && (
                         <a
-                          href={`https://wa.me/${ad.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
+                          href={`https://api.whatsapp.com/send?phone=${ad.whatsapp.replace(/\D/g, "")}&text=${encodeURIComponent(
                             `Olá! Tenho interesse no anúncio "${ad.title}" publicado no CaboVerde Conecta. Categoria: ${ad.category}. Localização: ${ad.municipality}, ${ad.island}. ${ad.price ? `Preço anunciado: ${ad.price}. ` : ""}Gostaria de saber se ainda está disponível e obter mais informações. Obrigado(a)!`
                           )}`}
                           target="_blank"
