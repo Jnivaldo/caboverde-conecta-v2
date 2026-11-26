@@ -8,6 +8,7 @@ import ProcuroOfereco from "./components/ProcuroOfereco";
 import ProcuroHomeHighlights from "./components/ProcuroHomeHighlights";
 import ProcuroAdminPanel from "./components/ProcuroAdminPanel";
 import NotificationCenter from "./components/NotificationCenter";
+import MonetizationPanel from "./components/MonetizationPanel";
 
 import {
   type Listing,
@@ -1692,6 +1693,7 @@ export default function App() {
 
         {tab === "admin" && (
           <section style={panelStyle}>
+            <MonetizationPanel canAdmin={canAdmin} />
             <ProcuroAdminPanel canAdmin={canAdmin} />
             <span style={eyebrowStyle("#EC4899")}>GOVERNANÇA E MODERAÇÃO</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>
