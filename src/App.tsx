@@ -1456,16 +1456,7 @@ export default function App() {
                 <div style={{ display: "flex", justifyContent: "flex-end", color: "#94A3B8", fontSize: ".74rem", marginTop: "-.55rem" }}>
                   {title.length}/100 caracteres
                 </div>
-                {/* preview counters are informational; server-side validation remains authoritative */ }
-                <textarea
-                  hidden
-                  rows={4}
-                  maxLength={3000}
-                  value={description}
-                  readOnly
-                  aria-hidden="true"
-                />
-                />
+                {/* The preview is informational; server-side validation remains authoritative. */}
               </div>
 
               <div style={subCardStyle}>
