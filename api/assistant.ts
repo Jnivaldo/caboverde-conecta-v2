@@ -82,8 +82,9 @@ function normalizeQuestion(value: string): string {
     .replace(/\s+/g, " ").trim();
 }
 
-function buildKnownReply(question: string): string | null {
+function buildKnownReply(question: string, userHistory: string[] = []): string | null {
   const q = normalizeQuestion(question);
+  const context = normalizeQuestion([...userHistory.slice(-4), question].join(" "));
   const has = (...phrases: string[]) => phrases.some((phrase) => q.includes(normalizeQuestion(phrase)));
 
   if (has("quero vender o meu carro", "quero vender meu carro", "quero vender carro", "pretendo vender o carro", "quero anunciar o meu carro", "quero vender a minha viatura", "quero vender uma viatura", "vender automovel")) {
@@ -92,8 +93,18 @@ function buildKnownReply(question: string): string | null {
   if (has("50 vagas", "cinquenta vagas", "campanha de lancamento", "primeiras 50 publicacoes", "quanto custa", "qual o preco", "preco para publicar", "custo de publicar", "anuncio e gratuito", "quanto pago")) {
     return "A campanha oferece gratuidade aos primeiros 50 anúncios aprovados e publicados no CaboVerde Conecta, no total, independentemente de quem os publica. Cada anúncio ocupa uma única vaga global — não são 50 anúncios gratuitos por utilizador. Depois de preenchidas as 50 vagas, cada novo anúncio fica sujeito à taxa de 1.500 CVE por anúncio.";
   }
-  if (has("quero comprar", "procuro comprar", "estou a procura de", "estou à procura de", "quero encontrar", "procuro um", "procuro uma", "quero contratar", "preciso de um profissional", "preciso de uma empresa")) {
-    return "Claro! Posso ajudar a orientar a sua pesquisa. O que procura exatamente? Depois explico como encontrar anúncios usando as categorias e os filtros do CaboVerde Conecta.";
+  const buyerIntent = has("quero comprar", "procuro comprar", "estou a procura de", "estou à procura de", "quero encontrar", "procuro um", "procuro uma", "quero contratar", "preciso de um profissional", "preciso de uma empresa")
+    || (q.length <= 60 && /quero comprar|procuro comprar|estou a procura de|quero contratar|preciso de um profissional|preciso de uma empresa/.test(context));
+  if (buyerIntent) {
+    const specificNeed = /\b(carro|viatura|mota|motociclo|casa|apartamento|terreno|terras|quarto|hospedagem|hotel|alojamento|eletricista|canalizador|pintor|mecanico|mecânico|pedreiro|limpeza|empresa|computador|telemovel|telemóvel|telefone|frigorifico|frigorífico|sofa|sofá|mobilia|mobília|roupa|gado|cabra|porco|maquina|máquina|equipamento|barco)\b/.test(context);
+    const hasArea = /\b(santiago|sao vicente|são vicente|sal|boa vista|fogo|maio|brava|santo antao|santo antão|sao nicolau|são nicolau|tarrafal|praia|assomada|mindelo|sal rei|espargos)\b/.test(context);
+    if (specificNeed && !hasArea) {
+      return "Percebi o que procura. Em que ilha e concelho pretende encontrar essa oferta? Assim posso indicar-lhe os filtros certos para a pesquisa.";
+    }
+    if (specificNeed && hasArea) {
+      return "Já percebi o que procura e a zona pretendida. Há alguma característica essencial ou limite de orçamento que queira usar para afinar a pesquisa? Pode indicar apenas o que considerar importante.";
+    }
+    return "Claro! Posso orientar a sua pesquisa. O que procura exatamente — um produto, imóvel, alojamento ou serviço? Depois ajudo a escolher a categoria e os filtros adequados.";
   }
   if (has("como pesquisar", "como procurar anuncios", "como encontrar anuncios", "procurar no site", "pesquisar anuncios")) {
     return "Pode pesquisar no CaboVerde Conecta por categoria ou texto e refinar os resultados por ilha e concelho. Comece por escolher a categoria mais adequada e use palavras específicas para encontrar ofertas relevantes.";
@@ -200,7 +211,8 @@ export default async function handler(request: Request): Promise<Response> {
 
   const latestQuestion = messages[messages.length - 1].content;
   const asksForGeneratedContent = /\b(cria|criar|escreve|escrever|redige|redigir|elabora|elaborar|prepara|preparar|gera|gerar|desenvolve|desenvolver|exemplo|modelo de anuncio|texto profissional|anuncio profissional)\b/i.test(normalizeQuestion(latestQuestion));
-  const knownReply = asksForGeneratedContent ? null : buildKnownReply(latestQuestion);
+  const userHistory = messages.filter((message) => message.role === "user").map((message) => message.content);
+  const knownReply = asksForGeneratedContent ? null : buildKnownReply(latestQuestion, userHistory);
   if (knownReply) return json({ reply: knownReply });
 
   if (!accountId || !apiToken) {
