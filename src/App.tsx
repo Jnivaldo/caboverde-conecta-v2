@@ -441,7 +441,7 @@ export default function App() {
     {
       id: "welcome",
       sender: "assistant",
-      text: "Olá! Sou o assistente do CaboVerde Conecta. Posso esclarecer dúvidas sobre a campanha de lançamento, publicação de anúncios e contacto direto. Nesta pré-visualização, os pagamentos e o suporte ainda não estão ativos.",
+      text: "Olá! 👋 Bem-vindo ao CaboVerde Conecta. Sou o assistente virtual e estou aqui para ajudar a divulgar os seus anúncios e serviços, esclarecer dúvidas sobre a campanha de lançamento e explicar como encontrar ou contactar anunciantes. Como posso ajudar hoje?",
     },
   ]);
 
