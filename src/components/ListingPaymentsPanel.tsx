@@ -6,6 +6,7 @@ type ListingItem = {
   title: string;
   paymentStatus: string;
   listingStatus: string;
+  paymentMethod: string;
 };
 type PaymentRow = {
   id: string;
@@ -120,7 +121,7 @@ export default function ListingPaymentsPanel({ userId, listings, canAdmin }: Pro
   }
 
   const pendingListings = listings.filter((item) =>
-    item.listingStatus === "pending" && item.paymentStatus === "pending" &&
+    item.listingStatus === "pending" && item.paymentStatus === "pending" && item.paymentMethod === "bank_transfer" &&
     !rows.some((row) => row.listing_id === item.id && row.status === "pending")
   );
 
