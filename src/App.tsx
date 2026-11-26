@@ -1775,7 +1775,14 @@ export default function App() {
         {tab === "admin" && (
           <section style={panelStyle}>
             <MonetizationPanel canAdmin={canAdmin} />
-            <ListingPaymentsPanel userId={authUser?.id ?? null} listings={accountListings} canAdmin={canAdmin} />
+            <ListingPaymentsPanel
+              userId={authUser?.id ?? null}
+              listings={accountListings}
+              canAdmin={canAdmin}
+              onPaymentReviewed={(listingId, decision) => setListings((prev) => prev.map((item) => item.id === listingId
+                ? { ...item, paymentStatus: decision === "approved" ? "confirmed" : "pending", paymentMethod: "bank_transfer" }
+                : item))}
+            />
             <ProcuroAdminPanel canAdmin={canAdmin} />
             <span style={eyebrowStyle("#EC4899")}>GOVERNANÇA E MODERAÇÃO</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>
