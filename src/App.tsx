@@ -934,6 +934,32 @@ export default function App() {
                 </button>
               );
             })}
+            {authUser && (
+              <button
+                type="button"
+                onClick={handleHeaderSignOut}
+                disabled={signingOut}
+                aria-label="Terminar sessão"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: 132,
+                  minHeight: 42,
+                  padding: "0.55rem 0.9rem",
+                  borderRadius: 10,
+                  border: "1px solid #FCA5A5",
+                  background: "#991B1B",
+                  color: "#FFFFFF",
+                  cursor: signingOut ? "wait" : "pointer",
+                  fontSize: "0.85rem",
+                  fontWeight: 800,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {signingOut ? "A sair..." : "Terminar sessão"}
+              </button>
+            )}
           </nav>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.7rem", flex: "1 1 100%", width: "100%", minHeight: 52, paddingTop: "0.55rem", borderTop: "1px solid rgba(181,195,216,0.14)", flexWrap: "nowrap", minWidth: 0, position: "relative", zIndex: 50 }}>
             <div
@@ -969,37 +995,6 @@ export default function App() {
 
           </div>
         </div>
-        {authUser && (
-          <div style={{ maxWidth: 1200, margin: "0.65rem auto 0", padding: "0 1.25rem", display: "flex", justifyContent: "flex-end", position: "relative", zIndex: 60 }}>
-            <button
-              type="button"
-              onClick={handleHeaderSignOut}
-              disabled={signingOut}
-              aria-label="Terminar sessão"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minWidth: 132,
-                minHeight: 46,
-                padding: "0.7rem 1.4rem",
-                borderRadius: 10,
-                border: "2px solid #FCA5A5",
-                background: "#991B1B",
-                color: "#FFFFFF",
-                cursor: signingOut ? "wait" : "pointer",
-                fontSize: "0.9rem",
-                fontWeight: 900,
-                letterSpacing: "0.02em",
-                whiteSpace: "nowrap",
-                boxShadow: "0 4px 14px rgba(153,27,27,.35)",
-                opacity: signingOut ? 0.7 : 1,
-              }}
-            >
-              {signingOut ? "A sair..." : "Sair da conta"}
-            </button>
-          </div>
-        )}
         {signOutFeedback && (
           <div role="status" aria-live="polite" style={{ maxWidth: 1200, margin: "0.55rem auto 0", color: signOutFeedback.startsWith("Não foi") ? "#FCA5A5" : "#6EE7B7", fontSize: "0.8rem" }}>
             {signOutFeedback}
