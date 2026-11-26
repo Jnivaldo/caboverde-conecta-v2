@@ -144,6 +144,23 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
     if (q.length > 2) return "Entendido! Vamos preparar esse anúncio. Pode dizer-me um pouco mais sobre o que está a oferecer ou divulgar?";
   }
 
+  // Continuidade determinística para anúncios de Imóveis.
+  if (previous.includes("pretende vender ou arrendar")) {
+    const transaction = /arrend|alug/.test(q) ? "Arrendamento" : /vend/.test(q) ? "Venda" : "";
+    if (transaction) return "Perfeito. É para " + transaction.toLowerCase() + ". Que tipo de imóvel é e em que ilha e concelho fica?";
+  }
+  if (previous.includes("que tipo de imovel e em que ilha e concelho fica")) {
+    return "Obrigado. Quais são as principais características do imóvel (por exemplo, número de quartos, área ou estado) e qual é o preço pretendido?";
+  }
+  if (previous.includes("principais caracteristicas do imovel") || previous.includes("principais caracteristicas")) {
+    const historyText = userHistory.join(" ");
+    const transaction = /arrend|alug/.test(normalizeQuestion(historyText)) ? "Arrendamento" : "Venda";
+    const propertyText = userHistory.slice(1).map((item) => item.trim().replace(/[.!?]+$/g, "")).filter(Boolean).join("; ");
+    const placeMatch = historyText.match(/\\b(Tarrafal|Praia|Assomada|Pedra Badejo|Santa Catarina|São Domingos|São Filipe|Mosteiros|Mindelo|Ribeira Grande|Porto Novo|Ponta do Sol|Sal Rei|Espargos|Santa Maria|Cova Figueira|Nova Sintra)\\b/i);
+    const propertyLocation = placeMatch ? placeMatch[0] : "A indicar pelo anunciante";
+    const title = transaction + " de imóvel - " + propertyText.slice(0, 65);
+    return "Rascunho do anúncio\\n\\nTítulo: " + title + "\\nCategoria: «Imóveis»\\nFinalidade: " + transaction + "\\n\\nDescrição:\\n" + propertyText + "\\nLocalização: " + propertyLocation + "\\nPreço: A indicar pelo anunciante, se ainda não foi informado\\nContactos: A indicar pelo anunciante\\n\\nEste texto é apenas um rascunho; ainda não foi publicado. Quer corrigir ou acrescentar alguma informação?";
+  }
   // Continuidade do anúncio de profissionais e serviços: recolhe o nome e a atividade sem reiniciar.
   const previousPrompt = normalizeQuestion(previousAssistant);
   if (previousPrompt.includes("qual e o nome profissional ou da empresa") && q.length > 1 && q.length <= 100) {
