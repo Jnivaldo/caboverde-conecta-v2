@@ -1526,6 +1526,21 @@ export default function App() {
                     <button type="button" onClick={() => { void navigator.clipboard?.writeText("000300007050338410176"); }} style={{ ...secondaryBtnStyle, padding: ".35rem .55rem", fontSize: ".74rem" }}>Copiar NIB</button>
                   </div>
                   <p style={{ margin: ".2rem 0 0", color: "#FDE68A", fontSize: ".76rem", lineHeight: 1.45 }}>Não efetue pagamentos nesta fase. Esta informação é apenas uma preparação; a opção de transferência será ativada depois de concluirmos o registo do pagamento e a validação segura pelo administrador.</p>
+                  <div style={{ borderTop: "1px solid rgba(181,195,216,.14)", marginTop: ".35rem", paddingTop: ".85rem", display: "grid", gap: ".5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
+                      <strong style={{ color: "#F8FAFC", fontSize: ".95rem" }}>Banco Cabo-verdiano de Negócios (BCN)</strong>
+                      <span style={{ border: "1px solid rgba(251,191,36,.4)", borderRadius: 999, padding: ".2rem .55rem", color: "#FDE68A", fontSize: ".7rem", fontWeight: 800 }}>EM PREPARAÇÃO</span>
+                    </div>
+                    <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Titular da conta</div>
+                    <strong style={{ color: "#F8FAFC", fontSize: ".9rem" }}>José Nivaldo G. Oliveira</strong>
+                    <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Número de conta</div>
+                    <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums" }}>119418310001</strong>
+                    <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>NIB</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: ".5rem", flexWrap: "wrap" }}>
+                      <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums", overflowWrap: "anywhere" }}>000400000119418310146</strong>
+                      <button type="button" onClick={() => { void navigator.clipboard?.writeText("000400000119418310146"); }} style={{ ...secondaryBtnStyle, padding: ".35rem .55rem", fontSize: ".74rem" }}>Copiar NIB</button>
+                    </div>
+                  </div>
                 </div>
 
                 <select
