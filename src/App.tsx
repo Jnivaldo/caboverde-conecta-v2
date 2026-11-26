@@ -1511,7 +1511,6 @@ export default function App() {
                 <div style={{ border: "1px solid rgba(96,165,250,.34)", borderRadius: 12, padding: "1rem", background: "linear-gradient(145deg,rgba(17,29,49,.92),rgba(16,24,42,.92))", display: "grid", gap: ".5rem" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
                     <strong style={{ color: "#F8FAFC", fontSize: ".95rem" }}>Banco Comercial do Atlântico (BCA)</strong>
-                    <span style={{ border: "1px solid rgba(251,191,36,.4)", borderRadius: 999, padding: ".2rem .55rem", color: "#FDE68A", fontSize: ".7rem", fontWeight: 800 }}>EM PREPARAÇÃO</span>
                   </div>
                   <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Titular da conta</div>
                   <strong style={{ color: "#F8FAFC", fontSize: ".9rem" }}>José Nivaldo G. Oliveira</strong>
@@ -1529,7 +1528,6 @@ export default function App() {
                   <div style={{ borderTop: "1px solid rgba(181,195,216,.14)", marginTop: ".35rem", paddingTop: ".85rem", display: "grid", gap: ".5rem" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
                       <strong style={{ color: "#F8FAFC", fontSize: ".95rem" }}>Banco Cabo-verdiano de Negócios (BCN)</strong>
-                      <span style={{ border: "1px solid rgba(251,191,36,.4)", borderRadius: 999, padding: ".2rem .55rem", color: "#FDE68A", fontSize: ".7rem", fontWeight: 800 }}>EM PREPARAÇÃO</span>
                     </div>
                     <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Titular da conta</div>
                     <strong style={{ color: "#F8FAFC", fontSize: ".9rem" }}>José Nivaldo G. Oliveira</strong>
