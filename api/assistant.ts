@@ -159,6 +159,19 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
     const title = "Serviços de " + serviceDescription.slice(0, 65);
     return "Rascunho do anúncio\n\nTítulo: " + title + "\nCategoria: «Profissionais e Serviços»\n\nDescrição:\n" + nameLine + "\nServiços prestados: " + serviceDescription + "\nÁrea de atuação: " + serviceArea + "\nContactos: A indicar pelo anunciante\n\nEste texto é apenas um rascunho; ainda não foi publicado. Quer corrigir ou acrescentar alguma informação?";
   }
+  // Continuidade determinística para anúncios de Produtos, sem depender apenas do modelo.
+  if (previousPrompt.includes("qual e o produto que pretende divulgar")) {
+    const productDetails = question.trim().replace(/[.!?]+$/g, "");
+    return "Entendido. Em que estado se encontra o produto e que preço pretende pedir? Pode indicar também a localização, se ainda não o fez.";
+  }
+  if (previousPrompt.includes("em que estado se encontra o produto") && q.length > 1) {
+    const productInfo = userHistory.length >= 2 ? userHistory[userHistory.length - 2].trim().replace(/[.!?]+$/g, "") : "Produto a indicar";
+    const conditionAndPrice = question.trim().replace(/[.!?]+$/g, "");
+    const historyText = userHistory.join(" ");
+    const placeMatch = historyText.match(/\\b(Tarrafal|Praia|Assomada|Pedra Badejo|Santa Catarina|São Domingos|São Filipe|Mosteiros|Mindelo|Ribeira Grande|Porto Novo|Ponta do Sol|Sal Rei|Espargos|Santa Maria|Cova Figueira|Nova Sintra)\\b/i);
+    const productLocation = placeMatch ? placeMatch[0] : "A indicar pelo anunciante";
+    return "Rascunho do anúncio\\n\\nTítulo: " + productInfo.slice(0, 75) + "\\nCategoria: «Produtos»\\n\\nDescrição:\\nProduto: " + productInfo + "\\nEstado e preço: " + conditionAndPrice + "\\nLocalização: " + productLocation + "\\nContactos: A indicar pelo anunciante\\n\\nEste texto é apenas um rascunho; ainda não foi publicado. Quer corrigir ou acrescentar alguma informação?";
+  }
   if (has("quero vender o meu carro", "quero vender meu carro", "quero vender carro", "pretendo vender o carro", "quero anunciar o meu carro", "quero vender a minha viatura", "quero vender uma viatura", "vender automovel")) {
     return "Claro que sim! 🚗 O CaboVerde Conecta é um ótimo lugar para divulgar o seu carro. Vamos preparar um anúncio apelativo na categoria «Viaturas». Para começar, qual é a marca e o modelo do carro?";
   }
