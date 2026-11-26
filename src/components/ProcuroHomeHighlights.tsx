@@ -14,15 +14,15 @@ type PublicRequest = {
 
 function getRequestHighlight(title: string) {
   const rules: Array<[RegExp, string]> = [
-    [/^procuro\\b/i, "PROCURO"],
-    [/^preciso\\s+de\\b/i, "PRECISO DE"],
-    [/^necessito\\s+de\\b/i, "NECESSITO DE"],
-    [/^procura[- ]se\\b/i, "PROCURA-SE"],
-    [/^ofereço\\b/i, "OFEREÇO"],
-    [/^disponível\\b/i, "DISPONÍVEL"],
-    [/^vende[- ]se\\b/i, "VENDE-SE"],
-    [/^arrenda[- ]se\\b/i, "ARRENDA-SE"],
-    [/^aluga[- ]se\\b/i, "ALUGA-SE"],
+    [/^procuro\b/i, "PROCURO"],
+    [/^preciso\s+de\b/i, "PRECISO DE"],
+    [/^necessito\s+de\b/i, "NECESSITO DE"],
+    [/^procura[- ]se\b/i, "PROCURA-SE"],
+    [/^ofereço\b/i, "OFEREÇO"],
+    [/^disponível\b/i, "DISPONÍVEL"],
+    [/^vende[- ]se\b/i, "VENDE-SE"],
+    [/^arrenda[- ]se\b/i, "ARRENDA-SE"],
+    [/^aluga[- ]se\b/i, "ALUGA-SE"],
   ];
   const match = rules.find(([pattern]) => pattern.test(title.trim()));
   if (!match) return { label: "PEDIDO", title };
@@ -33,7 +33,6 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }
   const [items, setItems] = useState<PublicRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -57,24 +56,24 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }
   }, []);
 
   useEffect(() => {
-    if (paused || items.length < 2) return;
+    if (items.length < 2) return;
     const timer = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % items.length);
     }, 6500);
     return () => window.clearInterval(timer);
-  }, [items.length, paused]);
+  }, [items.length]);
 
   if (loading || items.length === 0) return null;
 
   const item = items[activeIndex] ?? items[0];
   const highlight = getRequestHighlight(item.title);
   const palette = highlight.label === "OFEREÇO" || highlight.label === "DISPONÍVEL"
-    ? { badge: "#047857", glow: "rgba(16,185,129,.18)", border: "rgba(52,211,153,.42)", surface: "linear-gradient(120deg,rgba(6,78,59,.42),rgba(7,11,24,.72))" }
+    ? { badge: "#047857", glow: "rgba(16,185,129,.18)", text: "#6EE7B7", border: "rgba(52,211,153,.42)", surface: "linear-gradient(120deg,rgba(6,78,59,.42),rgba(7,11,24,.72))" }
     : highlight.label === "VENDE-SE" || highlight.label === "ARRRENDA-SE" || highlight.label === "ARRENDA-SE" || highlight.label === "ALUGA-SE"
-    ? { badge: "#B45309", glow: "rgba(245,158,11,.18)", border: "rgba(251,191,36,.42)", surface: "linear-gradient(120deg,rgba(120,53,15,.42),rgba(7,11,24,.72))" }
+    ? { badge: "#B45309", glow: "rgba(245,158,11,.18)", text: "#FCD34D", border: "rgba(251,191,36,.42)", surface: "linear-gradient(120deg,rgba(120,53,15,.42),rgba(7,11,24,.72))" }
     : highlight.label === "PRECISO DE" || highlight.label === "NECESSITO DE" || highlight.label === "PROCURA-SE" || highlight.label === "PROCURO"
-    ? { badge: "#B91C1C", glow: "rgba(239,68,68,.2)", border: "rgba(248,113,113,.48)", surface: "linear-gradient(120deg,rgba(127,29,29,.42),rgba(7,11,24,.72))" }
-    : { badge: "#1D4ED8", glow: "rgba(59,130,246,.18)", border: "rgba(96,165,250,.42)", surface: "linear-gradient(120deg,rgba(30,58,138,.4),rgba(7,11,24,.72))" };
+    ? { badge: "#B91C1C", glow: "rgba(239,68,68,.2)", text: "#FCA5A5", border: "rgba(248,113,113,.48)", surface: "linear-gradient(120deg,rgba(127,29,29,.42),rgba(7,11,24,.72))" }
+    : { badge: "#1D4ED8", glow: "rgba(59,130,246,.18)", text: "#93C5FD", border: "rgba(96,165,250,.42)", surface: "linear-gradient(120deg,rgba(30,58,138,.4),rgba(7,11,24,.72))" };
 
   const move = (direction: number) => {
     setActiveIndex((current) => (current + direction + items.length) % items.length);
@@ -83,12 +82,6 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }
   return (
     <section
       aria-label="Pedidos Procuro & Ofereço em destaque"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setPaused(false);
-      }}
       style={{ margin: "0 auto 1.6rem", padding: "clamp(1rem, 2.5vw, 1.5rem)", borderRadius: 18, border: "1px solid rgba(56,214,160,.3)", background: "linear-gradient(135deg,#10182A 0%,#12243A 100%)", boxShadow: "0 14px 32px rgba(0,0,0,.16)", overflow: "hidden" }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".8rem", flexWrap: "wrap", marginBottom: "1rem" }}>
@@ -106,7 +99,7 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }
           <span style={{ color: "#8EF0C8", fontSize: ".78rem", fontWeight: 750 }}>{item.category}</span>
           <span style={{ color: "#8FA2BD", fontSize: ".75rem" }}>{item.municipality}, {item.island}</span>
         </div>
-        <h3 style={{ margin: ".8rem 0 .45rem", color: "#F8FAFC", fontSize: "clamp(1.18rem,2.8vw,1.55rem)", lineHeight: 1.3, fontWeight: 850 }}>{highlight.title || item.title}</h3>
+        <h3 style={{ margin: ".8rem 0 .45rem", color: palette.text, fontSize: "clamp(1.18rem,2.8vw,1.55rem)", lineHeight: 1.3, fontWeight: 850 }}>{highlight.title || item.title}</h3>
         <p style={{ margin: 0, color: "#B5C3D8", fontSize: ".9rem", lineHeight: 1.6, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 3, overflow: "hidden" }}>{item.description}</p>
         {item.budget && <strong style={{ display: "block", marginTop: ".65rem", color: "#F8FAFC", fontSize: ".88rem" }}>Orçamento: {item.budget}</strong>}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".8rem", flexWrap: "wrap", marginTop: "1rem" }}>
