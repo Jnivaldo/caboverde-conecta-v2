@@ -910,6 +910,36 @@ export default function App() {
               );
             })}
           </nav>
+          <div
+            role="status"
+            aria-live="polite"
+            title={authUser ? "A sua conta está autenticada" : "Ainda não iniciou sessão"}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.48rem",
+              padding: "0.48rem 0.72rem",
+              borderRadius: 999,
+              border: authUser ? "1px solid rgba(56,214,160,.42)" : "1px solid rgba(181,195,216,.2)",
+              background: authUser ? "rgba(16,185,129,.12)" : "rgba(21,31,51,.72)",
+              color: authUser ? "#6EE7B7" : "#B5C3D8",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: authLoading ? "#94A3B8" : authUser ? "#34D399" : "#94A3B8",
+                boxShadow: authUser && !authLoading ? "0 0 0 3px rgba(52,211,153,.14)" : "none",
+              }}
+            />
+            {authLoading ? "A verificar sessão..." : authUser ? "Sessão iniciada" : "Não autenticado"}
+          </div>
         </div>
       </header>
 
@@ -1169,7 +1199,9 @@ export default function App() {
                       <div style={{ display: "flex", gap: "0.5rem", marginTop: "auto" }}>
                       {ad.whatsapp && (
                         <a
-                          href={`https://wa.me/${ad.whatsapp.replace(/\D/g, "")}`}
+                          href={`https://wa.me/${ad.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
+                            `Olá! Tenho interesse no anúncio "${ad.title}" publicado no CaboVerde Conecta. Categoria: ${ad.category}. Localização: ${ad.municipality}, ${ad.island}. ${ad.price ? `Preço anunciado: ${ad.price}. ` : ""}Gostaria de saber se ainda está disponível e obter mais informações. Obrigado(a)!`
+                          )}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={whatsappBtnStyle}
