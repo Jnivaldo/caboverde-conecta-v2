@@ -240,6 +240,8 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState<string[]>([]);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutFeedback, setSignOutFeedback] = useState("");
   const [canAdmin, setCanAdmin] = useState(false);
   const [accountEmail, setAccountEmail] = useState("");
   const [editingListingId, setEditingListingId] = useState<string | null>(null);
@@ -265,6 +267,23 @@ export default function App() {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  async function handleHeaderSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    setSignOutFeedback("");
+    const { error } = await supabase.auth.signOut({ scope: "local" });
+    setSigningOut(false);
+    if (error) {
+      setSignOutFeedback("Não foi possível terminar a sessão. Tente novamente.");
+      console.error("Falha ao terminar sessão:", error.message);
+      return;
+    }
+    setCanAdmin(false);
+    setAccountEmail("");
+    setTab("home");
+    setSignOutFeedback("Sessão terminada com sucesso.");
+  }
 
   useEffect(() => {
     setAccountEmail(authUser?.email ?? "");
@@ -941,7 +960,37 @@ export default function App() {
             />
             {authLoading ? "A verificar sessão..." : authUser ? "Sessão iniciada" : "Não autenticado"}
           </div>
+          {authUser && !authLoading && (
+            <button
+              type="button"
+              onClick={handleHeaderSignOut}
+              disabled={signingOut}
+              aria-label="Terminar sessão"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.4rem",
+                padding: "0.5rem 0.85rem",
+                borderRadius: 10,
+                border: "1px solid rgba(248,113,113,.5)",
+                background: "rgba(127,29,29,.22)",
+                color: "#FCA5A5",
+                cursor: signingOut ? "wait" : "pointer",
+                fontSize: "0.82rem",
+                fontWeight: 750,
+                opacity: signingOut ? 0.7 : 1,
+              }}
+            >
+              {signingOut ? "A sair..." : "Sair"}
+            </button>
+          )}
         </div>
+        {signOutFeedback && (
+          <div role="status" aria-live="polite" style={{ maxWidth: 1200, margin: "0.55rem auto 0", color: signOutFeedback.startsWith("Não foi") ? "#FCA5A5" : "#6EE7B7", fontSize: "0.8rem" }}>
+            {signOutFeedback}
+          </div>
+        )}
       </header>
 
       <main style={{ maxWidth: 1200, margin: "0 auto", padding: "1.85rem 1.25rem 5rem" }}>
