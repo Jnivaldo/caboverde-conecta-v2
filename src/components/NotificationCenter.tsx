@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type NotificationRow = {
@@ -35,10 +35,14 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
+  const currentUserId = useRef(userId);
+  currentUserId.current = userId;
 
   const loadNotifications = useCallback(async () => {
     if (!userId) {
       setItems([]);
+      setUnreadCount(0);
+      setLoading(false);
       return;
     }
     setLoading(true);
@@ -49,6 +53,7 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
       supabase.from("user_notifications")
         .select("id", { count: "exact", head: true }).eq("user_id", userId).is("read_at", null),
     ]);
+    if (currentUserId.current !== userId) return;
     if (listResult.error || countResult.error) {
       const error = listResult.error || countResult.error;
       setFeedback("Não foi possível carregar as notificações.");
