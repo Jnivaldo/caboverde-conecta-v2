@@ -5,6 +5,7 @@ import AuthPanel from "./components/AuthPanel";
 import ListingMediaPicker from "./components/ListingMediaPicker";
 import ListingMediaManager from "./components/ListingMediaManager";
 import ProcuroOfereco from "./components/ProcuroOfereco";
+import ProcuroHomeHighlights from "./components/ProcuroHomeHighlights";
 
 import {
   type Listing,
@@ -1099,6 +1100,8 @@ export default function App() {
                 <span style={{ color: "#9FB0C8", fontSize: "0.78rem" }}>Após a campanha: <strong style={{ color: "#F8FAFC" }}>1.500 CVE</strong> por anúncio</span>
               </div>
             </section>
+
+            <ProcuroHomeHighlights onOpen={() => setTab("requests")} />
 
             <div
               style={{
