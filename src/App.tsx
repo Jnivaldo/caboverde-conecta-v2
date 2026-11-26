@@ -6,6 +6,7 @@ import ListingMediaPicker from "./components/ListingMediaPicker";
 import ListingMediaManager from "./components/ListingMediaManager";
 import ProcuroOfereco from "./components/ProcuroOfereco";
 import ProcuroHomeHighlights from "./components/ProcuroHomeHighlights";
+import ProcuroAdminPanel from "./components/ProcuroAdminPanel";
 
 import {
   type Listing,
@@ -1643,6 +1644,7 @@ export default function App() {
 
         {tab === "admin" && (
           <section style={panelStyle}>
+            <ProcuroAdminPanel canAdmin={canAdmin} />
             <span style={eyebrowStyle("#EC4899")}>GOVERNANÇA E MODERAÇÃO</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>
               Painel Administrativo
