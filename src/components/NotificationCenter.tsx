@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type NotificationRow = {
@@ -34,8 +34,7 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
-
-  const unreadCount = useMemo(() => items.filter((item) => !item.read_at).length, [items]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const loadNotifications = useCallback(async () => {
     if (!userId) {
@@ -43,23 +42,29 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
-      .from("user_notifications")
-      .select("id, notification_type, title, message, target_path, entity_id, created_at, read_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(20);
-    if (error) {
+    const [listResult, countResult] = await Promise.all([
+      supabase.from("user_notifications")
+        .select("id, notification_type, title, message, target_path, entity_id, created_at, read_at")
+        .eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
+      supabase.from("user_notifications")
+        .select("id", { count: "exact", head: true }).eq("user_id", userId).is("read_at", null),
+    ]);
+    if (listResult.error || countResult.error) {
+      const error = listResult.error || countResult.error;
       setFeedback("Não foi possível carregar as notificações.");
-      console.error("Falha ao carregar notificações:", error.message);
+      console.error("Falha ao carregar notificações:", error?.message);
     } else {
-      setItems((data ?? []) as NotificationRow[]);
+      setItems((listResult.data ?? []) as NotificationRow[]);
+      setUnreadCount(countResult.count ?? 0);
       setFeedback("");
     }
     setLoading(false);
   }, [userId]);
 
   useEffect(() => {
+    setItems([]);
+    setUnreadCount(0);
+    setFeedback("");
     void loadNotifications();
     if (!userId) return;
     const channel = supabase
@@ -78,6 +83,7 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
     if (!userId) return;
     const now = new Date().toISOString();
     setItems((current) => current.map((item) => item.id === id ? { ...item, read_at: now } : item));
+    setUnreadCount((count) => Math.max(0, count - 1));
     const { error } = await supabase.from("user_notifications")
       .update({ read_at: now }).eq("id", id).eq("user_id", userId);
     if (error) {
@@ -90,6 +96,7 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
     if (!userId || unreadCount === 0) return;
     const now = new Date().toISOString();
     setItems((current) => current.map((item) => item.read_at ? item : { ...item, read_at: now }));
+    setUnreadCount(0);
     const { error } = await supabase.from("user_notifications")
       .update({ read_at: now }).eq("user_id", userId).is("read_at", null);
     if (error) {
@@ -120,7 +127,7 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
           whiteSpace: "nowrap",
         }}
       >
-        <span aria-hidden="true" style={{ fontSize: "1.05rem", lineHeight: 1 }}>♢</span>
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></svg>
         Avisos
         {unreadCount > 0 && <span style={{ minWidth: 19, height: 19, display: "grid", placeItems: "center", padding: "0 4px", borderRadius: 99, background: "#EF4444", color: "#fff", fontSize: ".68rem", fontWeight: 900 }}>{unreadCount > 99 ? "99+" : unreadCount}</span>}
       </button>
