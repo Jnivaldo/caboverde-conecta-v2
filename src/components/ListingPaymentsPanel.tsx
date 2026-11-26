@@ -122,10 +122,20 @@ export default function ListingPaymentsPanel({ userId, listings, canAdmin, onPay
   }
 
   async function openProof(row: PaymentRow) {
+    const proofWindow = window.open("about:blank", "_blank");
+    if (!proofWindow) {
+      setFeedback("O navegador bloqueou a nova janela. Permita pop-ups para abrir o comprovativo.");
+      return;
+    }
     const { data, error } = await supabase.storage.from("payment-proofs").createSignedUrl(row.proof_path, 300);
-    if (error || !data?.signedUrl) { setFeedback("Não foi possível abrir o comprovativo: " + (error?.message ?? "erro")); return; }
+    if (error || !data?.signedUrl) {
+      proofWindow.close();
+      setFeedback("Não foi possível abrir o comprovativo: " + (error?.message ?? "erro"));
+      return;
+    }
     setProofUrls((prev) => ({ ...prev, [row.id]: data.signedUrl }));
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    proofWindow.opener = null;
+    proofWindow.location.href = data.signedUrl;
   }
 
   const pendingListings = listings.filter((item) =>
