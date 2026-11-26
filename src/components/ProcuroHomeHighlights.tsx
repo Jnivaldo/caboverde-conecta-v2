@@ -56,7 +56,7 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }
               <span style={{ color: "#8EF0C8", fontSize: ".74rem", fontWeight: 750 }}>{item.category}</span>
               <span style={{ color: "#8FA2BD", fontSize: ".72rem" }}>{item.municipality}, {item.island}</span>
             </div>
-            <h3 style={{ margin: ".5rem 0 .35rem", color: "#F8FAFC", fontSize: "1.02rem", lineHeight: 1.35 }}>{item.title}</h3>
+            <h3 style={{ margin: ".55rem 0 .4rem", color: "#F8FAFC", fontSize: "1.08rem", lineHeight: 1.35, fontWeight: 850, display: "flex", alignItems: "center", flexWrap: "wrap", gap: ".42rem" }}>{/^procuro\b/i.test(item.title) ? <><span style={{ display: "inline-flex", alignItems: "center", padding: ".18rem .48rem", borderRadius: 6, background: "#B91C1C", color: "#FFFFFF", fontSize: ".72rem", fontWeight: 900, letterSpacing: ".08em", boxShadow: "0 2px 8px rgba(185,28,28,.3)" }}>PROCURO</span><span>{item.title.replace(/^procuro\s*/i, "")}</span></> : item.title}</h3>
             <p style={{ margin: 0, color: "#B5C3D8", fontSize: ".82rem", lineHeight: 1.5, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2, overflow: "hidden" }}>{item.description}</p>
             {item.budget && <strong style={{ display: "block", marginTop: ".55rem", color: "#F8FAFC", fontSize: ".82rem" }}>Orçamento: {item.budget}</strong>}
             <button type="button" onClick={onOpen} style={{ marginTop: ".75rem", padding: 0, border: 0, background: "transparent", color: "#93C5FD", fontWeight: 750, cursor: "pointer" }}>Ver pedido e responder →</button>
