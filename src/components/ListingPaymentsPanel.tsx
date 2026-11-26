@@ -141,7 +141,7 @@ export default function ListingPaymentsPanel({ userId, listings, canAdmin }: Pro
             : "Valor por anúncio: 1.500 CVE. Envie o comprovativo depois de efetuar a transferência para BCA ou BCN. A publicação continua sujeita à análise do anúncio."}
         </p>
       </div>
-      {!canAdmin && (
+      {!canAdmin && (pendingListings.length > 0 || rows.some((row) => row.status === "pending")) && (
         <div style={{ ...card, background: "linear-gradient(145deg,rgba(17,29,49,.98),rgba(16,24,42,.98))" }}>
           <strong style={{ color: "#F8FAFC" }}>Contas para transferência — 1.500 CVE</strong>
           <div style={{ display: "grid", gap: ".65rem", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
