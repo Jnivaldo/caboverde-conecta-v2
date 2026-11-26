@@ -153,6 +153,17 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
     if (q.length > 2) return "Entendido! Vamos preparar esse anúncio. Pode dizer-me um pouco mais sobre o que está a oferecer ou divulgar?";
   }
 
+  // Preserva a intenção de anunciar mesmo quando a resposta anterior do modelo não coincide com a pergunta esperada.
+  const historyContext = normalizeQuestion(userHistory.join(" "));
+  const startedPropertyAd = /\b(quero anunciar|pretendo anunciar|quero publicar um anuncio|pretendo publicar um anuncio|quero divulgar|pretendo divulgar|quero colocar um anuncio|ajuda para anunciar|ajuda me a anunciar|ajude me a anunciar)\b/.test(historyContext)
+    && /\b(casa|apartamento|moradia|terreno|predio|imovel|imoveis|loja|armazem)\b/.test(historyContext);
+  if (startedPropertyAd && /\b(arrendar|arrendamento|alugar|aluguer)\b/.test(q)) {
+    return "Perfeito. É para arrendamento. Que tipo de imóvel é e em que ilha e concelho fica?";
+  }
+  if (startedPropertyAd && /\b(vender|venda)\b/.test(q)) {
+    return "Perfeito. É para venda. Que tipo de imóvel é e em que ilha e concelho fica?";
+  }
+
   // Continuidade determinística para anúncios de Imóveis.
   if (previous.includes("pretende vender ou arrendar") || previous.includes("venda ou arrendamento")) {
     const transaction = /arrend|alug/.test(q) ? "Arrendamento" : /vend/.test(q) ? "Venda" : "";
