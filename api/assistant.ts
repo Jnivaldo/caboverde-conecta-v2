@@ -100,7 +100,7 @@ function normalizeQuestion(value: string): string {
     .replace(/\s+/g, " ").trim();
 }
 
-function buildKnownReply(question: string, userHistory: string[] = []): string | null {
+function buildKnownReply(question: string, userHistory: string[] = [], previousAssistant = ""): string | null {
   const q = normalizeQuestion(question);
   const context = normalizeQuestion([...userHistory.slice(-4), question].join(" "));
   const has = (...phrases: string[]) => phrases.some((phrase) => q.includes(normalizeQuestion(phrase)));
@@ -143,7 +143,12 @@ function buildKnownReply(question: string, userHistory: string[] = []): string |
                           : null;
     if (!category) return "Claro! Posso orientar a sua pesquisa. O que procura exatamente — um produto, imóvel, viatura, alojamento, profissional ou outro serviço? Assim ajudo a escolher a categoria certa.";
     if (!hasArea) return "Percebi que procura na categoria «" + category + "». Em que ilha e concelho pretende pesquisar? Assim poderá aplicar os filtros de localização no site.";
-    if (category === "Viaturas" && /\bpraia\b/.test(context)) return "Percebi — procura um carro na Praia. Na categoria «Viaturas», pesquise por «carro» e selecione Praia na localização. Tem alguma marca ou modelo em mente?";
+    if (category === "Viaturas" && /\bpraia\b/.test(context)) {
+      if (/marca ou modelo|marca.*modelo/.test(normalizeQuestion(previousAssistant)) && q.length > 1 && q.length <= 60) {
+        return "Boa, " + question.trim().replace(/[.!?]+$/g, "") + ". Tem preferência por algum ano ou orçamento aproximado?";
+      }
+      return "Percebi — procura um carro na Praia. Na categoria «Viaturas», pesquise por «carro» e selecione Praia na localização. Tem alguma marca ou modelo em mente?";
+    }
     const keywords = category === "Imóveis" ? "tipo de imóvel e «venda» ou «arrendamento»"
       : category === "Hospedagem" ? "tipo de alojamento e características da estadia"
       : category === "Viaturas" ? "marca, modelo e tipo de viatura"
@@ -263,7 +268,8 @@ export default async function handler(request: Request): Promise<Response> {
   const latestQuestion = messages[messages.length - 1].content;
   const asksForGeneratedContent = /\b(cria|criar|escreve|escrever|redige|redigir|elabora|elaborar|prepara|preparar|gera|gerar|desenvolve|desenvolver|exemplo|modelo de anuncio|texto profissional|anuncio profissional)\b/i.test(normalizeQuestion(latestQuestion));
   const userHistory = messages.filter((message) => message.role === "user").map((message) => message.content);
-  const knownReply = asksForGeneratedContent ? null : buildKnownReply(latestQuestion, userHistory);
+  const previousAssistant = messages.length >= 2 && messages[messages.length - 2].role === "assistant" ? messages[messages.length - 2].content : "";
+  const knownReply = asksForGeneratedContent ? null : buildKnownReply(latestQuestion, userHistory, previousAssistant);
   if (knownReply) return json({ reply: knownReply });
 
   if (!accountId || !apiToken) {
