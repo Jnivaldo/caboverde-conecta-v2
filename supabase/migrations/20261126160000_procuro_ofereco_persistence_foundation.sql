@@ -201,8 +201,26 @@ where o.moderation_status = 'approved'
   and r.status in ('active', 'negotiating')
   and r.expires_at > now();
 
--- Supplier insert validation uses the safe public projection (the base request table
--- intentionally remains private to its owner/admin).
+-- Private, minimal projection used only by authenticated RLS checks.
+-- It avoids exposing requester_id through the public feed while preventing suppliers
+-- from submitting offers to their own requests.
+create schema if not exists private;
+revoke all on schema private from public, anon;
+grant usage on schema private to authenticated;
+
+create or replace view private.procurement_request_offer_targets
+with (security_barrier = true)
+as
+select id, requester_id
+from public.procurement_requests
+where moderation_status = 'approved'
+  and status in ('active', 'negotiating')
+  and expires_at > now();
+
+revoke all on private.procurement_request_offer_targets from public, anon;
+grant select on private.procurement_request_offer_targets to authenticated;
+
+-- Supplier insert validation uses the public projection plus a private ownership check.
 drop policy if exists procurement_offers_supplier_insert_public_request on public.procurement_offers;
 create policy procurement_offers_supplier_insert_public_request
   on public.procurement_offers for insert to authenticated
@@ -212,6 +230,10 @@ create policy procurement_offers_supplier_insert_public_request
     and exists (
       select 1 from public.public_procurement_requests pr
       where pr.id = request_id
+    )
+    and exists (
+      select 1 from private.procurement_request_offer_targets t
+      where t.id = request_id and t.requester_id <> (select auth.uid())
     )
     and exists (
       select 1 from public.profiles p
