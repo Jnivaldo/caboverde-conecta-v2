@@ -141,6 +141,32 @@ export default function ListingPaymentsPanel({ userId, listings, canAdmin }: Pro
             : "Valor por anúncio: 1.500 CVE. Envie o comprovativo depois de efetuar a transferência para BCA ou BCN. A publicação continua sujeita à análise do anúncio."}
         </p>
       </div>
+      {!canAdmin && (
+        <div style={{ ...card, background: "linear-gradient(145deg,rgba(17,29,49,.98),rgba(16,24,42,.98))" }}>
+          <strong style={{ color: "#F8FAFC" }}>Contas para transferência — 1.500 CVE</strong>
+          <div style={{ display: "grid", gap: ".65rem", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
+            <div style={{ border: "1px solid rgba(96,165,250,.25)", borderRadius: 10, padding: ".8rem" }}>
+              <strong style={{ color: "#DBEAFE" }}>BCA — Banco Comercial do Atlântico</strong>
+              <div style={{ color: "#94A3B8", fontSize: ".76rem", marginTop: ".45rem" }}>Titular</div>
+              <strong style={{ color: "#F8FAFC", fontSize: ".86rem" }}>José Nivaldo G. Oliveira</strong>
+              <div style={{ color: "#94A3B8", fontSize: ".76rem", marginTop: ".4rem" }}>IBAN</div>
+              <strong style={{ color: "#DBEAFE", fontSize: ".82rem", overflowWrap: "anywhere" }}>CV64 0003 0000 7050 3384 1017 6</strong>
+              <div style={{ color: "#94A3B8", fontSize: ".76rem", marginTop: ".4rem" }}>NIB</div>
+              <strong style={{ color: "#DBEAFE", fontSize: ".82rem", overflowWrap: "anywhere" }}>000300007050338410176</strong>
+            </div>
+            <div style={{ border: "1px solid rgba(96,165,250,.25)", borderRadius: 10, padding: ".8rem" }}>
+              <strong style={{ color: "#DBEAFE" }}>BCN — Banco Cabo-verdiano de Negócios</strong>
+              <div style={{ color: "#94A3B8", fontSize: ".76rem", marginTop: ".45rem" }}>Titular</div>
+              <strong style={{ color: "#F8FAFC", fontSize: ".86rem" }}>José Nivaldo G. Oliveira</strong>
+              <div style={{ color: "#94A3B8", fontSize: ".76rem", marginTop: ".4rem" }}>Número de conta</div>
+              <strong style={{ color: "#DBEAFE", fontSize: ".82rem" }}>119418310001</strong>
+              <div style={{ color: "#94A3B8", fontSize: ".76rem", marginTop: ".4rem" }}>NIB</div>
+              <strong style={{ color: "#DBEAFE", fontSize: ".82rem", overflowWrap: "anywhere" }}>000400000119418310146</strong>
+            </div>
+          </div>
+          <p style={{ margin: 0, color: "#FDE68A", fontSize: ".78rem", lineHeight: 1.45 }}>Efetue a transferência apenas para um anúncio submetido com pagamento de 1.500 CVE. Envie o comprovativo e aguarde a validação da administração. Não faça pagamentos antecipados.</p>
+        </div>
+      )}
       {feedback && <div role="status" style={{ color: "#93C5FD", fontSize: ".84rem" }}>{feedback}</div>}
 
       {!canAdmin && pendingListings.map((listing) => (
