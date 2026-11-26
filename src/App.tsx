@@ -409,6 +409,7 @@ export default function App() {
   const [maxPrice, setMaxPrice] = useState("");
   const [sortOrder, setSortOrder] = useState("newest");
   const [lightbox, setLightbox] = useState<{ src: string; title: string; images: { id: string; url: string }[]; index: number } | null>(null);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
 
   useEffect(() => {
     if (!lightbox) return;
@@ -1248,6 +1249,7 @@ export default function App() {
                       <strong style={{ color: "#5EEAD4", fontSize: "1.2rem", lineHeight: 1.3 }}>{ad.price || "Preço sob consulta"}</strong>
                     </div>
                     <ListingDescription description={ad.description} />
+                    <button type="button" onClick={() => setSelectedListing(ad)} style={{ ...secondaryBtnStyle, width: "100%", marginTop: "0.15rem", borderColor: "rgba(96,165,250,0.4)", color: "#BFDBFE" }}>Ver detalhes do anúncio <span aria-hidden="true">→</span></button>
                     {(mediaByListing[ad.id] || []).some((media) => media.type === "video") && (
                       <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
                         {(mediaByListing[ad.id] || []).filter((media) => media.type === "video").map((media) => (
@@ -2017,6 +2019,27 @@ export default function App() {
         </button>
       </div>
 
+      {selectedListing && (
+        <div role="dialog" aria-modal="true" aria-label={"Detalhes: " + selectedListing.title} onClick={() => setSelectedListing(null)} style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(3,6,15,.88)", backdropFilter: "blur(8px)", overflowY: "auto", padding: "1rem" }}>
+          <section onClick={(e) => e.stopPropagation()} style={{ width: "min(920px,100%)", margin: "2rem auto", background: "#10182A", border: "1px solid rgba(181,195,216,.22)", borderRadius: 20, overflow: "hidden", boxShadow: "0 30px 80px rgba(0,0,0,.5)" }}>
+            <div style={{ padding: "1rem 1.2rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, borderBottom: "1px solid rgba(181,195,216,.14)" }}><span style={{ color: "#93C5FD", fontWeight: 750, fontSize: ".8rem" }}>DETALHES DO ANÚNCIO</span><button type="button" onClick={() => setSelectedListing(null)} style={secondaryBtnStyle}>Fechar ×</button></div>
+            <div style={{ padding: "1.1rem", display: "grid", gap: "1rem" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}><span style={{ ...badgeStyle("#1D4ED8"), fontSize: ".8rem" }}>{selectedListing.category}</span>{selectedListing.subcategory && <span style={{ ...badgeStyle("#334155"), fontSize: ".8rem" }}>{selectedListing.subcategory}</span>}</div>
+              <h2 style={{ margin: 0, fontSize: "clamp(1.35rem,3vw,2rem)", lineHeight: 1.35, color: "#F8FAFC" }}>{selectedListing.title}</h2>
+              <div style={{ color: "#B5C3D8" }}>📍 {selectedListing.municipality}{selectedListing.island ? ", " + selectedListing.island : ""}</div>
+              <div style={{ padding: "1rem", borderRadius: 14, background: "linear-gradient(135deg,rgba(56,214,160,.13),rgba(96,165,250,.1))", border: "1px solid rgba(56,214,160,.25)" }}><strong style={{ color: "#5EEAD4", fontSize: "1.5rem" }}>{selectedListing.price || "Preço sob consulta"}</strong></div>
+              <ListingGallery title={selectedListing.title} images={(mediaByListing[selectedListing.id] || []).filter(m => m.type === "image").sort((a,b)=>a.sort-b.sort)} fallbackImage={selectedListing.image} onOpen={(src,images,index)=>setLightbox({src,title:selectedListing.title,images,index})}/>
+              <h3 style={{ margin: "0.25rem 0 0", color: "#E2E8F0" }}>Descrição</h3><p style={{ whiteSpace: "pre-wrap", color: "#D7E6F4", lineHeight: 1.7, margin: 0 }}>{selectedListing.description}</p>
+              {(mediaByListing[selectedListing.id] || []).filter(m=>m.type==="video").map(m=><video key={m.id} src={m.url} controls style={{ width: "100%", maxHeight: 400, borderRadius: 12, background: "#070B18" }}/>)}
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", paddingTop: ".3rem" }}>
+                {selectedListing.whatsapp && <a href={`https://api.whatsapp.com/send?phone=${selectedListing.whatsapp.replace(/\\D/g,"")}&text=${encodeURIComponent("Olá! Tenho interesse no anúncio "+selectedListing.title+" publicado no CaboVerde Conecta. Gostaria de obter mais informações. Obrigado(a)!")}`} target="_blank" rel="noopener noreferrer" style={{ ...whatsappBtnStyle, padding: ".85rem", minWidth: 220 }}>Contactar via WhatsApp</a>}
+                {selectedListing.phone && <a href={`tel:${selectedListing.phone.replace(/\\D/g,"")}`} style={{ ...callLinkStyle, padding: ".85rem" }}>Ligar ao anunciante</a>}
+              </div>
+              <p style={{ margin: 0, color: "#94A3B8", fontSize: ".82rem" }}>Contacte diretamente o anunciante e confirme os detalhes antes de qualquer negócio.</p>
+            </div>
+          </section>
+        </div>
+      )}
       {lightbox && (
         <div
           onClick={() => setLightbox(null)}
