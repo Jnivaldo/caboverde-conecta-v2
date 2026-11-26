@@ -105,6 +105,17 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
   const context = normalizeQuestion([...userHistory.slice(-4), question].join(" "));
   const has = (...phrases: string[]) => phrases.some((phrase) => q.includes(normalizeQuestion(phrase)));
 
+  // Saudações e agradecimentos simples recebem uma resposta breve, sem iniciar um fluxo de pesquisa.
+  if (/^(ola|oi|bom dia|boa tarde|boa noite|tudo bem|ola tudo bem|como vai|boas)$/.test(q)) {
+    return "Olá! Seja bem-vindo ao CaboVerde Conecta. 😊 Como posso ajudar hoje — procura alguma coisa ou pretende divulgar um anúncio?";
+  }
+  if (/^(obrigado|obrigada|muito obrigado|muito obrigada|agradecido|agradecida|thanks|valeu)$/.test(q)) {
+    return "De nada! 😊 Estou por aqui se precisar de mais alguma ajuda."; 
+  }
+  if (/^(adeus|ate logo|ate mais|tchau|xau)$/.test(q)) {
+    return "Até breve! Obrigado por visitar o CaboVerde Conecta."; 
+  }
+
   if (has("quero vender o meu carro", "quero vender meu carro", "quero vender carro", "pretendo vender o carro", "quero anunciar o meu carro", "quero vender a minha viatura", "quero vender uma viatura", "vender automovel")) {
     return "Claro que sim! 🚗 O CaboVerde Conecta é um ótimo lugar para divulgar o seu carro. Vamos preparar um anúncio apelativo na categoria «Viaturas». Para começar, qual é a marca e o modelo do carro?";
   }
