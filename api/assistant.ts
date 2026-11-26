@@ -123,13 +123,13 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
 
   // Pedido explícito de divulgação: reconhecer a categoria quando já vem indicada na primeira mensagem.
   if (has("quero anunciar", "pretendo anunciar", "quero publicar um anuncio", "pretendo publicar um anuncio", "quero divulgar", "pretendo divulgar", "quero colocar um anuncio", "ajuda para anunciar", "ajuda me a anunciar", "ajude me a anunciar", "quero vender algo", "quero vender uma coisa")) {
-    if (/\\b(casa|apartamento|moradia|terreno|predio|imovel|imoveis|loja|armazem)\\b/.test(q)) {
+    if (/\b(casa|apartamento|moradia|terreno|predio|imovel|imoveis|loja|armazem)\b/.test(q)) {
       return "Claro! Vamos preparar o anúncio na categoria «Imóveis». Pretende vender ou arrendar?";
     }
-    if (/\\b(carro|viatura|automovel|mota|motociclo|carrinha|jipe|camiao|barco)\\b/.test(q)) {
+    if (/\b(carro|viatura|automovel|mota|motociclo|carrinha|jipe|camiao|barco)\b/.test(q)) {
       return "Claro! Vamos preparar o anúncio na categoria «Viaturas». Qual é a marca e o modelo?";
     }
-    if (/\\b(produto|telemovel|telefone|computador|roupa|mobilia|frigorifico|sofa|bicicleta)\\b/.test(q)) {
+    if (/\b(produto|telemovel|telefone|computador|roupa|mobilia|frigorifico|sofa|bicicleta)\b/.test(q)) {
       return "Claro! Vamos preparar o anúncio na categoria «Produtos». Qual é o produto que pretende divulgar e, se souber, qual é a marca ou modelo?";
     }
     return "Claro! Vamos preparar o seu anúncio. 😊 O que pretende divulgar? Pode ser um imóvel, viatura, produto, serviço ou outra coisa.";
@@ -138,12 +138,12 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
   // Continuidade do fluxo de anúncio: aproveita a resposta à pergunta sobre o que pretende divulgar.
   const previous = normalizeQuestion(previousAssistant);
   if ((previous.includes("o que pretende divulgar") || previous.includes("o que quer anunciar") || previous.includes("o que pretende anunciar")) && q.length <= 120) {
-    const vehicle = /\\b(carro|viatura|automovel|mota|motociclo|carrinha|jipe|camiao|barco)\\b/.test(q);
-    const property = /\\b(casa|apartamento|moradia|terreno|predio|imovel|loja|armazem)\\b/.test(q);
-    const professional = /\\b(eletricista|canalizador|pintor|pedreiro|mecanico|jardineiro|costureira|limpeza|servico|servicos|profissional)\\b/.test(q);
-    const accommodation = /\\b(hospedagem|alojamento|quarto|hotel|pousada|casa de ferias|estadia)\\b/.test(q);
-    const product = /\\b(produto|telemovel|telefone|computador|roupa|mobilia|frigorifico|sofa|bicicleta)\\b/.test(q);
-    const tourism = /\\b(passeio|excursao|turismo|experiencia|mergulho|caiaque|pesca desportiva)\\b/.test(q);
+    const vehicle = /\b(carro|viatura|automovel|mota|motociclo|carrinha|jipe|camiao|barco)\b/.test(q);
+    const property = /\b(casa|apartamento|moradia|terreno|predio|imovel|loja|armazem)\b/.test(q);
+    const professional = /\b(eletricista|canalizador|pintor|pedreiro|mecanico|jardineiro|costureira|limpeza|servico|servicos|profissional)\b/.test(q);
+    const accommodation = /\b(hospedagem|alojamento|quarto|hotel|pousada|casa de ferias|estadia)\b/.test(q);
+    const product = /\b(produto|telemovel|telefone|computador|roupa|mobilia|frigorifico|sofa|bicicleta)\b/.test(q);
+    const tourism = /\b(passeio|excursao|turismo|experiencia|mergulho|caiaque|pesca desportiva)\b/.test(q);
     if (vehicle) return "Perfeito! Vamos preparar o anúncio na categoria «Viaturas». Qual é a marca e o modelo?";
     if (property) return "Entendido. Vamos preparar o anúncio na categoria «Imóveis». Pretende vender ou arrendar?";
     if (accommodation) return "Muito bem. Vamos preparar o anúncio na categoria «Hospedagem». Em que ilha e concelho fica o alojamento?";
@@ -165,7 +165,7 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
     const historyText = userHistory.join(" ");
     const transaction = /arrend|alug/.test(normalizeQuestion(historyText)) ? "Arrendamento" : "Venda";
     const propertyText = userHistory.slice(1).map((item) => item.trim().replace(/[.!?]+$/g, "")).filter(Boolean).join("; ");
-    const placeMatch = historyText.match(/\\b(Tarrafal|Praia|Assomada|Pedra Badejo|Santa Catarina|São Domingos|São Filipe|Mosteiros|Mindelo|Ribeira Grande|Porto Novo|Ponta do Sol|Sal Rei|Espargos|Santa Maria|Cova Figueira|Nova Sintra)\\b/i);
+    const placeMatch = historyText.match(/\b(Tarrafal|Praia|Assomada|Pedra Badejo|Santa Catarina|São Domingos|São Filipe|Mosteiros|Mindelo|Ribeira Grande|Porto Novo|Ponta do Sol|Sal Rei|Espargos|Santa Maria|Cova Figueira|Nova Sintra)\b/i);
     const propertyLocation = placeMatch ? placeMatch[0] : "A indicar pelo anunciante";
     const title = transaction + " de imóvel - " + propertyText.slice(0, 65);
     return "Rascunho do anúncio\\n\\nTítulo: " + title + "\\nCategoria: «Imóveis»\\nFinalidade: " + transaction + "\\n\\nDescrição:\\n" + propertyText + "\\nLocalização: " + propertyLocation + "\\nPreço: A indicar pelo anunciante, se ainda não foi informado\\nContactos: A indicar pelo anunciante\\n\\nEste texto é apenas um rascunho; ainda não foi publicado. Quer corrigir ou acrescentar alguma informação?";
@@ -194,7 +194,7 @@ function buildKnownReply(question: string, userHistory: string[] = [], previousA
     const productInfo = userHistory.length >= 2 ? userHistory[userHistory.length - 2].trim().replace(/[.!?]+$/g, "") : "Produto a indicar";
     const conditionAndPrice = question.trim().replace(/[.!?]+$/g, "");
     const historyText = userHistory.join(" ");
-    const placeMatch = historyText.match(/\\b(Tarrafal|Praia|Assomada|Pedra Badejo|Santa Catarina|São Domingos|São Filipe|Mosteiros|Mindelo|Ribeira Grande|Porto Novo|Ponta do Sol|Sal Rei|Espargos|Santa Maria|Cova Figueira|Nova Sintra)\\b/i);
+    const placeMatch = historyText.match(/\b(Tarrafal|Praia|Assomada|Pedra Badejo|Santa Catarina|São Domingos|São Filipe|Mosteiros|Mindelo|Ribeira Grande|Porto Novo|Ponta do Sol|Sal Rei|Espargos|Santa Maria|Cova Figueira|Nova Sintra)\b/i);
     const productLocation = placeMatch ? placeMatch[0] : "A indicar pelo anunciante";
     return "Rascunho do anúncio\\n\\nTítulo: " + productInfo.slice(0, 75) + "\\nCategoria: «Produtos»\\n\\nDescrição:\\nProduto: " + productInfo + "\\nEstado e preço: " + conditionAndPrice + "\\nLocalização: " + productLocation + "\\nContactos: A indicar pelo anunciante\\n\\nEste texto é apenas um rascunho; ainda não foi publicado. Quer corrigir ou acrescentar alguma informação?";
   }
