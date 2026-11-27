@@ -1987,7 +1987,7 @@ export default function App() {
             onClick={(e) => e.stopPropagation()}
             style={{ position: "relative", width: "min(1100px, 100%)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.85rem" }}
           >
-            <button type="button" aria-label="Fechar galeria" onClick={() => setLightbox(null)} style={{ position: "absolute", top: -42, right: 0, width: 38, height: 38, borderRadius: "50%", border: "1px solid rgba(255,255,255,.3)", background: "rgba(21,31,51,.88)", color: "#fff", fontSize: 24, cursor: "pointer", zIndex: 2 }}>×</button>
+            <button type="button" aria-label="Fechar galeria" onClick={() => setLightbox(null)} style={{ position: "fixed", top: "max(12px, env(safe-area-inset-top))", right: "max(12px, env(safe-area-inset-right))", minWidth: 88, height: 44, padding: "0 13px", borderRadius: 999, border: "1px solid rgba(255,255,255,.42)", background: "rgba(21,31,51,.96)", color: "#fff", fontSize: 15, fontWeight: 750, cursor: "pointer", zIndex: 110, boxShadow: "0 4px 18px rgba(0,0,0,.35)" }}>Fechar ×</button>
             <div style={{ position: "relative", width: "100%", minHeight: "min(68vh, 680px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <img
                 key={lightbox.src}
