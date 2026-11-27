@@ -1734,6 +1734,34 @@ export default function App() {
         )}
       </main>
 
+      <footer
+        style={{
+          marginTop: "2rem",
+          padding: "2rem 1.25rem",
+          background: "linear-gradient(180deg, #10182A 0%, #0B1220 100%)",
+          borderTop: "1px solid rgba(181,195,216,0.18)",
+        }}
+      >
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1.25rem", flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 260px" }}>
+            <strong style={{ display: "block", color: "#F8FAFC", fontSize: "1.05rem", marginBottom: "0.35rem" }}>Precisa de ajuda? Estamos aqui para si.</strong>
+            <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.88rem", lineHeight: 1.6 }}>Fale diretamente com a nossa equipa de suporte humano pelo WhatsApp. Teremos todo o gosto em esclarecer as suas dúvidas.</p>
+          </div>
+          <a
+            href="https://wa.me/2389823835?text=Ol%C3%A1%21%20Preciso%20de%20ajuda%20com%20o%20CaboVerde%20Conecta."
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Falar com o suporte humano do CaboVerde Conecta pelo WhatsApp"
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.6rem", padding: "0.85rem 1.15rem", borderRadius: 12, background: "#16A34A", border: "1px solid #22C55E", color: "#FFFFFF", textDecoration: "none", fontWeight: 750, fontSize: "0.92rem", boxShadow: "0 8px 22px rgba(22,163,74,.2)" }}
+          >
+            <span aria-hidden="true">✆</span> Suporte humano · WhatsApp
+          </a>
+        </div>
+        <div style={{ maxWidth: 1200, margin: "1.25rem auto 0", paddingTop: "0.85rem", borderTop: "1px solid rgba(181,195,216,0.1)", color: "#8192AA", fontSize: "0.76rem" }}>
+          CaboVerde Conecta · Estamos disponíveis para ajudar.
+        </div>
+      </footer>
+
       {/* Assistente Flutuante */}
       <div
         style={{
