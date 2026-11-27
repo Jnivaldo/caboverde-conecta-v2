@@ -1307,7 +1307,7 @@ export default function App() {
                 <div style={{ position: "relative", zIndex: 1, animation: "conecta-success-pop .45s ease-out both" }}>
                   <div style={{ fontSize: "2.5rem", marginBottom: 5 }}>🎉</div>
                   <strong style={{ display: "block", color: "#F8FAFC", fontSize: "1.18rem", marginBottom: 7 }}>Anúncio submetido com sucesso!</strong>
-                  <p style={{ margin: "0 auto 0.9rem", maxWidth: 520, color: "#D7E6F4", lineHeight: 1.55, fontSize: "0.92rem" }}>{paymentMethod === "free_launch" ? "Recebemos os seus dados e fotografias. O anúncio está PENDENTE DE APROVAÇÃO e só ficará visível ao público depois da validação do administrador." : "Recebemos os dados do anúncio. Para concluir o pagamento de 1.500 CVE, entre em Minha Conta, abra Pagamento por transferência e envie o comprovativo. O anúncio só será publicado depois da validação do pagamento e da aprovação do conteúdo."}</p>
+                  <p style={{ margin: "0 auto 0.9rem", maxWidth: 520, color: "#D7E6F4", lineHeight: 1.55, fontSize: "0.92rem" }}>{paymentMethod === "free_launch" ? "O anúncio fica visível imediatamente e recebe a indicação «Novo anúncio» durante 24 horas. A equipa poderá analisá-lo depois e, se precisar de melhorias, notificará o proprietário." : "O anúncio será publicado depois da confirmação do pagamento e da validação dos quatro elementos essenciais."}</p>
                   <button type="button" onClick={() => setSubmissionSuccess(false)} style={{ ...secondaryBtnStyle, borderColor: "rgba(56,214,160,0.55)" }}>Continuar</button>
                 </div>
               </div>
@@ -1409,7 +1409,7 @@ export default function App() {
                     type="text"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    placeholder="Preço ou valor (ex.: 25.000 CVE)"
+                    placeholder="Preço ou valor (opcional — deixe em branco para preço sob consulta)"
                     style={inputStyle}
                   />
                   <input
@@ -1453,7 +1453,8 @@ export default function App() {
               </div>
 
               <div style={subCardStyle}>
-                <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>2. Fotografias e vídeos</strong>
+                <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>2. Fotografias</strong>
+                <p style={{ margin: 0, color: "#AFC0D6", fontSize: ".78rem" }}>É necessária pelo menos uma fotografia. Vídeos são opcionais.</p>
                 <React.Suspense fallback={<span style={{ color: "#AFC0D6" }}>A carregar gestor de fotografias…</span>}><ListingMediaPicker files={mediaFiles} onChange={setMediaFiles} /></React.Suspense>
               </div>
 
@@ -1539,7 +1540,7 @@ export default function App() {
               </div>
 
               <button type="submit" disabled={isSubmitting} style={{ ...primaryBtnStyle, opacity: isSubmitting ? 0.72 : 1, cursor: isSubmitting ? "wait" : "pointer", minHeight: 48 }}>
-                {isSubmitting ? "A enviar anúncio… Não feche esta página" : "Submeter Anúncio para Análise"}
+                {isSubmitting ? "A publicar anúncio… Não feche esta página" : "Publicar Anúncio"}
               </button>
             </form>
           </section>
@@ -1579,6 +1580,7 @@ export default function App() {
             )}
 
             <div style={{ display: "grid", gap: "0.85rem" }}>
+              {editFeedback && <div style={feedbackBoxStyle}>{editFeedback}</div>}
               {!authUser ? (
                 <div style={subCardStyle}>
                   <strong>Entre para consultar os seus anúncios</strong>
