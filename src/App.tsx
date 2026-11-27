@@ -1001,6 +1001,7 @@ export default function App() {
           <nav style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap" }}>
             {[
               { key: "account", label: "Minha Conta" },
+              ...(authUser ? [{ key: "myListings", label: "Os Meus Anúncios" }] : []),
               { key: "home", label: "Início" },
               { key: "publish", label: "Publicar Anúncio" },
               { key: "requests", label: "Procuro & Ofereço" },
@@ -1013,7 +1014,14 @@ export default function App() {
                   type="button"
                   className={item.key === "account" ? "account-nav-button" : undefined}
                   aria-current={active ? "page" : undefined}
-                  onClick={() => setTab(item.key as typeof tab)}
+                  onClick={() => {
+                    if (item.key === "myListings") {
+                      setTab("account");
+                      window.setTimeout(() => document.getElementById("my-listings")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+                    } else {
+                      setTab(item.key as typeof tab);
+                    }
+                  }}
                   style={{
                     padding: "0.5rem 0.9rem",
                     borderRadius: 10,
@@ -1712,6 +1720,18 @@ export default function App() {
               </div>
             )}
 
+            {authUser && (
+              <div id="my-listings" style={{ display: "grid", gap: "0.65rem", scrollMarginTop: "1.25rem", marginBottom: "0.85rem" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap" }}>
+                  <div>
+                    <span style={eyebrowStyle("#60A5FA")}>GESTÃO DO ANUNCIANTE</span>
+                    <h2 style={{ margin: "0.2rem 0 0", fontSize: "1.35rem", color: "#F8FAFC" }}>Os Meus Anúncios</h2>
+                    <p style={{ margin: "0.25rem 0 0", color: "#B5C3D8", fontSize: ".86rem" }}>Consulte estados, edite publicações e acompanhe os seus destaques.</p>
+                  </div>
+                  <span style={{ ...badgeStyle("#1D4ED8"), fontSize: ".82rem", padding: ".45rem .7rem" }}>{accountListings.length} anúncio(s)</span>
+                </div>
+              </div>
+            )}
             <div style={{ display: "grid", gap: "0.85rem" }}>
               {editFeedback && <div style={feedbackBoxStyle}>{editFeedback}</div>}
               {!authUser ? (
