@@ -196,3 +196,30 @@ p, h1, h2, h3, strong, span, a, li, label {
     padding-top: .5rem !important;
   }
 }
+
+
+/* Mobile listing browsing: clearer cards, safer media proportions and filter control spacing. */
+@media (max-width: 700px) {
+  main article {
+    border-radius: 14px;
+  }
+  main article img, main article video {
+    width: 100%;
+    max-height: 55vh;
+    object-fit: contain;
+    background: #0b1220;
+    border-radius: 10px;
+  }
+  main article h3 { margin-top: .65rem; }
+  main article p { font-size: .92rem; }
+  main button, main a[href] {
+    padding-top: .65rem;
+    padding-bottom: .65rem;
+  }
+  main input[type="search"] { border-radius: 12px; }
+  main select { min-height: 46px; }
+  main [aria-label*="Filtrar"], main [aria-label*="Pesquisar"] { scroll-margin-top: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
