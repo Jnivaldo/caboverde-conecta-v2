@@ -368,6 +368,7 @@ export default function App() {
   const [maxPrice, setMaxPrice] = useState("");
   const [sortOrder, setSortOrder] = useState("newest");
   const [lightbox, setLightbox] = useState<{ src: string; title: string; images: { id: string; url: string }[]; index: number } | null>(null);
+  const lightboxTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
 
   useEffect(() => {
@@ -1988,7 +1989,28 @@ export default function App() {
             style={{ position: "relative", width: "min(1100px, 100%)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.85rem" }}
           >
             <button type="button" aria-label="Fechar galeria" onClick={() => setLightbox(null)} style={{ position: "fixed", top: "max(12px, env(safe-area-inset-top))", right: "max(12px, env(safe-area-inset-right))", minWidth: 88, height: 44, padding: "0 13px", borderRadius: 999, border: "1px solid rgba(255,255,255,.42)", background: "rgba(21,31,51,.96)", color: "#fff", fontSize: 15, fontWeight: 750, cursor: "pointer", zIndex: 110, boxShadow: "0 4px 18px rgba(0,0,0,.35)" }}>Fechar ×</button>
-            <div style={{ position: "relative", width: "100%", minHeight: "min(68vh, 680px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div
+              onTouchStart={(event) => {
+                const touch = event.touches[0];
+                if (touch) lightboxTouchStartRef.current = { x: touch.clientX, y: touch.clientY };
+              }}
+              onTouchEnd={(event) => {
+                const start = lightboxTouchStartRef.current;
+                lightboxTouchStartRef.current = null;
+                const touch = event.changedTouches[0];
+                if (!start || !touch || lightbox.images.length < 2) return;
+                const deltaX = touch.clientX - start.x;
+                const deltaY = touch.clientY - start.y;
+                if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+                const direction = deltaX < 0 ? 1 : -1;
+                setLightbox((current) => {
+                  if (!current || current.images.length < 2) return current;
+                  const index = (current.index + direction + current.images.length) % current.images.length;
+                  return { ...current, index, src: current.images[index].url };
+                });
+              }}
+              style={{ position: "relative", width: "100%", minHeight: "min(68vh, 680px)", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "pan-y" }}
+            >
               <img
                 key={lightbox.src}
                 src={lightbox.src}
@@ -2015,7 +2037,7 @@ export default function App() {
                 ))}
               </div>
             )}
-            <span style={{ color: "#9FB0C8", fontSize: "0.76rem" }}>Use as setas do teclado ou os controlos para percorrer as fotografias · Esc para fechar</span>
+            <span style={{ color: "#9FB0C8", fontSize: "0.76rem" }}>{lightbox.images.length > 1 ? "Deslize para a esquerda ou direita, ou use os controlos, para percorrer as fotografias" : "Toque em Fechar para regressar ao anúncio"} · Esc para fechar</span>
           </div>
         </div>
       )}
