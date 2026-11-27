@@ -1,8 +1,8 @@
 const RELATED_TERMS: Record<string, string[]> = {
-  peixe: ["peixes", "pescado", "pescados", "marisco", "mariscos", "frutos do mar", "camarão", "camarões", "lagosta", "lagostas", "polvo", "lula", "atum", "garoupa", "cavala", "sardinha"],
-  peixes: ["peixe", "pescado", "pescados", "marisco", "mariscos", "frutos do mar", "camarão", "lagosta", "polvo", "lula"],
-  marisco: ["mariscos", "peixe", "peixes", "pescado", "frutos do mar", "camarão", "lagosta", "polvo", "lula"],
-  mariscos: ["marisco", "peixe", "peixes", "pescado", "frutos do mar", "camarão", "lagosta", "polvo", "lula"],
+  peixe: ["peixes", "pescado", "pescados", "marisco", "mariscos", "frutos do mar", "produtos do mar", "camarão", "camarões", "lagosta", "lagostas", "polvo", "lula", "atum", "garoupa", "cavala", "sardinha", "peixaria", "peixarias"],
+  peixes: ["peixe", "pescado", "pescados", "marisco", "mariscos", "frutos do mar", "produtos do mar", "camarão", "camarões", "lagosta", "lagostas", "polvo", "lula", "atum", "garoupa", "cavala", "sardinha", "peixaria", "peixarias"],
+  marisco: ["mariscos", "peixe", "peixes", "pescado", "pescados", "frutos do mar", "produtos do mar", "camarão", "camarões", "lagosta", "lagostas", "polvo", "lula"],
+  mariscos: ["marisco", "peixe", "peixes", "pescado", "pescados", "frutos do mar", "produtos do mar", "camarão", "camarões", "lagosta", "lagostas", "polvo", "lula"],
   carro: ["carros", "viatura", "viaturas", "automóvel", "automóveis", "motorizada", "mota"],
   carros: ["carro", "viatura", "viaturas", "automóvel", "automóveis"],
   viatura: ["viaturas", "carro", "carros", "automóvel", "automóveis"],
