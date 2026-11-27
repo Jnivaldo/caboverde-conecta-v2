@@ -781,6 +781,35 @@ export default function App() {
     addAudit(`Ação administrativa gravada no servidor em ${id}: ${action}.`);
   }
 
+  async function deleteListingAsAdmin(item: Listing) {
+    if (!authUser || !canAdmin) return;
+    const confirmed = window.confirm(
+      `Tem a certeza de que pretende eliminar definitivamente o anúncio “${item.title}”? Esta ação não pode ser desfeita.`
+    );
+    if (!confirmed) return;
+
+    const { error } = await supabase.from("listings").delete().eq("id", item.id);
+    if (error) {
+      setFeedback("Não foi possível eliminar o anúncio: " + error.message);
+      return;
+    }
+
+    setListings((previous) => previous.filter((listing) => listing.id !== item.id));
+    setMediaByListing((previous) => {
+      const next = { ...previous };
+      delete next[item.id];
+      return next;
+    });
+    const { error: auditError } = await supabase.from("audit_logs").insert({
+      actor_id: authUser.id,
+      listing_id: item.id,
+      action: "listing_deleted",
+      details: { title: item.title, owner_email: item.ownerEmail },
+    });
+    addAudit(`Anúncio ${item.id} eliminado pelo administrador.`);
+    if (auditError) console.error("Não foi possível gravar a auditoria da eliminação:", auditError.message);
+  }
+
   const previewCategory = useCustomCategory ? customCategory.trim() : pubCategory;
   const previewSubcategory = useCustomCategory || useCustomSubcategory ? customSubcategory.trim() : pubSubcategory;
   const previewTitle = title.trim() || "O título do seu anúncio aparecerá aqui";
@@ -1717,6 +1746,13 @@ export default function App() {
                       style={actionBtnStyle("#DC2626")}
                     >
                       Rejeitar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void deleteListingAsAdmin(item)}
+                      style={actionBtnStyle("#991B1B")}
+                    >
+                      Autorizar eliminação
                     </button>
                   </div>
                 </div>
