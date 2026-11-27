@@ -881,7 +881,7 @@ export default function App() {
     const nextFeatured = !item.isFeatured;
     const { data, error } = await supabase
       .from("listings")
-      .update({ is_featured: nextFeatured })
+      .update({ is_featured: nextFeatured, featured_until: nextFeatured ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null })
       .eq("id", item.id)
       .select("is_featured")
       .maybeSingle();
@@ -1738,7 +1738,7 @@ export default function App() {
 
                     {item.listingStatus === "suspended" && item.moderationNote && <div style={{ color: "#FDE68A", fontSize: ".82rem" }}>Melhorias pedidas pela equipa: {item.moderationNote}</div>}
                     {item.listingStatus === "published" && authUser && item.ownerAccountId === authUser.id && (() => {
-                      const promotion = featuredPromotions.find((entry) => entry.listing_id === item.id && ["pending_payment", "active"].includes(entry.status));
+                      const promotion = featuredPromotions.find((entry) => entry.listing_id === item.id && (entry.status === "pending_payment" || (entry.status === "active" && Boolean(entry.featured_until) && new Date(entry.featured_until as string).getTime() > Date.now())));
                       return <div style={{ ...subCardStyle, border: "1px solid rgba(212,175,55,.45)", gap: ".45rem" }}>
                         <strong style={{ color: "#FDE68A" }}>✦ Destaque Premium · 2.500 CVE / 30 dias</strong>
                         <span style={{ color: "#B5C3D8", fontSize: ".82rem" }}>Mais visibilidade na página inicial, etiqueta exclusiva e moldura dourada. O destaque só começa após confirmação do pagamento.</span>
