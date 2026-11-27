@@ -1337,23 +1337,35 @@ export default function App() {
             ) : (
               <>
               {publicListings.some((ad) => ad.isFeatured) && (
-                <section style={{ marginBottom: "1.25rem", padding: "1.1rem", borderRadius: 16, border: "1px solid rgba(212,175,55,.5)", background: "linear-gradient(135deg, rgba(120,82,18,.12), rgba(16,24,42,.94))" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: ".85rem" }}>
+                <section className="premium-showcase" aria-label="Anúncios em Destaque">
+                  <div className="premium-showcase-top">
                     <div>
-                      <span style={{ color: "#FDE68A", fontSize: ".72rem", fontWeight: 900, letterSpacing: ".1em" }}>✦ SELEÇÃO PREMIUM</span>
-                      <h2 style={{ margin: ".2rem 0 0", color: "#F8FAFC", fontSize: "1.3rem" }}>Anúncios em Destaque</h2>
+                      <span className="premium-kicker"><span aria-hidden="true">✦</span> SELEÇÃO EXCLUSIVA</span>
+                      <h2 className="premium-showcase-title">Destaques Premium</h2>
+                      <p className="premium-showcase-subtitle">Oportunidades selecionadas com visibilidade especial no CaboVerde Conecta</p>
                     </div>
-                    <span style={{ color: "#E8D59B", fontSize: ".8rem" }}>Maior visibilidade na página inicial</span>
+                    <span className="premium-showcase-mark">✦ PREMIUM</span>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: ".8rem" }}>
+                  <div className="premium-showcase-grid">
                     {publicListings.filter((ad) => ad.isFeatured).map((ad) => (
-                      <button key={ad.id} type="button" onClick={() => setSelectedListing(ad)} style={{ textAlign: "left", display: "grid", gap: ".5rem", padding: ".65rem", borderRadius: 12, border: "1px solid rgba(253,230,138,.42)", background: "rgba(7,11,24,.72)", color: "#F8FAFC", cursor: "pointer" }}>
-                        {ad.image ? <img src={ad.image} alt={ad.title} style={{ width: "100%", height: 118, objectFit: "cover", borderRadius: 8 }} /> : <div style={{ height: 118, display: "grid", placeItems: "center", color: "#B5C3D8", background: "#10182A", borderRadius: 8 }}>Sem fotografia</div>}
-                        <span className="listing-featured-badge">✦ EM DESTAQUE</span>
-                        <strong style={{ lineHeight: 1.35 }}>{ad.title}</strong>
-                        <span style={{ color: "#B5C3D8", fontSize: ".8rem" }}>{ad.municipality}{ad.island ? ", " + ad.island : ""}</span>
-                        <strong style={{ color: "#FDE68A" }}>{ad.price || "Preço sob consulta"}</strong>
-                      </button>
+                      <article key={ad.id} className="premium-showcase-card">
+                        <div className="premium-showcase-media">
+                          <ListingGallery
+                            title={ad.title}
+                            images={(mediaByListing[ad.id] || []).filter((media) => media.type === "image").sort((x, y) => x.sort - y.sort)}
+                            fallbackImage={ad.image}
+                            onOpen={(src, images, index) => setLightbox({ src, title: ad.title, images, index })}
+                          />
+                          <span className="premium-image-ribbon">✦ DESTAQUE PREMIUM</span>
+                        </div>
+                        <div className="premium-showcase-content">
+                          <span className="premium-category">{ad.category}</span>
+                          <h3>{ad.title}</h3>
+                          <span className="premium-location">⌖ {ad.municipality}{ad.island ? ", " + ad.island : ""}</span>
+                          <strong className="premium-price">{ad.price || "Preço sob consulta"}</strong>
+                          <button type="button" onClick={() => setSelectedListing(ad)} className="premium-details-button">Ver anúncio completo <span aria-hidden="true">→</span></button>
+                        </div>
+                      </article>
                     ))}
                   </div>
                 </section>
