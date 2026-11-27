@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./responsive.css";import type { User } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
-import AuthPanel from "./components/AuthPanel";
-import ListingMediaPicker from "./components/ListingMediaPicker";
-import ListingMediaManager from "./components/ListingMediaManager";
-import ProcuroOfereco from "./components/ProcuroOfereco";
-import ProcuroHomeHighlights from "./components/ProcuroHomeHighlights";
-import ProcuroAdminPanel from "./components/ProcuroAdminPanel";
-import NotificationCenter from "./components/NotificationCenter";
-import MonetizationPanel from "./components/MonetizationPanel";
-import ListingPaymentsPanel from "./components/ListingPaymentsPanel";
+const AuthPanel = React.lazy(() => import("./components/AuthPanel"));
+const ListingMediaPicker = React.lazy(() => import("./components/ListingMediaPicker"));
+const ListingMediaManager = React.lazy(() => import("./components/ListingMediaManager"));
+const ProcuroOfereco = React.lazy(() => import("./components/ProcuroOfereco"));
+const ProcuroHomeHighlights = React.lazy(() => import("./components/ProcuroHomeHighlights"));
+const ProcuroAdminPanel = React.lazy(() => import("./components/ProcuroAdminPanel"));
+const NotificationCenter = React.lazy(() => import("./components/NotificationCenter"));
+const MonetizationPanel = React.lazy(() => import("./components/MonetizationPanel"));
+const ListingPaymentsPanel = React.lazy(() => import("./components/ListingPaymentsPanel"));
 
 import {
   type Listing,
@@ -945,7 +945,7 @@ export default function App() {
               />
               {authLoading ? "A verificar sessão..." : authUser ? "Sessão iniciada" : "Não autenticado"}
             </div>
-            <NotificationCenter userId={authUser?.id ?? null} onNavigate={(nextTab) => setTab(nextTab)} />
+            <React.Suspense fallback={<span role="status" style={{ color: "#AFC0D6", fontSize: ".78rem" }}>A carregar notificações…</span>}><NotificationCenter userId={authUser?.id ?? null} onNavigate={(nextTab) => setTab(nextTab)} /></React.Suspense>
           </div>
         </div>
       </header>
@@ -1046,7 +1046,7 @@ export default function App() {
               </div>
             </section>
 
-            <ProcuroHomeHighlights onOpen={() => setTab("requests")} />
+            <React.Suspense fallback={<div style={{ minHeight: 80 }} />}><ProcuroHomeHighlights onOpen={() => setTab("requests")} /></React.Suspense>
 
             <div
               className="listing-search-filters"
@@ -1264,11 +1264,7 @@ export default function App() {
         )}
 
         {tab === "requests" && (
-          <ProcuroOfereco
-            user={authUser}
-            canAdmin={canAdmin}
-            onAuthClick={() => setTab("account")}
-          />
+          <React.Suspense fallback={<div role="status" style={{ color: "#AFC0D6", padding: "1rem" }}>A carregar Procuro & Ofereço…</div>}><ProcuroOfereco user={authUser} canAdmin={canAdmin} onAuthClick={() => setTab("account")} /></React.Suspense>
         )}
 
         {tab === "publish" && (
@@ -1446,7 +1442,7 @@ export default function App() {
 
               <div style={subCardStyle}>
                 <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>2. Fotografias e vídeos</strong>
-                <ListingMediaPicker files={mediaFiles} onChange={setMediaFiles} />
+                <React.Suspense fallback={<span style={{ color: "#AFC0D6" }}>A carregar gestor de fotografias…</span>}><ListingMediaPicker files={mediaFiles} onChange={setMediaFiles} /></React.Suspense>
               </div>
 
               <div style={subCardStyle}>
@@ -1539,7 +1535,7 @@ export default function App() {
 
         {tab === "account" && (
           <section style={panelStyle}>
-            {authUser && <ListingPaymentsPanel userId={authUser.id} listings={accountListings} canAdmin={false} />}
+            {authUser && <React.Suspense fallback={<span style={{ color: "#AFC0D6" }}>A carregar pagamentos…</span>}><ListingPaymentsPanel userId={authUser.id} listings={accountListings} canAdmin={false} /></React.Suspense>}
             <span style={eyebrowStyle("#38D6A0")}>ÁREA DO ANUNCIANTE</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>Minha Conta</h1>
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
@@ -1550,7 +1546,7 @@ export default function App() {
               {authLoading ? (
                 <span style={{ color: "#B5C3D8", fontSize: "0.88rem" }}>A verificar sessão segura...</span>
               ) : (
-                <AuthPanel user={authUser} onSignedIn={(user) => { setAuthUser(user); setAccountEmail(user.email ?? ""); }} onSignedOut={() => { setAuthUser(null); setAccountEmail(""); setListings([]); }} />
+                <React.Suspense fallback={<span style={{ color: "#AFC0D6" }}>A carregar autenticação segura…</span>}><AuthPanel user={authUser} onSignedIn={(user) => { setAuthUser(user); setAccountEmail(user.email ?? ""); }} onSignedOut={() => { setAuthUser(null); setAccountEmail(""); setListings([]); }} /></React.Suspense>
               )}
             </div>
 
@@ -1630,12 +1626,7 @@ export default function App() {
                     )}
 
                     {authUser && item.ownerAccountId === authUser.id && (
-                      <ListingMediaManager
-                        listingId={item.id}
-                        ownerId={authUser.id}
-                        currentCover={item.image}
-                        onCoverChange={(url) => setListings((prev) => prev.map((current) => current.id === item.id ? { ...current, image: url } : current))}
-                      />
+                      <React.Suspense fallback={<span style={{ color: "#AFC0D6" }}>A carregar fotografias…</span>}><ListingMediaManager listingId={item.id} ownerId={authUser.id} currentCover={item.image} onCoverChange={(url) => setListings((prev) => prev.map((current) => current.id === item.id ? { ...current, image: url } : current))} /></React.Suspense>
                     )}
 
                     {editingListingId === item.id && editDraft && (
@@ -1707,16 +1698,9 @@ export default function App() {
 
         {tab === "admin" && (
           <section style={panelStyle}>
-            <MonetizationPanel canAdmin={canAdmin} />
-            <ListingPaymentsPanel
-              userId={authUser?.id ?? null}
-              listings={accountListings}
-              canAdmin={canAdmin}
-              onPaymentReviewed={(listingId, decision) => setListings((prev) => prev.map((item) => item.id === listingId
-                ? { ...item, paymentStatus: decision === "approved" ? "confirmed" : "pending", paymentMethod: "bank_transfer" }
-                : item))}
-            />
-            <ProcuroAdminPanel canAdmin={canAdmin} />
+            <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><MonetizationPanel canAdmin={canAdmin} /></React.Suspense>
+            <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><ListingPaymentsPanel userId={authUser?.id ?? null} listings={accountListings} canAdmin={canAdmin} onPaymentReviewed={(listingId, decision) => setListings((prev) => prev.map((item) => item.id === listingId ? { ...item, paymentStatus: decision === "approved" ? "confirmed" : "pending", paymentMethod: "bank_transfer" } : item))} /></React.Suspense>
+            <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><ProcuroAdminPanel canAdmin={canAdmin} /></React.Suspense>
             <span style={eyebrowStyle("#EC4899")}>GOVERNANÇA E MODERAÇÃO</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>
               Painel Administrativo
