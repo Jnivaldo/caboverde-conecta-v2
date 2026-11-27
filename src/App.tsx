@@ -1514,7 +1514,7 @@ export default function App() {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".8rem", flexWrap: "wrap" }}>
                   <div>
                     <strong style={{ color: "#F8FAFC", fontSize: ".95rem" }}>Pré-visualização do anúncio</strong>
-                    <p style={{ margin: ".25rem 0 0", color: "#AFC0D6", fontSize: ".78rem" }}>Veja como os dados principais ficarão antes de enviar para análise.</p>
+                    <p style={{ margin: ".25rem 0 0", color: "#AFC0D6", fontSize: ".78rem" }}>Veja como os dados principais ficarão antes de publicar.</p>
                   </div>
                   <button type="button" onClick={() => setPublicationPreviewOpen((open) => !open)} style={{ ...secondaryBtnStyle, borderColor: "#60A5FA", color: "#BFDBFE" }}>
                     {publicationPreviewOpen ? "Ocultar pré-visualização" : "Ver pré-visualização"}
@@ -1650,7 +1650,7 @@ export default function App() {
                         <strong>Editar dados do anúncio</strong>
                         <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
                           Título
-                          <input required minLength={5} maxLength={100} value={editDraft.title} onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })} style={inputStyle} />
+                          <input required minLength={1} maxLength={100} value={editDraft.title} onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })} style={inputStyle} />
                         </label>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.65rem" }}>
                           <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
@@ -1679,7 +1679,7 @@ export default function App() {
                           </label>
                           <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
                             Preço / valor
-                            <input required maxLength={60} value={editDraft.price} onChange={(e) => setEditDraft({ ...editDraft, price: e.target.value })} style={inputStyle} />
+                            <input maxLength={60} value={editDraft.price} onChange={(e) => setEditDraft({ ...editDraft, price: e.target.value })} style={inputStyle} />
                           </label>
                           <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
                             WhatsApp
