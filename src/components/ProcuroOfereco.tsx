@@ -16,13 +16,7 @@ type OfferRow = {
 };
 type Props = { user: User | null; canAdmin: boolean; onAuthClick: () => void };
 
-const islands: Record<string, string[]> = {
-  Santiago: ["Praia", "Tarrafal", "Assomada", "São Domingos", "Calheta de São Miguel"],
-  "São Vicente": ["Mindelo", "Baía das Gatas", "São Pedro"], Sal: ["Espargos", "Santa Maria"],
-  "Boa Vista": ["Sal Rei", "Rabil"], "Santo Antão": ["Porto Novo", "Ribeira Grande", "Paul"],
-  "São Nicolau": ["Ribeira Brava", "Tarrafal de São Nicolau"], Fogo: ["São Filipe", "Mosteiros", "Santa Catarina do Fogo"],
-  Maio: ["Vila do Maio"], Brava: ["Nova Sintra"],
-};
+const islandNames = ["Santiago", "São Vicente", "Sal", "Boa Vista", "Santo Antão", "São Nicolau", "Fogo", "Maio", "Brava"];
 const categories = ["Imóveis", "Viaturas", "Produtos", "Hospedagem", "Profissionais", "Empresas", "Serviços", "Turismo e Experiências", "Agricultura e Pecuária", "Máquinas e Equipamentos", "Desporto e Lazer", "Oportunidades", "Outro"];
 const fieldStyle: React.CSSProperties = { width: "100%", boxSizing: "border-box", padding: ".78rem .85rem", borderRadius: 10, border: "1px solid rgba(181,195,216,.25)", background: "#0B1425", color: "#F8FAFC", fontSize: ".92rem", outlineColor: "#60A5FA" };
 const labelStyle: React.CSSProperties = { display: "grid", gap: ".42rem", color: "#DCE7F5", fontSize: ".82rem", fontWeight: 700 };
@@ -213,8 +207,8 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
           <label style={labelStyle}>Título do pedido<input required minLength={5} maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex.: Procuro televisor Vizio de 55 polegadas, novo" style={fieldStyle} /></label>
           <label style={labelStyle}>Categoria<select required value={category} onChange={(e) => setCategory(e.target.value)} style={fieldStyle}><option value="">Escolher categoria</option>{categories.map((value) => <option key={value}>{value}</option>)}</select></label>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: ".65rem" }}>
-            <label style={labelStyle}>Ilha<select required value={island} onChange={(e) => { setIsland(e.target.value); setMunicipality(""); }} style={fieldStyle}><option value="">Ilha</option>{Object.keys(islands).map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label style={labelStyle}>Concelho<select required disabled={!island} value={municipality} onChange={(e) => setMunicipality(e.target.value)} style={fieldStyle}><option value="">Concelho</option>{(islands[island] || []).map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label style={labelStyle}>Ilha<select required value={island} onChange={(e) => { setIsland(e.target.value); setMunicipality(""); }} style={fieldStyle}><option value="">Ilha</option>{islandNames.map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label style={labelStyle}>Concelho / localidade<input required minLength={2} maxLength={100} value={municipality} onChange={(e) => setMunicipality(e.target.value)} style={fieldStyle} placeholder="Ex.: Ribeira Grande de Santiago" /></label>
           </div>
           <label style={labelStyle}>Descrição<textarea required minLength={10} maxLength={2000} rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Marca, modelo, tamanho, estado, quantidade ou outras características..." style={{ ...fieldStyle, resize: "vertical" }} /></label>
           <label style={labelStyle}>Orçamento (opcional)<input value={budget} onChange={(e) => setBudget(e.target.value)} maxLength={80} placeholder="Ex.: Até 50.000 CVE" style={fieldStyle} /></label>
