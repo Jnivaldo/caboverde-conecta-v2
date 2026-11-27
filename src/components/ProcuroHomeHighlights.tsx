@@ -119,7 +119,7 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: (requestId?:
           <h2 style={{ margin: ".25rem 0 0", color: "#F8FAFC", fontSize: "clamp(1.2rem,2.6vw,1.55rem)" }}>O que a comunidade procura e oferece</h2>
           <p style={{ margin: ".3rem 0 0", color: "#B5C3D8", fontSize: ".86rem" }}>Pedidos reais, aprovados pela nossa equipa.</p>
         </div>
-        <button type="button" onClick={onOpen} style={{ border: "1px solid rgba(96,165,250,.45)", borderRadius: 10, padding: ".65rem .9rem", background: "#2563EB", color: "#fff", fontWeight: 750, cursor: "pointer" }}>Ver todos os pedidos</button>
+        <button type="button" onClick={() => onOpen()} style={{ border: "1px solid rgba(96,165,250,.45)", borderRadius: 10, padding: ".65rem .9rem", background: "#2563EB", color: "#fff", fontWeight: 750, cursor: "pointer" }}>Ver todos os pedidos</button>
       </div>
 
       <article key={item.id} aria-live="polite" style={{ minWidth: 0, padding: "clamp(1rem,3vw,1.4rem)", borderRadius: 14, border: `1px solid ${palette.border}`, background: palette.surface, boxShadow: `0 12px 30px ${palette.glow}`, animation: "procuroSlideIn .24s ease-out both", willChange: "transform, opacity" }}>
