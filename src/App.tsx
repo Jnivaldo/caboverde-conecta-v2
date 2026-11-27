@@ -146,7 +146,8 @@ function mapDatabaseListing(row: Record<string, unknown>): Listing {
     paymentMethod: (row.payment_method ?? "free_launch") as PaymentMethod,
     proofRef: row.proof_ref ? String(row.proof_ref) : undefined,
     slotNumber: typeof row.slot_number === "number" ? row.slot_number : undefined,
-    createdAt: String(row.created_at ?? "").slice(0, 10),
+    moderationNote: row.moderation_note ? String(row.moderation_note) : "",
+    createdAt: String(row.created_at ?? ""),
   };
 }
 
@@ -370,6 +371,8 @@ export default function App() {
   const [lightbox, setLightbox] = useState<{ src: string; title: string; images: { id: string; url: string }[]; index: number } | null>(null);
   const lightboxTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [clockNow, setClockNow] = useState(Date.now());
+  useEffect(() => { const timer = window.setInterval(() => setClockNow(Date.now()), 60_000); return () => window.clearInterval(timer); }, []);
 
   useEffect(() => {
     if (!lightbox) return;
@@ -556,28 +559,16 @@ export default function App() {
       return;
     }
 
-    if (title.trim().length < 5 || title.trim().length > 100) {
-      setFeedback("O título deve ter entre 5 e 100 caracteres.");
+    if (!title.trim() || title.trim().length > 100) {
+      setFeedback("Indique o nome do anúncio (máximo de 100 caracteres).");
       return;
     }
-    if (!price.trim() || price.trim().length > 60) {
-      setFeedback("Indique um preço ou valor válido (máximo de 60 caracteres).");
-      return;
-    }
-    if (useCustomCategory && customCategory.trim().length < 3) {
-      setFeedback("Indique uma categoria com pelo menos 3 caracteres.");
-      return;
-    }
-    if ((useCustomCategory || useCustomSubcategory) && customSubcategory.trim().length < 2) {
-      setFeedback("Indique o produto, subproduto ou serviço que pretende anunciar.");
+    if (price.trim().length > 60) {
+      setFeedback("O preço ou valor não pode ultrapassar 60 caracteres.");
       return;
     }
     if (!pubIsland || !LOCATIONS[pubIsland]?.includes(pubMunicipality)) {
       setFeedback("Selecione uma ilha e um concelho válidos.");
-      return;
-    }
-    if (!ownerEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail.trim())) {
-      setFeedback("Indique um endereço de email válido.");
       return;
     }
     const cleanWhatsApp = whatsapp.replace(/\D/g, "");
@@ -600,9 +591,13 @@ export default function App() {
         const parsedImageUrl = new URL(imageUrl.trim());
         if (parsedImageUrl.protocol !== "https:") throw new Error("HTTPS required");
       } catch {
-        setFeedback("A imagem deve utilizar um endereço HTTPS válido.");
+        setFeedback("A fotografia deve utilizar um endereço HTTPS válido.");
         return;
       }
+    }
+    if (!mediaFiles.some((file) => file.type.startsWith("image/")) && !imageUrl.trim()) {
+      setFeedback("Adicione pelo menos uma fotografia do anúncio.");
+      return;
     }
 
     if (paymentMethod === "bank_transfer" && !paidListingsEnabled) {
@@ -621,11 +616,11 @@ export default function App() {
     setIsSubmitting(true);
     const submitArgs = {
       p_title: title.trim(),
-      p_category: useCustomCategory ? customCategory.trim() : pubCategory,
-      p_subcategory: useCustomCategory || useCustomSubcategory ? customSubcategory.trim() : pubSubcategory,
+      p_category: (useCustomCategory ? customCategory.trim() : pubCategory) || "Outros",
+      p_subcategory: (useCustomCategory || useCustomSubcategory ? customSubcategory.trim() : pubSubcategory) || "Geral",
       p_island: pubIsland,
       p_municipality: pubMunicipality,
-      p_price: price.trim(),
+      p_price: price.trim() || "Preço sob consulta",
       p_description: description.trim(),
       p_whatsapp: cleanWhatsApp,
       p_phone: cleanPhone,
@@ -677,7 +672,9 @@ export default function App() {
         newAd.image = firstImage.url;
       }
     }
-    setListings((prev) => [newAd, ...prev]);
+    const { data: refreshedListing } = await supabase.from("listings").select("*").eq("id", newAd.id).maybeSingle();
+    const finalAd = refreshedListing ? mapDatabaseListing(refreshedListing as Record<string, unknown>) : newAd;
+    setListings((prev) => [finalAd, ...prev]);
     if (paymentMethod === "free_launch") {
       setUsedFreeSlots((current) => Math.max(current, newAd.slotNumber ?? current));
       addAudit(`Anúncio ${newAd.id} enviado ao servidor e recebeu a vaga gratuita #${newAd.slotNumber}.`);
@@ -693,7 +690,7 @@ export default function App() {
     setUseCustomCategory(false);
     setUseCustomSubcategory(false);
     setMediaFiles([]);
-    setFeedback("Anúncio submetido com sucesso! O seu anúncio está pendente de aprovação pelo administrador.");
+    setFeedback(finalAd.listingStatus === "published" ? "Anúncio publicado automaticamente! A equipa poderá analisá-lo e pedir melhorias, se necessário." : "Anúncio recebido. Será publicado assim que a fotografia estiver carregada e o pagamento confirmado.");
     setIsSubmitting(false);
     setSubmissionSuccess(true);
   }
@@ -759,12 +756,14 @@ export default function App() {
   async function updatePaymentAndListing(
     id: string,
     nextPayment: PaymentStatus,
-    nextListing: ListingStatus
+    nextListing: ListingStatus,
+    moderationNote?: string
   ) {
     if (!authUser || !canAdmin) return;
     const { error } = await supabase.from("listings").update({
       payment_status: nextPayment,
       listing_status: nextListing,
+      ...(moderationNote ? { moderation_note: moderationNote } : {}),
     }).eq("id", id);
     if (error) {
       setFeedback("Ação administrativa não concluída: " + error.message);
@@ -773,7 +772,7 @@ export default function App() {
     setListings((prev) =>
       prev.map((item) =>
         item.id === id
-          ? { ...item, paymentStatus: nextPayment, listingStatus: nextListing }
+          ? { ...item, paymentStatus: nextPayment, listingStatus: nextListing, moderationNote: moderationNote || item.moderationNote }
           : item
       )
     );
@@ -782,9 +781,23 @@ export default function App() {
       actor_id: authUser.id,
       listing_id: id,
       action: "listing_moderation",
-      details: { payment_status: nextPayment, listing_status: nextListing },
+      details: { payment_status: nextPayment, listing_status: nextListing, moderation_note: moderationNote || null },
     });
-    addAudit(`Ação administrativa gravada no servidor em ${id}: ${action}.`);
+    addAudit(`Ação administrativa gravada no servidor em ${id}: ${action}${moderationNote ? "; motivo: " + moderationNote : ""}.`);
+  }
+
+  function suspendListing(item: Listing) {
+    const reason = window.prompt("Indique ao anunciante o que deve melhorar antes de voltar a publicar:");
+    if (!reason?.trim()) return;
+    void updatePaymentAndListing(item.id, item.paymentStatus, "suspended", reason.trim().slice(0, 1000));
+  }
+
+  async function republishListing(item: Listing) {
+    if (!authUser || item.ownerAccountId !== authUser.id || item.listingStatus !== "suspended") return;
+    const { error } = await supabase.from("listings").update({ listing_status: "published" }).eq("id", item.id).eq("owner_id", authUser.id);
+    if (error) { setEditFeedback("Não foi possível voltar a publicar. Confirme fotografia, localização e contacto: " + error.message); return; }
+    setListings((previous) => previous.map((current) => current.id === item.id ? { ...current, listingStatus: "published" } : current));
+    setEditFeedback("O anúncio voltou a estar publicado.");
   }
 
   async function deleteListingAsAdmin(item: Listing) {
@@ -1226,6 +1239,7 @@ export default function App() {
                   <div className="listing-card-content" style={{ padding: "1.1rem", display: "flex", flexDirection: "column", gap: "0.65rem", flex: 1 }}>
                     <div className="listing-card-categories" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <span style={{ padding: "0.32rem 0.65rem", borderRadius: 999, background: "rgba(96,165,250,0.14)", border: "1px solid rgba(96,165,250,0.28)", color: "#BFDBFE", fontSize: "0.76rem", fontWeight: 750 }}>{ad.category}</span>
+                      {clockNow - new Date(ad.createdAt).getTime() < 86_400_000 && clockNow >= new Date(ad.createdAt).getTime() && <span style={{ padding: ".28rem .6rem", borderRadius: 999, background: "#FACC15", color: "#172033", fontSize: ".7rem", fontWeight: 900 }}>Novo anúncio</span>}
                       {ad.subcategory && <span style={{ color: "#9FB0C8", fontSize: "0.76rem" }}>{ad.subcategory}</span>}
                     </div>
                     <h2 className="listing-card-title" style={{ margin: 0, fontSize: "1.16rem", lineHeight: 1.4, color: "#F8FAFC", letterSpacing: "-0.01em" }}>{ad.title}</h2>
@@ -1279,9 +1293,7 @@ export default function App() {
               <span style={eyebrowStyle("#8B5CF6")}>SUBMISSÃO DE ANÚNCIO</span>
               <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>Publicar Anúncio</h1>
               <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.92rem", lineHeight: 1.5 }}>
-                Campanha de lançamento: até 50 anúncios gratuitos, sujeitos a confirmação do servidor. Valor padrão após campanha:{" "}
-                <strong style={{ color: "#F8FAFC" }}>1.500 CVE</strong>. O envio de comprovativo nunca publica o anúncio
-                automaticamente — depende sempre da confirmação do administrador.
+                Publique com apenas quatro elementos: nome, pelo menos uma fotografia, localização e contacto. Os anúncios gratuitos são publicados automaticamente; a equipa poderá analisá-los depois e pedir melhorias. O pagamento dos anúncios pagos continua sujeito a confirmação.
               </p>
             </div>
 
@@ -1416,13 +1428,7 @@ export default function App() {
                   />
                 </div>
 
-                <input
-                  type="email"
-                  value={ownerEmail}
-                  onChange={(e) => setOwnerEmail(e.target.value)}
-                  placeholder="E-mail do anunciante"
-                  style={inputStyle}
-                />
+                <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Usaremos automaticamente o email da sua conta para gerir o anúncio. Não precisa de o preencher novamente.</div>
 
                 <input
                   type="url"
@@ -1619,6 +1625,8 @@ export default function App() {
                       <span style={badgeStyle("#6D28D9")}>Anúncio: {item.listingStatus}</span>
                     </div>
 
+                    {item.listingStatus === "suspended" && item.moderationNote && <div style={{ color: "#FDE68A", fontSize: ".82rem" }}>Melhorias pedidas pela equipa: {item.moderationNote}</div>}
+                    {item.listingStatus === "suspended" && <button type="button" onClick={() => void republishListing(item)} style={actionBtnStyle("#15803D")}>Voltar a publicar</button>}
                     {item.listingStatus !== "rejected" && (
                       <div>
                         <button
@@ -1732,6 +1740,7 @@ export default function App() {
                       <span style={badgeStyle("#6D28D9")}>Anúncio: {item.listingStatus}</span>
                     </div>
                   </div>
+                  {item.moderationNote && item.listingStatus === "suspended" && <div style={{ color: "#FDE68A", fontSize: ".82rem" }}>Motivo da suspensão: {item.moderationNote}</div>}
 
                   <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.25rem" }}>
                     <button
@@ -1750,7 +1759,7 @@ export default function App() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => updatePaymentAndListing(item.id, item.paymentStatus, "suspended")}
+                      onClick={() => { const reason = window.prompt("Indique o que o anunciante deve melhorar:"); if (reason?.trim()) void updatePaymentAndListing(item.id, item.paymentStatus, "suspended", reason.trim().slice(0, 1000)); }}
                       style={actionBtnStyle("#D97706")}
                     >
                       Suspender
@@ -2004,7 +2013,7 @@ export default function App() {
           <section onClick={(e) => e.stopPropagation()} style={{ width: "min(920px,100%)", margin: "2rem auto", background: "#10182A", border: "1px solid rgba(181,195,216,.22)", borderRadius: 20, overflow: "hidden", boxShadow: "0 30px 80px rgba(0,0,0,.5)" }}>
             <div style={{ padding: "1rem 1.2rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, borderBottom: "1px solid rgba(181,195,216,.14)" }}><span style={{ color: "#93C5FD", fontWeight: 750, fontSize: ".8rem" }}>DETALHES DO ANÚNCIO</span><button type="button" onClick={() => setSelectedListing(null)} style={secondaryBtnStyle}>Fechar ×</button></div>
             <div style={{ padding: "1.1rem", display: "grid", gap: "1rem" }}>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}><span style={{ ...badgeStyle("#1D4ED8"), fontSize: ".8rem" }}>{selectedListing.category}</span>{selectedListing.subcategory && <span style={{ ...badgeStyle("#334155"), fontSize: ".8rem" }}>{selectedListing.subcategory}</span>}</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}><span style={{ ...badgeStyle("#1D4ED8"), fontSize: ".8rem" }}>{selectedListing.category}</span>{selectedListing.subcategory && <span style={{ ...badgeStyle("#334155"), fontSize: ".8rem" }}>{selectedListing.subcategory}</span>}{clockNow - new Date(selectedListing.createdAt).getTime() < 86_400_000 && clockNow >= new Date(selectedListing.createdAt).getTime() && <span style={{ ...badgeStyle("#FACC15"), color: "#172033", fontSize: ".8rem" }}>Novo anúncio</span>}</div>
               <h2 style={{ margin: 0, fontSize: "clamp(1.35rem,3vw,2rem)", lineHeight: 1.35, color: "#F8FAFC" }}>{selectedListing.title}</h2>
               <div style={{ color: "#B5C3D8" }}>📍 {selectedListing.municipality}{selectedListing.island ? ", " + selectedListing.island : ""}</div>
               <div style={{ padding: "1rem", borderRadius: 14, background: "linear-gradient(135deg,rgba(56,214,160,.13),rgba(96,165,250,.1))", border: "1px solid rgba(56,214,160,.25)" }}><strong style={{ color: "#5EEAD4", fontSize: "1.5rem" }}>{selectedListing.price || "Preço sob consulta"}</strong></div>
