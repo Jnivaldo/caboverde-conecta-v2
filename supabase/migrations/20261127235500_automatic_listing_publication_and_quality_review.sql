@@ -312,6 +312,48 @@ create trigger listing_media_auto_publish
 after insert on public.listing_media
 for each row execute function private.auto_publish_listing_after_photo_upload();
 
+-- If a paid listing is awaiting payment, publish it automatically as soon as
+-- the payment is confirmed and the four essential content fields are present.
+create or replace function private.auto_publish_listing_after_payment_confirmation()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+begin
+  if old.payment_status is distinct from new.payment_status
+     and new.payment_status = 'confirmed'
+     and new.listing_status = 'pending' then
+    update public.listings l
+    set listing_status = 'published'
+    where l.id = new.id
+      and nullif(trim(l.title), '') is not null
+      and nullif(trim(l.island), '') is not null
+      and nullif(trim(l.municipality), '') is not null
+      and (
+        char_length(regexp_replace(coalesce(l.whatsapp, ''), '[^0-9]', '', 'g')) between 7 and 15
+        or char_length(regexp_replace(coalesce(l.phone, ''), '[^0-9]', '', 'g')) between 7 and 15
+      )
+      and (
+        nullif(trim(l.image_url), '') is not null
+        or exists (
+          select 1 from public.listing_media m
+          where m.listing_id = l.id and m.media_type = 'image'
+        )
+      );
+  end if;
+  return new;
+end;
+$function$;
+
+revoke all on function private.auto_publish_listing_after_payment_confirmation()
+  from public, anon, authenticated;
+
+drop trigger if exists listings_auto_publish_after_payment on public.listings;
+create trigger listings_auto_publish_after_payment
+after update of payment_status on public.listings
+for each row execute function private.auto_publish_listing_after_payment_confirmation();
+
 -- Send the owner a useful moderation note and keep admins informed for post-publication review.
 create or replace function private.notify_listing_events()
 returns trigger
