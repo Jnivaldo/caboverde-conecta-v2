@@ -127,19 +127,49 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
     if (!focusTarget || loading) return;
     const request = items.find((item) => item.id === focusTarget.requestId);
     if (!request) return;
-    const timer = window.setTimeout(() => {
-      setFilter("Todos");
-      setFilterIsland("Todas");
-      setFilterMunicipality("Todos");
-      const targetId = focusTarget.offerId ? `procurement-offer-${focusTarget.offerId}` : `procurement-request-${focusTarget.requestId}`;
+
+    // Reset every filter first. The target card may not exist in the DOM until
+    // React has rendered the unfiltered list, so scrolling immediately here races.
+    setFilter("Todos");
+    setFilterIsland("Todas");
+    setFilterMunicipality("Todos");
+    setFocusedRequestId(focusTarget.requestId);
+    setFocusedOfferId(focusTarget.offerId ?? null);
+
+    const targetId = focusTarget.offerId
+      ? `procurement-offer-${focusTarget.offerId}`
+      : `procurement-request-${focusTarget.requestId}`;
+    let cancelled = false;
+    let attempts = 0;
+    let scrollTimer = 0;
+    const locateAndScroll = () => {
+      if (cancelled) return;
       const targetElement = document.getElementById(targetId);
       const requestElement = document.getElementById(`procurement-request-${focusTarget.requestId}`);
-      (targetElement || requestElement)?.scrollIntoView({ behavior: "smooth", block: "center" });
-      setFocusedRequestId(focusTarget.requestId);
-      setFocusedOfferId(focusTarget.offerId ?? null);
-    }, 80);
-    const clear = window.setTimeout(() => { setFocusedRequestId(null); setFocusedOfferId(null); }, 5200);
-    return () => { window.clearTimeout(timer); window.clearTimeout(clear); };
+      const element = targetElement || requestElement;
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (!element.hasAttribute("tabindex")) element.setAttribute("tabindex", "-1");
+        element.focus({ preventScroll: true });
+        return;
+      }
+      // The list may still be mounting (lazy component/data render). Retry briefly
+      // rather than leaving the visitor at the top of a long list.
+      if (attempts < 12) {
+        attempts += 1;
+        scrollTimer = window.setTimeout(locateAndScroll, 100);
+      }
+    };
+    scrollTimer = window.setTimeout(locateAndScroll, 120);
+    const clear = window.setTimeout(() => {
+      setFocusedRequestId(null);
+      setFocusedOfferId(null);
+    }, 6500);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(scrollTimer);
+      window.clearTimeout(clear);
+    };
   }, [focusTarget, loading, items, offers]);
 
   const municipalityOptions = useMemo(() => Array.from(new Set(
