@@ -239,3 +239,24 @@ p, h1, h2, h3, strong, span, a, li, label {
 @media (max-width: 380px) {
   [role="dialog"] > section > div:last-child { padding: .65rem !important; }
 }
+
+
+/* Compact, grouped marketplace filters on mobile without shrinking desktop layout. */
+@media (max-width: 700px) {
+  .listing-search-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: .55rem !important;
+    padding: .75rem !important;
+    margin-bottom: 1rem !important;
+  }
+  .listing-search-filters .filter-search,
+  .listing-search-filters .filter-wide { grid-column: 1 / -1; }
+  .listing-search-filters .filter-half { grid-column: span 1; min-width: 0 !important; }
+  .listing-search-filters input,
+  .listing-search-filters select { min-height: 44px; padding-left: .65rem !important; padding-right: .55rem !important; }
+  .listing-search-filters .filter-clear { width: 100%; }
+}
+@media (max-width: 360px) {
+  .listing-search-filters { grid-template-columns: minmax(0, 1fr) !important; }
+  .listing-search-filters .filter-half { grid-column: 1 / -1; }
+}
