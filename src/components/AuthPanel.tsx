@@ -136,8 +136,8 @@ export default function AuthPanel({ user, onSignedIn, onSignedOut }: AuthPanelPr
           Sessão autenticada
         </div>
         <div style={{ color: "#F8FAFC", fontSize: "0.9rem" }}>{user.email}</div>
-        <button type="button" onClick={signOut} disabled={loading} style={buttonStyle}>
-          {loading ? "Aguarde..." : "Terminar sessão"}
+        <button type="button" onClick={signOut} disabled={loading} style={logoutButtonStyle}>
+          {loading ? "Aguarde..." : "Sair da conta"}
         </button>
         {feedback && <p role="status" style={messageStyle}>{feedback}</p>}
       </div>
@@ -223,6 +223,8 @@ const buttonStyle: React.CSSProperties = {
   cursor: "pointer",
   fontWeight: 600,
 };
+
+const logoutButtonStyle: React.CSSProperties = { ...buttonStyle, width: "100%", minHeight: 48, padding: "0.78rem 1rem", borderRadius: 11, border: "1px solid rgba(248,113,113,.72)", background: "linear-gradient(180deg,#991B1B 0%,#7F1D1D 100%)", color: "#FFFFFF", fontSize: "0.95rem", fontWeight: 850, letterSpacing: ".02em", boxShadow: "0 5px 16px rgba(127,29,29,.25)" };
 
 const activeButtonStyle: React.CSSProperties = {
   ...buttonStyle,
