@@ -48,6 +48,8 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
   const [requestWhatsapp, setRequestWhatsapp] = useState("");
   const [showWhatsapp, setShowWhatsapp] = useState(false);
   const [filter, setFilter] = useState("Todos");
+  const [filterIsland, setFilterIsland] = useState("Todas");
+  const [filterMunicipality, setFilterMunicipality] = useState("Todos");
   const [notice, setNotice] = useState("");
   const [activeOffer, setActiveOffer] = useState<string | null>(null);
   const [offerBusiness, setOfferBusiness] = useState("");
@@ -121,6 +123,9 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
     const request = items.find((item) => item.id === focusTarget.requestId);
     if (!request) return;
     const timer = window.setTimeout(() => {
+      setFilter("Todos");
+      setFilterIsland("Todas");
+      setFilterMunicipality("Todos");
       const targetId = focusTarget.offerId ? `procurement-offer-${focusTarget.offerId}` : `procurement-request-${focusTarget.requestId}`;
       const targetElement = document.getElementById(targetId);
       const requestElement = document.getElementById(`procurement-request-${focusTarget.requestId}`);
@@ -132,10 +137,20 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
     return () => { window.clearTimeout(timer); window.clearTimeout(clear); };
   }, [focusTarget, loading, items, offers]);
 
-  const visibleItems = useMemo(() => {
-    const active = items.filter((item) => item.status !== "completed" && new Date(item.expires_at) > new Date());
-    return filter === "Todos" ? active : active.filter((item) => item.category === filter);
-  }, [items, filter]);
+  const municipalityOptions = useMemo(() => Array.from(new Set(
+    items
+      .filter((item) => filterIsland === "Todas" || item.island === filterIsland)
+      .map((item) => item.municipality.trim())
+      .filter(Boolean)
+  )).sort((a, b) => a.localeCompare(b, "pt")), [items, filterIsland]);
+
+  const visibleItems = useMemo(() => items.filter((item) =>
+    item.status !== "completed" &&
+    new Date(item.expires_at) > new Date() &&
+    (filter === "Todos" || item.category === filter) &&
+    (filterIsland === "Todas" || item.island === filterIsland) &&
+    (filterMunicipality === "Todos" || item.municipality === filterMunicipality)
+  ), [items, filter, filterIsland, filterMunicipality]);
 
   async function submitRequest(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -261,7 +276,11 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
 
         <div style={{ padding: "1.2rem", borderRadius: 16, border: "1px solid rgba(181,195,216,.2)", background: "#10182A", minHeight: 260 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", flexWrap: "wrap" }}><div><span style={{ color: "#60A5FA", fontSize: ".72rem", fontWeight: 850, letterSpacing: ".12em" }}>MURAL DE PEDIDOS</span><h2 style={{ margin: ".25rem 0", fontSize: "1.35rem" }}>O que as pessoas procuram</h2></div><span style={{ color: "#AFC0D6", fontSize: ".8rem" }}>{visibleItems.length} pedido(s)</span></div>
-          <select aria-label="Filtrar pedidos por categoria" value={filter} onChange={(e) => setFilter(e.target.value)} style={{ ...fieldStyle, margin: ".75rem 0 1rem" }}><option>Todos</option>{categories.map((value) => <option key={value}>{value}</option>)}</select>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(145px,1fr))", gap: ".55rem", margin: ".75rem 0 1rem" }}>
+            <label style={labelStyle}>Categoria<select aria-label="Filtrar pedidos por categoria" value={filter} onChange={(e) => setFilter(e.target.value)} style={fieldStyle}><option>Todos</option>{categories.map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label style={labelStyle}>Ilha<select aria-label="Filtrar pedidos por ilha" value={filterIsland} onChange={(e) => { setFilterIsland(e.target.value); setFilterMunicipality("Todos"); }} style={fieldStyle}><option>Todas</option>{islandNames.map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label style={labelStyle}>Concelho<select aria-label="Filtrar pedidos por concelho" value={filterMunicipality} onChange={(e) => setFilterMunicipality(e.target.value)} style={fieldStyle}><option>Todos</option>{municipalityOptions.map((value) => <option key={value}>{value}</option>)}</select></label>
+          </div>
           {loading ? <p style={{ color: "#AFC0D6" }}>A carregar pedidos publicados...</p> : visibleItems.length === 0 ? <div style={{ padding: "1.5rem .5rem", textAlign: "center", color: "#AFC0D6" }}><div style={{ fontSize: "2rem" }}>⌕</div><strong style={{ color: "#F8FAFC" }}>Ainda não há pedidos publicados nesta categoria</strong><p style={{ fontSize: ".84rem", lineHeight: 1.5 }}>Quando um pedido for aprovado, ficará disponível aqui para os fornecedores.</p></div> : <div style={{ display: "grid", gap: ".8rem" }}>{visibleItems.map((item, index) => {
             const palette = requestPalettes[index % requestPalettes.length];
             const itemOffers = offers.filter((offer) =>
