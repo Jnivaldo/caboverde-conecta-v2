@@ -260,7 +260,11 @@ begin
        or nullif(trim(new.title), '') is null
        or nullif(trim(new.island), '') is null
        or nullif(trim(new.municipality), '') is null
-       or (nullif(trim(new.whatsapp), '') is null and nullif(trim(new.phone), '') is null)
+       or not (
+         char_length(regexp_replace(coalesce(new.whatsapp, ''), '[^0-9]', '', 'g')) between 7 and 15
+         or char_length(regexp_replace(coalesce(new.phone, ''), '[^0-9]', '', 'g')) between 7 and 15
+       )
+       or (nullif(trim(new.image_url), '') is not null and lower(trim(new.image_url)) not like 'https://%')
        or not coalesce(v_has_photo, false) then
       raise exception 'PUBLICATION_REQUIREMENTS_NOT_MET: nome, fotografia, localização, contacto e pagamento confirmado são necessários.';
     end if;
