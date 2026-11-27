@@ -50,6 +50,7 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
   const [filter, setFilter] = useState("Todos");
   const [filterIsland, setFilterIsland] = useState("Todas");
   const [filterMunicipality, setFilterMunicipality] = useState("Todos");
+  const [showArchivedForAdmin, setShowArchivedForAdmin] = useState(false);
   const [notice, setNotice] = useState("");
   const [activeOffer, setActiveOffer] = useState<string | null>(null);
   const [offerBusiness, setOfferBusiness] = useState("");
@@ -146,12 +147,11 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
   )).sort((a, b) => a.localeCompare(b, "pt")), [items, filterIsland]);
 
   const visibleItems = useMemo(() => items.filter((item) =>
-    item.status !== "completed" &&
-    new Date(item.expires_at) > new Date() &&
+    (canAdmin && showArchivedForAdmin || (item.status !== "completed" && new Date(item.expires_at) > new Date())) &&
     (filter === "Todos" || item.category === filter) &&
     (filterIsland === "Todas" || item.island === filterIsland) &&
     (filterMunicipality === "Todos" || item.municipality === filterMunicipality)
-  ), [items, filter, filterIsland, filterMunicipality]);
+  ), [items, filter, filterIsland, filterMunicipality, canAdmin, showArchivedForAdmin]);
 
   async function submitRequest(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -330,6 +330,10 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
             <label style={labelStyle}>Ilha<select aria-label="Filtrar pedidos por ilha" value={filterIsland} onChange={(e) => { setFilterIsland(e.target.value); setFilterMunicipality("Todos"); }} style={fieldStyle}><option>Todas</option>{islandNames.map((value) => <option key={value}>{value}</option>)}</select></label>
             <label style={labelStyle}>Concelho<select aria-label="Filtrar pedidos por concelho" value={filterMunicipality} onChange={(e) => setFilterMunicipality(e.target.value)} style={fieldStyle}><option>Todos</option>{municipalityOptions.map((value) => <option key={value}>{value}</option>)}</select></label>
           </div>
+          {canAdmin && <label style={{ display: "flex", alignItems: "center", gap: ".55rem", margin: "0 0 1rem", padding: ".7rem .8rem", borderRadius: 10, border: "1px solid rgba(248,113,113,.28)", background: "rgba(127,29,29,.13)", color: "#FECACA", fontSize: ".8rem", fontWeight: 750 }}>
+            <input type="checkbox" checked={showArchivedForAdmin} onChange={(event) => setShowArchivedForAdmin(event.target.checked)} />
+            Incluir pedidos concluídos e expirados na gestão administrativa
+          </label>}
           {loading ? <p style={{ color: "#AFC0D6" }}>A carregar pedidos publicados...</p> : visibleItems.length === 0 ? <div style={{ padding: "1.5rem .5rem", textAlign: "center", color: "#AFC0D6" }}><div style={{ fontSize: "2rem" }}>⌕</div><strong style={{ color: "#F8FAFC" }}>Ainda não há pedidos publicados nesta categoria</strong><p style={{ fontSize: ".84rem", lineHeight: 1.5 }}>Quando um pedido for aprovado, ficará disponível aqui para os fornecedores.</p></div> : <div style={{ display: "grid", gap: ".8rem" }}>{visibleItems.map((item, index) => {
             const palette = requestPalettes[index % requestPalettes.length];
             const itemOffers = offers.filter((offer) =>
