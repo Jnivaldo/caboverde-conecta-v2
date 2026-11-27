@@ -102,7 +102,7 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }
         <button type="button" onClick={onOpen} style={{ border: "1px solid rgba(96,165,250,.45)", borderRadius: 10, padding: ".65rem .9rem", background: "#2563EB", color: "#fff", fontWeight: 750, cursor: "pointer" }}>Ver todos os pedidos</button>
       </div>
 
-      <article key={item.id} aria-live="polite" style={{ minWidth: 0, padding: "clamp(1rem,3vw,1.4rem)", borderRadius: 14, border: `1px solid ${palette.border}`, background: palette.surface, boxShadow: `0 12px 30px ${palette.glow}`, animation: "procuroSlideIn .9s cubic-bezier(.18,.78,.22,1) both", willChange: "transform, opacity, filter" }}>
+      <article key={item.id} aria-live="polite" style={{ minWidth: 0, padding: "clamp(1rem,3vw,1.4rem)", borderRadius: 14, border: `1px solid ${palette.border}`, background: palette.surface, boxShadow: `0 12px 30px ${palette.glow}`, animation: "procuroSlideIn .42s ease-out both", willChange: "transform, opacity" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".6rem", flexWrap: "wrap" }}>
           <span style={{ display: "inline-flex", alignItems: "center", padding: ".28rem .62rem", borderRadius: 6, background: palette.badge, color: "#FFFFFF", fontSize: ".72rem", fontWeight: 900, letterSpacing: ".08em", boxShadow: `0 3px 12px ${palette.glow}` }}>{highlight.label}</span>
           <span style={{ color: "#8EF0C8", fontSize: ".78rem", fontWeight: 750 }}>{item.category}</span>
@@ -118,17 +118,17 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }
       </article>
 
       {items.length > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: ".85rem", marginTop: "1rem" }}>
-          <button type="button" aria-label="Pedido anterior" onClick={() => move(-1)} style={{ width: 36, height: 36, borderRadius: 999, border: "1px solid rgba(181,195,216,.28)", background: "rgba(255,255,255,.06)", color: "#F8FAFC", fontSize: "1.15rem", cursor: "pointer" }}>‹</button>
-          <div style={{ display: "flex", alignItems: "center", gap: ".42rem" }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: ".5rem", marginTop: ".75rem" }}>
+          <button type="button" aria-label="Pedido anterior" onClick={() => move(-1)} style={{ width: 26, height: 26, borderRadius: 999, border: "1px solid rgba(181,195,216,.28)", background: "rgba(255,255,255,.06)", color: "#F8FAFC", fontSize: ".9rem", cursor: "pointer" }}>‹</button>
+          <div style={{ display: "flex", alignItems: "center", gap: ".3rem" }}>
             {items.map((entry, index) => (
-              <button key={entry.id} type="button" aria-label={`Mostrar pedido ${index + 1}`} aria-current={index === activeIndex ? "true" : undefined} onClick={() => setActiveIndex(index)} style={{ width: index === activeIndex ? 22 : 8, height: 8, padding: 0, border: 0, borderRadius: 99, background: index === activeIndex ? "#38D6A0" : "rgba(181,195,216,.42)", cursor: "pointer", transition: "all .2s ease" }} />
+              <button key={entry.id} type="button" aria-label={`Mostrar pedido ${index + 1}`} aria-current={index === activeIndex ? "true" : undefined} onClick={() => setActiveIndex(index)} style={{ width: index === activeIndex ? 12 : 5, height: 5, padding: 0, border: 0, borderRadius: 99, background: index === activeIndex ? "#38D6A0" : "rgba(181,195,216,.42)", cursor: "pointer", transition: "all .15s ease" }} />
             ))}
           </div>
           <button type="button" aria-label="Próximo pedido" onClick={() => move(1)} style={{ width: 36, height: 36, borderRadius: 999, border: "1px solid rgba(181,195,216,.28)", background: "rgba(255,255,255,.06)", color: "#F8FAFC", fontSize: "1.15rem", cursor: "pointer" }}>›</button>
         </div>
       )}
-      <style>{`@keyframes procuroSlideIn { 0% { opacity: 0; transform: translate3d(64px,0,0) scale(.96); filter: blur(3px); } 65% { opacity: 1; transform: translate3d(-5px,0,0) scale(1.005); filter: blur(0); } 100% { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: none; } }`}</style>
+      <style>{`@keyframes procuroSlideIn { 0% { opacity: 0; transform: translate3d(18px,0,0); } 100% { opacity: 1; transform: translate3d(0,0,0); } }`}</style>
     </section>
   );
 }
