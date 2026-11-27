@@ -1642,7 +1642,7 @@ export default function App() {
                     )}
 
                     {authUser && item.ownerAccountId === authUser.id && (
-                      <React.Suspense fallback={<span style={{ color: "#AFC0D6" }}>A carregar fotografias…</span>}><ListingMediaManager listingId={item.id} ownerId={authUser.id} currentCover={item.image} onCoverChange={(url) => setListings((prev) => prev.map((current) => current.id === item.id ? { ...current, image: url } : current))} /></React.Suspense>
+                      <React.Suspense fallback={<span style={{ color: "#AFC0D6" }}>A carregar fotografias…</span>}><ListingMediaManager listingId={item.id} ownerId={authUser.id} currentCover={item.image} listingStatus={item.listingStatus} onCoverChange={(url) => setListings((prev) => prev.map((current) => current.id === item.id ? { ...current, image: url } : current))} /></React.Suspense>
                     )}
 
                     {editingListingId === item.id && editDraft && (
