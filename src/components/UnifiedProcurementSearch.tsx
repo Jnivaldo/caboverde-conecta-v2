@@ -25,7 +25,7 @@ type PublicOffer = {
   created_at: string;
 };
 
-type Props = { query: string; onOpenProcurement: () => void };
+type Props = { query: string; onOpenProcurement: (target: { requestId: string; offerId?: string }) => void };
 
 const panelStyle: React.CSSProperties = {
   padding: "1rem",
@@ -111,9 +111,12 @@ export default function UnifiedProcurementSearch({ query, onOpenProcurement }: P
       <strong style={{ color: "#FCA5A5", fontSize: ".9rem" }}>Pessoas que procuram ({items.length})</strong>
       {items.map((item) => (
         <article key={item.id} style={{ padding: ".8rem", borderRadius: 10, border: "1px solid rgba(248,113,113,.35)", background: "rgba(127,29,29,.12)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".6rem", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: ".45rem", flexWrap: "wrap" }}><span style={{ padding: ".16rem .45rem", borderRadius: 6, background: "rgba(248,113,113,.14)", color: "#FCA5A5", fontSize: ".67rem", fontWeight: 850, letterSpacing: ".04em" }}>PROCURO &amp; OFEREÇO · PEDIDO</span><strong>{item.title}</strong></div>
           <p style={{ margin: ".3rem 0", color: "#C2D0E3", fontSize: ".82rem", lineHeight: 1.45 }}>{item.description}</p>
           <span style={{ color: "#AFC0D6", fontSize: ".74rem" }}>{item.category} · {item.municipality}, {item.island}</span>
+          <button type="button" onClick={() => onOpenProcurement({ requestId: item.id })} style={{ border: "1px solid rgba(248,113,113,.5)", borderRadius: 8, padding: ".48rem .7rem", background: "rgba(127,29,29,.32)", color: "#FECACA", fontWeight: 800, cursor: "pointer" }}>Ver este pedido ↓</button>
+          </div>
         </article>
       ))}
     </div>
@@ -132,6 +135,7 @@ export default function UnifiedProcurementSearch({ query, onOpenProcurement }: P
             </div>
             <p style={{ margin: ".3rem 0", color: "#C2D0E3", fontSize: ".82rem", lineHeight: 1.45 }}>{offer.description}</p>
             <span style={{ color: "#AFC0D6", fontSize: ".74rem" }}>{offer.business_name}{parent ? ` · ${parent.municipality}, ${parent.island}` : ""}</span>
+            {parent && <button type="button" onClick={() => onOpenProcurement({ requestId: parent.id, offerId: offer.id })} style={{ border: "1px solid rgba(56,214,160,.5)", borderRadius: 8, padding: ".48rem .7rem", background: "rgba(6,78,59,.3)", color: "#A7F3D0", fontWeight: 800, cursor: "pointer" }}>Ver esta proposta ↓</button>}
           </article>
         );
       })}
