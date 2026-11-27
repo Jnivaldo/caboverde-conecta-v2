@@ -18,6 +18,8 @@ export interface Listing {
   /** Local preview ownership identifier; not a verified account identity. */
   ownerAccountId?: string;
   listingStatus: ListingStatus;
+  /** True only when an administrator selects this published listing for premium display. */
+  isFeatured?: boolean;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   proofRef?: string;
