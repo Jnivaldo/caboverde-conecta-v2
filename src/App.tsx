@@ -1715,7 +1715,12 @@ export default function App() {
         {tab === "admin" && (
           <section style={panelStyle}>
             <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><MonetizationPanel canAdmin={canAdmin} /></React.Suspense>
-            <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><ListingPaymentsPanel userId={authUser?.id ?? null} listings={accountListings} canAdmin={canAdmin} onPaymentReviewed={(listingId, decision) => setListings((prev) => prev.map((item) => item.id === listingId ? { ...item, paymentStatus: decision === "approved" ? "confirmed" : "pending", paymentMethod: "bank_transfer" } : item))} /></React.Suspense>
+            <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><ListingPaymentsPanel userId={authUser?.id ?? null} listings={accountListings} canAdmin={canAdmin} onPaymentReviewed={(listingId) => {
+              void supabase.from("listings").select("*").eq("id", listingId).maybeSingle().then(({ data, error }) => {
+                if (error) { console.error("Falha ao atualizar o anúncio após rever pagamento:", error.message); return; }
+                if (data) setListings((prev) => prev.map((item) => item.id === listingId ? mapDatabaseListing(data as Record<string, unknown>) : item));
+              });
+            }} /></React.Suspense>
             <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><ProcuroAdminPanel canAdmin={canAdmin} /></React.Suspense>
             <span style={eyebrowStyle("#EC4899")}>GOVERNANÇA E MODERAÇÃO</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>
