@@ -1,10 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./responsive.css";import type { User } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
-import AuthPanel from "./components/AuthPanel";
-import ListingMediaPicker from "./components/ListingMediaPicker";
-import ListingMediaManager from "./components/ListingMediaManager";
-import ProcuroOfereco from "./components/ProcuroOfereco";
+const AuthPanel = React.lazy(() => import("./components/AuthPanel"));
+const ListingMediaPicker = React.lazy(() => import("./components/ListingMediaPicker"));
+const ListingMediaManager = React.lazy(() => import("./components/ListingMediaManager"));
+const ProcuroOfereco = React.lazy(() => import("./components/ProcuroOfereco"));
+const ProcuroHomeHighlights = React.lazy(() => import("./components/ProcuroHomeHighlights"));
+const HomeSearchSpotlight = React.lazy(() => import("./components/HomeSearchSpotlight"));
+const ProcuroAdminPanel = React.lazy(() => import("./components/ProcuroAdminPanel"));
+const NotificationCenter = React.lazy(() => import("./components/NotificationCenter"));
+const MonetizationPanel = React.lazy(() => import("./components/MonetizationPanel"));
+const ListingPaymentsPanel = React.lazy(() => import("./components/ListingPaymentsPanel"));
 
 import {
   type Listing,
@@ -15,19 +21,12 @@ import {
 import { countListingsByStatus, getPreviewListingsByEmail } from "./data/listingManagement";
 import { applyListingEdit, validateListingEdit, type EditableListingFields } from "./data/listingEditPolicy";
 
+import { getSearchMatch, getRelatedSearchReason } from "./lib/smartSearch";
+
 interface ChatMessage {
   id: string;
   sender: "user" | "assistant";
   text: string;
-}
-
-interface CategorySuggestion {
-  id: string;
-  requester_id: string;
-  requested_category: string;
-  requested_subcategory: string;
-  description: string;
-  created_at: string;
 }
 
 const CATEGORIES: Record<string, string[]> = {
@@ -147,10 +146,11 @@ function mapDatabaseListing(row: Record<string, unknown>): Listing {
     ownerAccountId: String(row.owner_id ?? ""),
     listingStatus: row.listing_status as ListingStatus,
     paymentStatus: (row.payment_status ?? "pending") as PaymentStatus,
-    paymentMethod: "free_launch",
+    paymentMethod: (row.payment_method ?? "free_launch") as PaymentMethod,
     proofRef: row.proof_ref ? String(row.proof_ref) : undefined,
     slotNumber: typeof row.slot_number === "number" ? row.slot_number : undefined,
-    createdAt: String(row.created_at ?? "").slice(0, 10),
+    moderationNote: row.moderation_note ? String(row.moderation_note) : "",
+    createdAt: String(row.created_at ?? ""),
   };
 }
 
@@ -203,14 +203,14 @@ function ListingGallery({ title, images, fallbackImage, onOpen }: ListingGallery
       />
       {slides.length > 1 && (
         <>
-          <button type="button" aria-label="Fotografia anterior" onClick={() => move(-1)} style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", border: "1px solid rgba(255,255,255,.55)", background: "rgba(7,11,24,.72)", color: "#fff", fontSize: 22, lineHeight: 1, cursor: "pointer" }}>‹</button>
-          <button type="button" aria-label="Fotografia seguinte" onClick={() => move(1)} style={{ position: "absolute", right: 9, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", border: "1px solid rgba(255,255,255,.55)", background: "rgba(7,11,24,.72)", color: "#fff", fontSize: 22, lineHeight: 1, cursor: "pointer" }}>›</button>
-          <div style={{ position: "absolute", left: 0, right: 0, bottom: 9, display: "flex", justifyContent: "center", alignItems: "center", gap: 5 }}>
+          <button type="button" aria-label="Fotografia anterior" onClick={() => move(-1)} style={{ position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, minHeight: 0, padding: 0, borderRadius: "50%", border: "1px solid rgba(255,255,255,.3)", background: "rgba(7,11,24,.48)", color: "#fff", fontSize: 14, lineHeight: 1, cursor: "pointer", display: "grid", placeItems: "center" }}>‹</button>
+          <button type="button" aria-label="Fotografia seguinte" onClick={() => move(1)} style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, minHeight: 0, padding: 0, borderRadius: "50%", border: "1px solid rgba(255,255,255,.3)", background: "rgba(7,11,24,.48)", color: "#fff", fontSize: 14, lineHeight: 1, cursor: "pointer", display: "grid", placeItems: "center" }}>›</button>
+          <div style={{ position: "absolute", left: 0, right: 0, bottom: 6, display: "flex", justifyContent: "center", alignItems: "center", gap: 4 }}>
             {slides.map((slide, index) => (
-              <button key={slide.id} type="button" aria-label={"Ver fotografia " + (index + 1)} onClick={() => setActiveIndex(index)} style={{ width: index === activeIndex ? 18 : 7, height: 7, padding: 0, border: 0, borderRadius: 99, background: index === activeIndex ? "#fff" : "rgba(255,255,255,.58)", cursor: "pointer", transition: "all .2s ease" }} />
+              <button key={slide.id} type="button" aria-label={"Ver fotografia " + (index + 1)} onClick={() => setActiveIndex(index)} style={{ width: index === activeIndex ? 10 : 3, height: 3, minHeight: 0, padding: 0, border: 0, borderRadius: 99, background: index === activeIndex ? "#fff" : "rgba(255,255,255,.58)", cursor: "pointer", transition: "all .2s ease" }} />
             ))}
           </div>
-          <span style={{ position: "absolute", top: 9, right: 9, padding: "4px 8px", borderRadius: 99, background: "rgba(7,11,24,.72)", color: "#fff", fontSize: 11, fontWeight: 650 }}>{activeIndex + 1}/{slides.length}</span>
+          <span style={{ position: "absolute", top: 6, right: 6, padding: "2px 5px", borderRadius: 99, background: "rgba(7,11,24,.72)", color: "#fff", fontSize: 11, fontWeight: 650 }}>{activeIndex + 1}/{slides.length}</span>
         </>
       )}
       <style>{`@keyframes conecta-gallery-fade { from { opacity: .55; transform: scale(1.015); } to { opacity: 1; transform: scale(1); } }`}</style>
@@ -241,8 +241,6 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState<string[]>([]);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [signingOut, setSigningOut] = useState(false);
-  const [signOutFeedback, setSignOutFeedback] = useState("");
   const [canAdmin, setCanAdmin] = useState(false);
   const [accountEmail, setAccountEmail] = useState("");
   const [editingListingId, setEditingListingId] = useState<string | null>(null);
@@ -273,23 +271,6 @@ export default function App() {
       listener.subscription.unsubscribe();
     };
   }, []);
-
-  async function handleHeaderSignOut() {
-    if (signingOut) return;
-    setSigningOut(true);
-    setSignOutFeedback("");
-    const { error } = await supabase.auth.signOut({ scope: "local" });
-    setSigningOut(false);
-    if (error) {
-      setSignOutFeedback("Não foi possível terminar a sessão. Tente novamente.");
-      console.error("Falha ao terminar sessão:", error.message);
-      return;
-    }
-    setCanAdmin(false);
-    setAccountEmail("");
-    setTab("home");
-    setSignOutFeedback("Sessão terminada com sucesso.");
-  }
 
   useEffect(() => {
     setAccountEmail(authUser?.email ?? "");
@@ -336,14 +317,6 @@ export default function App() {
   }, [authUser]);
 
   const [marketplaceCategoryOptions, setMarketplaceCategoryOptions] = useState<{ category_name: string; subcategory_name: string | null }[]>([]);
-  const [categorySuggestions, setCategorySuggestions] = useState<CategorySuggestion[]>([]);
-  const [categorySuggestionsLoading, setCategorySuggestionsLoading] = useState(false);
-  const [categoryReviewFeedback, setCategoryReviewFeedback] = useState("");
-  const [suggestionCategory, setSuggestionCategory] = useState("");
-  const [suggestionSubcategory, setSuggestionSubcategory] = useState("");
-  const [suggestionDescription, setSuggestionDescription] = useState("");
-  const [suggestionFeedback, setSuggestionFeedback] = useState("");
-  const [suggestionSubmitting, setSuggestionSubmitting] = useState(false);
 
   const accountListings = useMemo(
     () => authUser ? getPreviewListingsByEmail(listings, authUser.email ?? "") : [],
@@ -389,38 +362,20 @@ export default function App() {
     return () => { active = false; };
   }, []);
 
-  useEffect(() => {
-    if (!canAdmin) {
-      setCategorySuggestions([]);
-      return;
-    }
-    let active = true;
-    setCategorySuggestionsLoading(true);
-    async function loadPendingCategorySuggestions() {
-      const { data, error } = await supabase
-        .from("category_suggestions")
-        .select("id, requester_id, requested_category, requested_subcategory, description, created_at")
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
-      if (!active) return;
-      if (error) {
-        setCategoryReviewFeedback("Não foi possível carregar as sugestões: " + error.message);
-      } else {
-        setCategorySuggestions((data ?? []) as CategorySuggestion[]);
-      }
-      setCategorySuggestionsLoading(false);
-    }
-    loadPendingCategorySuggestions();
-    return () => { active = false; };
-  }, [canAdmin]);
-
   // Filtros públicos (apenas anúncios publicados)
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [island, setIsland] = useState("");
   const [municipality, setMunicipality] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [sortOrder, setSortOrder] = useState("newest");
   const [lightbox, setLightbox] = useState<{ src: string; title: string; images: { id: string; url: string }[]; index: number } | null>(null);
+  const lightboxTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [clockNow, setClockNow] = useState(Date.now());
+  useEffect(() => { const timer = window.setInterval(() => setClockNow(Date.now()), 60_000); return () => window.clearInterval(timer); }, []);
 
   useEffect(() => {
     if (!lightbox) return;
@@ -458,6 +413,7 @@ export default function App() {
   const [feedback, setFeedback] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [publicationPreviewOpen, setPublicationPreviewOpen] = useState(false);
 
   // Assistente flutuante
   const [chatOpen, setChatOpen] = useState(false);
@@ -477,9 +433,15 @@ export default function App() {
   }, [messages, chatLoading, chatOpen]);
 
   const totalFreeSlots = 50;
+  // Ativar apenas depois de validar e publicar o fluxo de cobrança.
+  const paidListingsEnabled = false;
   const [usedFreeSlots, setUsedFreeSlots] = useState(0);
   const freeSlotsRemaining = Math.max(0, totalFreeSlots - usedFreeSlots);
   const canClaimFreeSlot = freeSlotsRemaining > 0;
+
+  useEffect(() => {
+    setPaymentMethod(canClaimFreeSlot ? "free_launch" : "bank_transfer");
+  }, [canClaimFreeSlot]);
 
   useEffect(() => {
     let active = true;
@@ -496,27 +458,45 @@ export default function App() {
     return () => { active = false; };
   }, [listings]);
 
-  const publicListings = useMemo(
-    () =>
-      listings.filter((ad) => {
-        if (ad.listingStatus !== "published") return false;
-        if (category && ad.category !== category) return false;
-        if (subcategory && ad.subcategory !== subcategory) return false;
-        if (island && ad.island !== island) return false;
-        if (municipality && ad.municipality !== municipality) return false;
-        if (query.trim()) {
-          const q = query.toLowerCase();
-          const hit =
-            ad.title.toLowerCase().includes(q) ||
-            ad.description.toLowerCase().includes(q) ||
-            ad.island.toLowerCase().includes(q) ||
-            ad.municipality.toLowerCase().includes(q);
-          if (!hit) return false;
-        }
-        return true;
-      }),
-    [listings, category, subcategory, island, municipality, query]
-  );
+  const publicListings = useMemo(() => {
+    const parsePrice = (value: string) => {
+      const digits = value.replace(/[^0-9]/g, "");
+      return digits ? Number(digits) : null;
+    };
+    const min = minPrice.trim() ? parsePrice(minPrice) : null;
+    const max = maxPrice.trim() ? parsePrice(maxPrice) : null;
+    const filtered = listings.filter((ad) => {
+      if (ad.listingStatus !== "published") return false;
+      if (category && ad.category !== category) return false;
+      if (subcategory && ad.subcategory !== subcategory) return false;
+      if (island && ad.island !== island) return false;
+      if (municipality && ad.municipality !== municipality) return false;
+      if (query.trim()) {
+        const match = getSearchMatch(query, [ad.title, ad.description, ad.category, ad.subcategory, ad.island, ad.municipality]);
+        if (match === "none") return false;
+      }
+      const numericPrice = parsePrice(ad.price);
+      if (min !== null && (numericPrice === null || numericPrice < min)) return false;
+      if (max !== null && (numericPrice === null || numericPrice > max)) return false;
+      return true;
+    });
+    filtered.sort((a, b) => {
+      if (query.trim()) {
+        const aMatch = getSearchMatch(query, [a.title, a.description, a.category, a.subcategory]);
+        const bMatch = getSearchMatch(query, [b.title, b.description, b.category, b.subcategory]);
+        if (aMatch !== bMatch) return aMatch === "exact" ? -1 : 1;
+      }
+      if (sortOrder === "low" || sortOrder === "high") {
+        const pa = parsePrice(a.price), pb = parsePrice(b.price);
+        if (pa === null && pb === null) return 0;
+        if (pa === null) return 1;
+        if (pb === null) return -1;
+        return sortOrder === "low" ? pa - pb : pb - pa;
+      }
+      return String(b.createdAt).localeCompare(String(a.createdAt));
+    });
+    return filtered;
+  }, [listings, category, subcategory, island, municipality, query, minPrice, maxPrice, sortOrder]);
 
   function addAudit(entry: string) {
     setAuditLogs((prev) => [`[${new Date().toLocaleTimeString()}] ${entry}`, ...prev]);
@@ -574,68 +554,6 @@ export default function App() {
     }
   }
 
-  async function submitCategorySuggestion() {
-    setSuggestionFeedback("");
-    if (!authUser) {
-      setSuggestionFeedback("Entre na sua conta para enviar uma sugestão.");
-      setTab("account");
-      return;
-    }
-    const requestedCategory = (suggestionCategory.trim() || (useCustomCategory ? customCategory.trim() : pubCategory)).trim();
-    const requestedSubcategory = (suggestionSubcategory.trim() || ((useCustomCategory || useCustomSubcategory) ? customSubcategory.trim() : "")).trim();
-    if (requestedCategory.length < 2) {
-      setSuggestionFeedback("Indique uma categoria com pelo menos 2 caracteres.");
-      return;
-    }
-    if (!requestedSubcategory && !suggestionDescription.trim()) {
-      setSuggestionFeedback("Indique um produto, subproduto ou serviço, ou explique a nova categoria.");
-      return;
-    }
-    setSuggestionSubmitting(true);
-    const { error } = await supabase.from("category_suggestions").insert({
-      requester_id: authUser.id,
-      requested_category: requestedCategory,
-      requested_subcategory: requestedSubcategory,
-      description: suggestionDescription.trim(),
-      status: "pending",
-    });
-    if (error) {
-      setSuggestionFeedback("Não foi possível enviar a sugestão: " + error.message);
-    } else {
-      setSuggestionFeedback("Sugestão enviada! A administração irá analisá-la. Se for aprovada, ficará disponível na lista para todos.");
-      setSuggestionCategory("");
-      setSuggestionSubcategory("");
-      setSuggestionDescription("");
-    }
-    setSuggestionSubmitting(false);
-  }
-
-  async function reviewCategorySuggestion(id: string, decision: "approved" | "rejected") {
-    setCategoryReviewFeedback("");
-    const { error } = await supabase.rpc("review_category_suggestion", {
-      p_suggestion_id: id,
-      p_decision: decision,
-      p_admin_notes: null,
-    });
-    if (error) {
-      setCategoryReviewFeedback("Não foi possível atualizar a sugestão: " + error.message);
-      return;
-    }
-    setCategorySuggestions((current) => current.filter((item) => item.id !== id));
-    if (decision === "approved") {
-      const { data, error: categoriesError } = await supabase
-        .from("marketplace_categories")
-        .select("category_name, subcategory_name")
-        .eq("is_active", true);
-      if (!categoriesError && data) {
-        setMarketplaceCategoryOptions(data as { category_name: string; subcategory_name: string | null }[]);
-      }
-      setCategoryReviewFeedback("Sugestão aprovada e adicionada às opções de publicação.");
-    } else {
-      setCategoryReviewFeedback("Sugestão rejeitada.");
-    }
-  }
-
   async function handlePublishSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (isSubmitting) return;
@@ -647,28 +565,16 @@ export default function App() {
       return;
     }
 
-    if (title.trim().length < 5 || title.trim().length > 100) {
-      setFeedback("O título deve ter entre 5 e 100 caracteres.");
+    if (!title.trim() || title.trim().length > 100) {
+      setFeedback("Indique o nome do anúncio (máximo de 100 caracteres).");
       return;
     }
-    if (!price.trim() || price.trim().length > 60) {
-      setFeedback("Indique um preço ou valor válido (máximo de 60 caracteres).");
-      return;
-    }
-    if (useCustomCategory && customCategory.trim().length < 3) {
-      setFeedback("Indique uma categoria com pelo menos 3 caracteres.");
-      return;
-    }
-    if ((useCustomCategory || useCustomSubcategory) && customSubcategory.trim().length < 2) {
-      setFeedback("Indique o produto, subproduto ou serviço que pretende anunciar.");
+    if (price.trim().length > 60) {
+      setFeedback("O preço ou valor não pode ultrapassar 60 caracteres.");
       return;
     }
     if (!pubIsland || !LOCATIONS[pubIsland]?.includes(pubMunicipality)) {
       setFeedback("Selecione uma ilha e um concelho válidos.");
-      return;
-    }
-    if (!ownerEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail.trim())) {
-      setFeedback("Indique um endereço de email válido.");
       return;
     }
     const cleanWhatsApp = whatsapp.replace(/\D/g, "");
@@ -691,39 +597,51 @@ export default function App() {
         const parsedImageUrl = new URL(imageUrl.trim());
         if (parsedImageUrl.protocol !== "https:") throw new Error("HTTPS required");
       } catch {
-        setFeedback("A imagem deve utilizar um endereço HTTPS válido.");
+        setFeedback("A fotografia deve utilizar um endereço HTTPS válido.");
         return;
       }
     }
-
-    if (paymentMethod !== "free_launch") {
-      setFeedback("Os pagamentos por transferência ainda não estão ativos nesta versão. Não faça transferências nem envie comprovativos. Aguarde a ativação do pagamento seguro.");
+    if (!mediaFiles.some((file) => file.type.startsWith("image/")) && !imageUrl.trim()) {
+      setFeedback("Adicione pelo menos uma fotografia do anúncio.");
       return;
     }
 
-    if (!canClaimFreeSlot) {
-      setFeedback("As 50 vagas gratuitas já foram preenchidas. O pagamento seguro ainda não está ativo; por isso, não é possível submeter novos anúncios.");
+    if (paymentMethod === "bank_transfer" && !paidListingsEnabled) {
+      setFeedback("As 50 vagas gratuitas já foram preenchidas. Os pagamentos ainda não estão ativos; não faça transferências. Neste momento não é possível submeter novos anúncios pagos.");
+      return;
+    }
+    if (paymentMethod === "free_launch" && !canClaimFreeSlot) {
+      setFeedback("As 50 vagas gratuitas já foram preenchidas. Atualize a página para consultar a modalidade de pagamento.");
+      return;
+    }
+    if (paymentMethod === "bank_transfer" && canClaimFreeSlot) {
+      setFeedback("Ainda existem vagas gratuitas disponíveis. A publicação deve utilizar a campanha gratuita.");
       return;
     }
 
     setIsSubmitting(true);
-    const { data, error } = await supabase.rpc("submit_listing", {
+    const submitArgs = {
       p_title: title.trim(),
-      p_category: useCustomCategory ? customCategory.trim() : pubCategory,
-      p_subcategory: useCustomCategory || useCustomSubcategory ? customSubcategory.trim() : pubSubcategory,
+      p_category: (useCustomCategory ? customCategory.trim() : pubCategory) || "Outros",
+      p_subcategory: (useCustomCategory || useCustomSubcategory ? customSubcategory.trim() : pubSubcategory) || "Geral",
       p_island: pubIsland,
       p_municipality: pubMunicipality,
-      p_price: price.trim(),
+      p_price: price.trim() || "Preço sob consulta",
       p_description: description.trim(),
       p_whatsapp: cleanWhatsApp,
       p_phone: cleanPhone,
       p_image_url: imageUrl.trim(),
-    });
+    };
+    const { data, error } = paymentMethod === "free_launch"
+      ? await supabase.rpc("submit_listing", submitArgs)
+      : await supabase.rpc("submit_paid_listing", submitArgs);
 
     if (error) {
       const message = error.message.includes("CAMPAIGN_FULL_PAYMENT_NOT_AVAILABLE")
-        ? "As 50 vagas gratuitas já foram preenchidas. O pagamento seguro ainda não está ativo."
-        : "Não foi possível enviar o anúncio ao servidor: " + error.message;
+        ? "As 50 vagas gratuitas já foram preenchidas. Atualize a página para continuar com o pagamento."
+        : error.message.includes("FREE_CAMPAIGN_STILL_AVAILABLE")
+          ? "Ainda existem vagas gratuitas. A campanha deve ser aplicada automaticamente."
+          : "Não foi possível enviar o anúncio ao servidor: " + error.message;
       setFeedback(message);
       setIsSubmitting(false);
       return;
@@ -760,9 +678,15 @@ export default function App() {
         newAd.image = firstImage.url;
       }
     }
-    setListings((prev) => [newAd, ...prev]);
-    setUsedFreeSlots((current) => Math.max(current, newAd.slotNumber ?? current));
-    addAudit(`Anúncio ${newAd.id} enviado ao servidor e recebeu a vaga gratuita #${newAd.slotNumber}.`);
+    const { data: refreshedListing } = await supabase.from("listings").select("*").eq("id", newAd.id).maybeSingle();
+    const finalAd = refreshedListing ? mapDatabaseListing(refreshedListing as Record<string, unknown>) : newAd;
+    setListings((prev) => [finalAd, ...prev]);
+    if (paymentMethod === "free_launch") {
+      setUsedFreeSlots((current) => Math.max(current, newAd.slotNumber ?? current));
+      addAudit(`Anúncio ${newAd.id} enviado ao servidor e recebeu a vaga gratuita #${newAd.slotNumber}.`);
+    } else {
+      addAudit(`Anúncio ${newAd.id} submetido com pagamento por transferência pendente de validação.`);
+    }
     setTitle("");
     setPrice("");
     setDescription("");
@@ -772,7 +696,7 @@ export default function App() {
     setUseCustomCategory(false);
     setUseCustomSubcategory(false);
     setMediaFiles([]);
-    setFeedback("Anúncio submetido com sucesso! O seu anúncio está pendente de aprovação pelo administrador.");
+    setFeedback(finalAd.listingStatus === "published" ? "Anúncio publicado automaticamente! A equipa poderá analisá-lo e pedir melhorias, se necessário." : "Anúncio recebido. Será publicado assim que a fotografia estiver carregada e o pagamento confirmado.");
     setIsSubmitting(false);
     setSubmissionSuccess(true);
   }
@@ -838,12 +762,14 @@ export default function App() {
   async function updatePaymentAndListing(
     id: string,
     nextPayment: PaymentStatus,
-    nextListing: ListingStatus
+    nextListing: ListingStatus,
+    moderationNote?: string
   ) {
     if (!authUser || !canAdmin) return;
     const { error } = await supabase.from("listings").update({
       payment_status: nextPayment,
       listing_status: nextListing,
+      ...(moderationNote ? { moderation_note: moderationNote } : {}),
     }).eq("id", id);
     if (error) {
       setFeedback("Ação administrativa não concluída: " + error.message);
@@ -852,7 +778,7 @@ export default function App() {
     setListings((prev) =>
       prev.map((item) =>
         item.id === id
-          ? { ...item, paymentStatus: nextPayment, listingStatus: nextListing }
+          ? { ...item, paymentStatus: nextPayment, listingStatus: nextListing, moderationNote: moderationNote || item.moderationNote }
           : item
       )
     );
@@ -861,10 +787,84 @@ export default function App() {
       actor_id: authUser.id,
       listing_id: id,
       action: "listing_moderation",
-      details: { payment_status: nextPayment, listing_status: nextListing },
+      details: { payment_status: nextPayment, listing_status: nextListing, moderation_note: moderationNote || null },
     });
-    addAudit(`Ação administrativa gravada no servidor em ${id}: ${action}.`);
+    addAudit(`Ação administrativa gravada no servidor em ${id}: ${action}${moderationNote ? "; motivo: " + moderationNote : ""}.`);
   }
+
+  function suspendListing(item: Listing) {
+    const reason = window.prompt("Indique ao anunciante o que deve melhorar antes de voltar a publicar:");
+    if (!reason?.trim()) return;
+    void updatePaymentAndListing(item.id, item.paymentStatus, "suspended", reason.trim().slice(0, 1000));
+  }
+
+  async function republishListing(item: Listing) {
+    if (!authUser || item.ownerAccountId !== authUser.id || item.listingStatus !== "suspended") return;
+    const { error } = await supabase.from("listings").update({ listing_status: "published" }).eq("id", item.id).eq("owner_id", authUser.id);
+    if (error) { setEditFeedback("Não foi possível voltar a publicar. Confirme fotografia, localização e contacto: " + error.message); return; }
+    setListings((previous) => previous.map((current) => current.id === item.id ? { ...current, listingStatus: "published" } : current));
+    setEditFeedback("O anúncio voltou a estar publicado.");
+  }
+
+  async function deleteListingAsAdmin(item: Listing) {
+    if (!authUser || !canAdmin) return;
+    const confirmed = window.confirm(
+      `Tem a certeza de que pretende eliminar definitivamente o anúncio “${item.title}”? O anúncio e as respetivas fotografias/vídeos serão removidos. Esta ação não pode ser desfeita.`
+    );
+    if (!confirmed) return;
+
+    const { data: mediaRows, error: mediaReadError } = await supabase
+      .from("listing_media")
+      .select("media_url")
+      .eq("listing_id", item.id);
+    if (mediaReadError) {
+      setFeedback("Não foi possível preparar a eliminação dos ficheiros do anúncio: " + mediaReadError.message);
+      return;
+    }
+
+    const objectPaths = (mediaRows ?? []).flatMap((row) => {
+      const marker = "/listing-media/";
+      const url = String(row.media_url ?? "");
+      const index = url.indexOf(marker);
+      if (index < 0) return [];
+      const path = url.slice(index + marker.length).split("?")[0];
+      try { return [decodeURIComponent(path)]; } catch { return [path]; }
+    });
+    if (objectPaths.length) {
+      const { error: storageError } = await supabase.storage.from("listing-media").remove(objectPaths);
+      if (storageError) {
+        setFeedback("Não foi possível remover as fotografias/vídeos. O anúncio foi mantido: " + storageError.message);
+        return;
+      }
+    }
+
+    const { error } = await supabase.from("listings").delete().eq("id", item.id);
+    if (error) {
+      setFeedback("Não foi possível eliminar o anúncio: " + error.message);
+      return;
+    }
+
+    setListings((previous) => previous.filter((listing) => listing.id !== item.id));
+    setMediaByListing((previous) => {
+      const next = { ...previous };
+      delete next[item.id];
+      return next;
+    });
+    const { error: auditError } = await supabase.from("audit_logs").insert({
+      actor_id: authUser.id,
+      listing_id: item.id,
+      action: "listing_deleted",
+      details: { title: item.title, owner_email: item.ownerEmail },
+    });
+    addAudit(`Anúncio ${item.id} eliminado pelo administrador, incluindo os respetivos ficheiros multimédia.`);
+    if (auditError) console.error("Não foi possível gravar a auditoria da eliminação:", auditError.message);
+  }
+
+  const previewCategory = useCustomCategory ? customCategory.trim() : pubCategory;
+  const previewSubcategory = useCustomCategory || useCustomSubcategory ? customSubcategory.trim() : pubSubcategory;
+  const previewTitle = title.trim() || "O título do seu anúncio aparecerá aqui";
+  const previewDescription = description.trim() || "A descrição que escrever será apresentada nesta área.";
+  const previewContacts = [whatsapp.trim() && "WhatsApp", phone.trim() && "Telefone"].filter(Boolean).join(" · ") || "Adicione um contacto";
 
   return (
     <div
@@ -896,21 +896,21 @@ export default function App() {
             flexWrap: "wrap",
           }}
         >
-          <div>
-            <strong style={{ fontSize: "1.18rem", letterSpacing: "-0.01em" }}>
-              CaboVerde Conecta
+          <div className="site-brand">
+            <strong className="site-brand-title">
+              <span>CABOVERDE</span> <span>CONECTA</span>
             </strong>
-            <div style={{ fontSize: "0.82rem", color: "#38D6A0", fontWeight: 600 }}>
+            <div className="site-brand-campaign" style={{ fontSize: "0.82rem", color: "#38D6A0", fontWeight: 600 }}>
               Campanha de lançamento: até 50 anúncios gratuitos · Após campanha: 1.500 CVE
             </div>
           </div>
 
           <nav style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap" }}>
             {[
+              { key: "account", label: "Minha Conta" },
               { key: "home", label: "Início" },
               { key: "publish", label: "Publicar Anúncio" },
               { key: "requests", label: "Procuro & Ofereço" },
-              { key: "account", label: "Minha Conta" },
               ...(canAdmin ? [{ key: "admin", label: "Administração" }] : []),
             ].map((item) => {
               const active = tab === item.key;
@@ -918,6 +918,8 @@ export default function App() {
                 <button
                   key={item.key}
                   type="button"
+                  className={item.key === "account" ? "account-nav-button" : undefined}
+                  aria-current={active ? "page" : undefined}
                   onClick={() => setTab(item.key as typeof tab)}
                   style={{
                     padding: "0.5rem 0.9rem",
@@ -936,32 +938,6 @@ export default function App() {
                 </button>
               );
             })}
-            {authUser && (
-              <button
-                type="button"
-                onClick={handleHeaderSignOut}
-                disabled={signingOut}
-                aria-label="Terminar sessão"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minWidth: 132,
-                  minHeight: 42,
-                  padding: "0.55rem 0.9rem",
-                  borderRadius: 10,
-                  border: "1px solid #FCA5A5",
-                  background: "#991B1B",
-                  color: "#FFFFFF",
-                  cursor: signingOut ? "wait" : "pointer",
-                  fontSize: "0.85rem",
-                  fontWeight: 800,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {signingOut ? "A sair..." : "Terminar sessão"}
-              </button>
-            )}
           </nav>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.7rem", flex: "1 1 100%", width: "100%", minHeight: 52, paddingTop: "0.55rem", borderTop: "1px solid rgba(181,195,216,0.14)", flexWrap: "nowrap", minWidth: 0, position: "relative", zIndex: 50 }}>
             <div
@@ -994,14 +970,9 @@ export default function App() {
               />
               {authLoading ? "A verificar sessão..." : authUser ? "Sessão iniciada" : "Não autenticado"}
             </div>
-
+            <React.Suspense fallback={<span role="status" style={{ color: "#AFC0D6", fontSize: ".78rem" }}>A carregar notificações…</span>}><NotificationCenter userId={authUser?.id ?? null} onNavigate={(nextTab) => setTab(nextTab)} /></React.Suspense>
           </div>
         </div>
-        {signOutFeedback && (
-          <div role="status" aria-live="polite" style={{ maxWidth: 1200, margin: "0.55rem auto 0", color: signOutFeedback.startsWith("Não foi") ? "#FCA5A5" : "#6EE7B7", fontSize: "0.8rem" }}>
-            {signOutFeedback}
-          </div>
-        )}
       </header>
 
       <main style={{ maxWidth: 1200, margin: "0 auto", padding: "1.85rem 1.25rem 5rem" }}>
@@ -1033,6 +1004,19 @@ export default function App() {
                 Imóveis, viaturas, produtos, serviços e oportunidades — tudo num só lugar.
               </p>
             </section>
+
+            <React.Suspense fallback={<div style={{ minHeight: 260 }} />}>
+              <HomeSearchSpotlight
+                query={query}
+                setQuery={setQuery}
+                category={category}
+                setCategory={setCategory}
+                island={island}
+                setIsland={setIsland}
+                categories={availableCategories}
+                islands={Object.keys(LOCATIONS)}
+              />
+            </React.Suspense>
 
             <section
               aria-label="Progresso da campanha de lançamento"
@@ -1100,7 +1084,10 @@ export default function App() {
               </div>
             </section>
 
+            <React.Suspense fallback={<div style={{ minHeight: 80 }} />}><ProcuroHomeHighlights onOpen={() => setTab("requests")} /></React.Suspense>
+
             <div
+              className="listing-search-filters"
               style={{
                 backgroundColor: "#10182A",
                 border: "1px solid rgba(181,195,216,0.16)",
@@ -1112,14 +1099,9 @@ export default function App() {
                 gap: "0.65rem",
               }}
             >
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Pesquisar por título ou ilha..."
-                style={inputStyle}
-              />
               <select
+                className="filter-wide"
+                aria-label="Categoria"
                 value={category}
                 onChange={(e) => {
                   setCategory(e.target.value);
@@ -1135,6 +1117,8 @@ export default function App() {
                 ))}
               </select>
               <select
+                className="filter-wide"
+                aria-label="Subcategoria"
                 value={subcategory}
                 onChange={(e) => setSubcategory(e.target.value)}
                 disabled={!category}
@@ -1148,6 +1132,8 @@ export default function App() {
                 ))}
               </select>
               <select
+                className="filter-half"
+                aria-label="Ilha"
                 value={island}
                 onChange={(e) => {
                   setIsland(e.target.value);
@@ -1163,6 +1149,8 @@ export default function App() {
                 ))}
               </select>
               <select
+                className="filter-half"
+                aria-label="Concelho"
                 value={municipality}
                 onChange={(e) => setMunicipality(e.target.value)}
                 disabled={!island}
@@ -1175,7 +1163,15 @@ export default function App() {
                   </option>
                 ))}
               </select>
+              <input className="filter-half" type="number" min="0" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} placeholder="Preço mínimo" aria-label="Preço mínimo" style={{ ...inputStyle, minWidth: 120 }} />
+              <input className="filter-half" type="number" min="0" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="Preço máximo" aria-label="Preço máximo" style={{ ...inputStyle, minWidth: 120 }} />
+              <select className="filter-half" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} aria-label="Ordenar anúncios" style={inputStyle}>
+                <option value="newest">Mais recentes</option>
+                <option value="low">Preço mais baixo</option>
+                <option value="high">Preço mais alto</option>
+              </select>
               <button
+                className="filter-half filter-clear"
                 type="button"
                 onClick={() => {
                   setQuery("");
@@ -1183,10 +1179,13 @@ export default function App() {
                   setSubcategory("");
                   setIsland("");
                   setMunicipality("");
+                  setMinPrice("");
+                  setMaxPrice("");
+                  setSortOrder("newest");
                 }}
                 style={secondaryBtnStyle}
               >
-                Limpar
+                Limpar filtros
               </button>
             </div>
 
@@ -1220,15 +1219,22 @@ export default function App() {
               })}
             </div>
 
+            <div id="public-listings-results" style={{ margin: "-0.85rem 0 1rem", color: "#9FB0C8", fontSize: "0.84rem", scrollMarginTop: 24 }} aria-live="polite">
+              {publicListings.length} anúncio(s) encontrado(s)
+              {query.trim() && publicListings.some((ad) => getSearchMatch(query, [ad.title, ad.description, ad.category, ad.subcategory, ad.island, ad.municipality]) === "related") && <span style={{ display: "block", marginTop: ".4rem", color: "#FDE68A", lineHeight: 1.5 }}>{getRelatedSearchReason(query)} Os resultados exatos aparecem primeiro; as alternativas estão identificadas.</span>}
+            </div>
             {publicListings.length === 0 ? (
-              <div style={{ ...panelStyle, textAlign: "center", color: "#B5C3D8" }}>
-                <strong style={{ color: "#F8FAFC" }}>Ainda não existem anúncios publicados.</strong>
-                <p style={{ margin: "0.45rem 0 0", fontSize: "0.9rem", lineHeight: 1.5 }}>
-                  Os anúncios só aparecerão aqui depois de submetidos, analisados e publicados pela plataforma.
+              <div style={{ ...panelStyle, textAlign: "center", color: "#B5C3D8", padding: "2rem 1.25rem", border: "1px solid rgba(96,165,250,0.25)" }}>
+                <div style={{ width: 54, height: 54, margin: "0 auto 0.9rem", borderRadius: 16, display: "grid", placeItems: "center", background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.22)", fontSize: 24 }}>⌕</div>
+                <strong style={{ color: "#F8FAFC", fontSize: "1.05rem" }}>{query || category || subcategory || island || municipality || minPrice || maxPrice ? "Nenhum anúncio corresponde aos filtros" : "Ainda não existem anúncios publicados"}</strong>
+                <p style={{ margin: "0.55rem auto 1rem", fontSize: "0.9rem", lineHeight: 1.6, maxWidth: 480 }}>
+                  {query || category || subcategory || island || municipality || minPrice || maxPrice ? "Experimente alterar as palavras, aumentar o intervalo de preço ou retirar alguns filtros." : "Os anúncios aprovados aparecerão aqui. Entretanto, pode explorar Procuro & Ofereço para encontrar oportunidades."}
                 </p>
+                {(query || category || subcategory || island || municipality || minPrice || maxPrice) && <button type="button" onClick={() => { setQuery(""); setCategory(""); setSubcategory(""); setIsland(""); setMunicipality(""); setMinPrice(""); setMaxPrice(""); setSortOrder("newest"); }} style={secondaryBtnStyle}>Ver todos os anúncios</button>}
               </div>
             ) : (
               <div
+                className="listing-card-grid"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fill, minmax(275px, 1fr))",
@@ -1236,20 +1242,27 @@ export default function App() {
                 }}
               >
               {publicListings.map((ad) => (
-                <article key={ad.id} style={cardStyle}>
+                <article key={ad.id} className="listing-card" style={cardStyle}>
                   <ListingGallery
                     title={ad.title}
                     images={(mediaByListing[ad.id] || []).filter((media) => media.type === "image").sort((a, b) => a.sort - b.sort)}
                     fallbackImage={ad.image}
                     onOpen={(src, images, index) => setLightbox({ src, title: ad.title, images, index })}
                   />
-                  <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 }}>
-                    <span style={{ fontSize: "0.79rem", color: "#B5C3D8" }}>
-                      {ad.category} · {ad.subcategory} · {ad.island} ({ad.municipality})
-                    </span>
-                    <h2 style={{ margin: 0, fontSize: "1.03rem", lineHeight: 1.35 }}>{ad.title}</h2>
-                    <strong style={{ color: "#38D6A0", fontSize: "0.98rem" }}>{ad.price}</strong>
+                  <div className="listing-card-content" style={{ padding: "1.1rem", display: "flex", flexDirection: "column", gap: "0.65rem", flex: 1 }}>
+                    <div className="listing-card-categories" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ padding: "0.32rem 0.65rem", borderRadius: 999, background: "rgba(96,165,250,0.14)", border: "1px solid rgba(96,165,250,0.28)", color: "#BFDBFE", fontSize: "0.76rem", fontWeight: 750 }}>{ad.category}</span>
+                      {query.trim() && getSearchMatch(query, [ad.title, ad.description, ad.category, ad.subcategory, ad.island, ad.municipality]) === "related" && <span title={getRelatedSearchReason(query)} style={{ padding: ".3rem .58rem", borderRadius: 999, background: "rgba(251,191,36,.12)", border: "1px solid rgba(251,191,36,.38)", color: "#FDE68A", fontSize: ".7rem", fontWeight: 800 }}>Alternativa relacionada</span>}
+                      {clockNow - new Date(ad.createdAt).getTime() < 86_400_000 && clockNow >= new Date(ad.createdAt).getTime() && <span style={{ padding: ".28rem .6rem", borderRadius: 999, background: "#FACC15", color: "#172033", fontSize: ".7rem", fontWeight: 900 }}>Novo anúncio</span>}
+                      {ad.subcategory && <span style={{ color: "#9FB0C8", fontSize: "0.76rem" }}>{ad.subcategory}</span>}
+                    </div>
+                    <h2 className="listing-card-title" style={{ margin: 0, fontSize: "1.16rem", lineHeight: 1.4, color: "#F8FAFC", letterSpacing: "-0.01em" }}>{ad.title}</h2>
+                    <div className="listing-card-location" style={{ display: "flex", alignItems: "center", gap: 6, color: "#B5C3D8", fontSize: "0.84rem" }}><span aria-hidden="true">📍</span><span>{ad.municipality}{ad.island ? ", " + ad.island : ""}</span></div>
+                    <div className="listing-card-price" style={{ padding: "0.7rem 0.85rem", borderRadius: 11, background: "linear-gradient(135deg, rgba(56,214,160,0.12), rgba(96,165,250,0.08))", border: "1px solid rgba(56,214,160,0.2)" }}>
+                      <strong style={{ color: "#5EEAD4", fontSize: "1.2rem", lineHeight: 1.3 }}>{ad.price || "Preço sob consulta"}</strong>
+                    </div>
                     <ListingDescription description={ad.description} />
+                    <button type="button" onClick={() => setSelectedListing(ad)} style={{ ...secondaryBtnStyle, width: "100%", marginTop: "0.15rem", borderColor: "rgba(96,165,250,0.4)", color: "#BFDBFE" }}>Ver detalhes do anúncio <span aria-hidden="true">→</span></button>
                     {(mediaByListing[ad.id] || []).some((media) => media.type === "video") && (
                       <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
                         {(mediaByListing[ad.id] || []).filter((media) => media.type === "video").map((media) => (
@@ -1257,7 +1270,7 @@ export default function App() {
                         ))}
                       </div>
                     )}
-                      <div style={{ display: "flex", gap: "0.5rem", marginTop: "auto" }}>
+                      <div style={{ display: "flex", gap: "0.5rem", marginTop: "auto", paddingTop: "0.55rem" }}>
                       {ad.whatsapp && (
                         <a
                           href={`https://api.whatsapp.com/send?phone=${ad.whatsapp.replace(/\D/g, "")}&text=${encodeURIComponent(
@@ -1285,7 +1298,7 @@ export default function App() {
         )}
 
         {tab === "requests" && (
-          <ProcuroOfereco onOfferClick={() => setTab("publish")} />
+          <React.Suspense fallback={<div role="status" style={{ color: "#AFC0D6", padding: "1rem" }}>A carregar Procuro & Ofereço…</div>}><ProcuroOfereco user={authUser} canAdmin={canAdmin} onAuthClick={() => setTab("account")} /></React.Suspense>
         )}
 
         {tab === "publish" && (
@@ -1294,9 +1307,7 @@ export default function App() {
               <span style={eyebrowStyle("#8B5CF6")}>SUBMISSÃO DE ANÚNCIO</span>
               <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>Publicar Anúncio</h1>
               <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.92rem", lineHeight: 1.5 }}>
-                Campanha de lançamento: até 50 anúncios gratuitos, sujeitos a confirmação do servidor. Valor padrão após campanha:{" "}
-                <strong style={{ color: "#F8FAFC" }}>1.500 CVE</strong>. O envio de comprovativo nunca publica o anúncio
-                automaticamente — depende sempre da confirmação do administrador.
+                Publique com apenas quatro elementos: nome, pelo menos uma fotografia, localização e contacto. Os anúncios gratuitos são publicados automaticamente; a equipa poderá analisá-los depois e pedir melhorias. O pagamento dos anúncios pagos continua sujeito a confirmação.
               </p>
             </div>
 
@@ -1310,7 +1321,7 @@ export default function App() {
                 <div style={{ position: "relative", zIndex: 1, animation: "conecta-success-pop .45s ease-out both" }}>
                   <div style={{ fontSize: "2.5rem", marginBottom: 5 }}>🎉</div>
                   <strong style={{ display: "block", color: "#F8FAFC", fontSize: "1.18rem", marginBottom: 7 }}>Anúncio submetido com sucesso!</strong>
-                  <p style={{ margin: "0 auto 0.9rem", maxWidth: 520, color: "#D7E6F4", lineHeight: 1.55, fontSize: "0.92rem" }}>Recebemos os seus dados e fotografias. O anúncio está <strong style={{ color: "#FBBF24" }}>PENDENTE DE APROVAÇÃO</strong> e só ficará visível ao público depois da validação do administrador.</p>
+                  <p style={{ margin: "0 auto 0.9rem", maxWidth: 520, color: "#D7E6F4", lineHeight: 1.55, fontSize: "0.92rem" }}>{paymentMethod === "free_launch" ? "O anúncio fica visível imediatamente e recebe a indicação «Novo anúncio» durante 24 horas. A equipa poderá analisá-lo depois e, se precisar de melhorias, notificará o proprietário." : "O anúncio será publicado depois da confirmação do pagamento e da validação dos quatro elementos essenciais."}</p>
                   <button type="button" onClick={() => setSubmissionSuccess(false)} style={{ ...secondaryBtnStyle, borderColor: "rgba(56,214,160,0.55)" }}>Continuar</button>
                 </div>
               </div>
@@ -1321,11 +1332,17 @@ export default function App() {
                 <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>1. Dados Principais e Localização</strong>
                 <input
                   type="text"
+                  required
+                  minLength={1}
+                  maxLength={100}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Título do anúncio (ex.: Moradia T2 no Tarrafal)"
                   style={inputStyle}
                 />
+                <div style={{ display: "flex", justifyContent: "flex-end", color: "#94A3B8", fontSize: ".74rem", marginTop: "-.55rem" }}>
+                  {title.length}/100 caracteres
+                </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: "0.65rem" }}>
                   <select
@@ -1401,45 +1418,12 @@ export default function App() {
                   </select>
                 </div>
 
-                <div style={{ marginTop: "0.75rem", padding: "0.9rem", border: "1px dashed rgba(96,165,250,0.55)", borderRadius: 12, background: "rgba(37,99,235,0.07)", display: "grid", gap: "0.6rem" }}>
-                  <strong style={{ color: "#F8FAFC", fontSize: "0.9rem" }}>Não encontrou uma categoria, produto ou serviço?</strong>
-                  <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.82rem", lineHeight: 1.45 }}>Envie uma sugestão à administração. Depois de aprovada, a nova opção ficará disponível para todos os anunciantes.</p>
-                  <input
-                    type="text"
-                    maxLength={60}
-                    value={suggestionCategory}
-                    onChange={(e) => setSuggestionCategory(e.target.value)}
-                    placeholder={`Categoria (por defeito: ${useCustomCategory ? customCategory || "nova categoria" : pubCategory})`}
-                    style={inputStyle}
-                  />
-                  <input
-                    type="text"
-                    maxLength={80}
-                    value={suggestionSubcategory}
-                    onChange={(e) => setSuggestionSubcategory(e.target.value)}
-                    placeholder="Novo produto, subproduto ou serviço (opcional para categoria nova)"
-                    style={inputStyle}
-                  />
-                  <textarea
-                    rows={2}
-                    maxLength={500}
-                    value={suggestionDescription}
-                    onChange={(e) => setSuggestionDescription(e.target.value)}
-                    placeholder="Explique brevemente a sugestão (opcional)"
-                    style={inputStyle}
-                  />
-                  {suggestionFeedback && <div role="status" aria-live="polite" style={{ color: suggestionFeedback.startsWith("Sugestão enviada") ? "#6EE7B7" : "#FBBF24", fontSize: "0.82rem" }}>{suggestionFeedback}</div>}
-                  <button type="button" onClick={submitCategorySuggestion} disabled={suggestionSubmitting} style={{ ...secondaryBtnStyle, borderColor: "rgba(96,165,250,0.55)", color: "#BFDBFE", opacity: suggestionSubmitting ? 0.65 : 1 }}>
-                    {suggestionSubmitting ? "A enviar sugestão…" : "Enviar sugestão para aprovação"}
-                  </button>
-                </div>
-
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: "0.65rem" }}>
                   <input
                     type="text"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    placeholder="Preço ou valor (ex.: 25.000 CVE)"
+                    placeholder="Preço ou valor (opcional — deixe em branco para preço sob consulta)"
                     style={inputStyle}
                   />
                   <input
@@ -1458,13 +1442,7 @@ export default function App() {
                   />
                 </div>
 
-                <input
-                  type="email"
-                  value={ownerEmail}
-                  onChange={(e) => setOwnerEmail(e.target.value)}
-                  placeholder="E-mail do anunciante"
-                  style={inputStyle}
-                />
+                <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Usaremos automaticamente o email da sua conta para gerir o anúncio. Não precisa de o preencher novamente.</div>
 
                 <input
                   type="url"
@@ -1475,43 +1453,108 @@ export default function App() {
                 />
 
                 <textarea
-                  rows={3}
+                  rows={4}
+                  maxLength={3000}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Descreva o imóvel, viatura, produto, serviço ou oportunidade..."
                   style={inputStyle}
                 />
+                <div style={{ display: "flex", justifyContent: "flex-end", color: "#94A3B8", fontSize: ".74rem", marginTop: "-.55rem" }}>
+                  {description.length}/3000 caracteres
+                </div>
+                {/* The preview is informational; server-side validation remains authoritative. */}
               </div>
 
               <div style={subCardStyle}>
-                <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>2. Fotografias e vídeos</strong>
-                <ListingMediaPicker files={mediaFiles} onChange={setMediaFiles} />
+                <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>2. Fotografias</strong>
+                <p style={{ margin: 0, color: "#AFC0D6", fontSize: ".78rem" }}>É necessária pelo menos uma fotografia. Vídeos são opcionais.</p>
+                <React.Suspense fallback={<span style={{ color: "#AFC0D6" }}>A carregar gestor de fotografias…</span>}><ListingMediaPicker files={mediaFiles} onChange={setMediaFiles} /></React.Suspense>
               </div>
 
               <div style={subCardStyle}>
                 <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>3. Modalidade e Pagamento (1.500 CVE)</strong>
                 <div style={{ fontSize: "0.85rem", color: "#B5C3D8", lineHeight: 1.55 }}>
-                  Esta pré-visualização ainda não processa pagamentos. Não faça transferências bancárias nem envie comprovativos. Os dados de pagamento só serão apresentados quando o fluxo seguro estiver ativo.
+                  {canClaimFreeSlot ? `Campanha de lançamento: ainda existem ${freeSlotsRemaining} vagas gratuitas. Enquanto houver vagas, não é necessário efetuar qualquer transferência.` : "Campanha gratuita concluída. O valor por anúncio é 1.500 CVE. Depois de submeter, aceda a Minha Conta para escolher BCA ou BCN e enviar o comprovativo para validação."}
+                </div>
+                <div style={{ border: "1px solid rgba(96,165,250,.34)", borderRadius: 12, padding: "1rem", background: "linear-gradient(145deg,rgba(17,29,49,.92),rgba(16,24,42,.92))", display: "grid", gap: ".5rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
+                    <strong style={{ color: "#F8FAFC", fontSize: ".95rem" }}>Banco Comercial do Atlântico (BCA)</strong>
+                  </div>
+                  <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Titular da conta</div>
+                  <strong style={{ color: "#F8FAFC", fontSize: ".9rem" }}>José Nivaldo G. Oliveira</strong>
+                  <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>IBAN</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: ".5rem", flexWrap: "wrap" }}>
+                    <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums", overflowWrap: "anywhere" }}>CV64 0003 0000 7050 3384 1017 6</strong>
+                    <button type="button" onClick={() => { void navigator.clipboard?.writeText("CV64000300007050338410176"); }} style={{ ...secondaryBtnStyle, padding: ".35rem .55rem", fontSize: ".74rem" }}>Copiar IBAN</button>
+                  </div>
+                  <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>NIB</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: ".5rem", flexWrap: "wrap" }}>
+                    <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums", overflowWrap: "anywhere" }}>000300007050338410176</strong>
+                    <button type="button" onClick={() => { void navigator.clipboard?.writeText("000300007050338410176"); }} style={{ ...secondaryBtnStyle, padding: ".35rem .55rem", fontSize: ".74rem" }}>Copiar NIB</button>
+                  </div>
+                  <p style={{ margin: ".2rem 0 0", color: "#FDE68A", fontSize: ".76rem", lineHeight: 1.45 }}>{canClaimFreeSlot ? "Não efetue pagamentos enquanto houver vagas gratuitas disponíveis. A campanha aplica automaticamente a gratuidade." : "Transfira apenas depois de submeter um anúncio pago. Envie o comprovativo em Minha Conta e aguarde a confirmação administrativa."}</p>
+                  <div style={{ borderTop: "1px solid rgba(181,195,216,.14)", marginTop: ".35rem", paddingTop: ".85rem", display: "grid", gap: ".5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
+                      <strong style={{ color: "#F8FAFC", fontSize: ".95rem" }}>Banco Cabo-verdiano de Negócios (BCN)</strong>
+                    </div>
+                    <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Titular da conta</div>
+                    <strong style={{ color: "#F8FAFC", fontSize: ".9rem" }}>José Nivaldo G. Oliveira</strong>
+                    <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Número de conta</div>
+                    <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums" }}>119418310001</strong>
+                    <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>NIB</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: ".5rem", flexWrap: "wrap" }}>
+                      <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums", overflowWrap: "anywhere" }}>000400000119418310146</strong>
+                      <button type="button" onClick={() => { void navigator.clipboard?.writeText("000400000119418310146"); }} style={{ ...secondaryBtnStyle, padding: ".35rem .55rem", fontSize: ".74rem" }}>Copiar NIB</button>
+                    </div>
+                  </div>
                 </div>
 
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
                   style={inputStyle}
-                  disabled={!canClaimFreeSlot}
+                  disabled
                 >
                   {canClaimFreeSlot ? (
-                    <option value="free_launch">
-                      Solicitar vaga gratuita na campanha (sujeita a confirmação)
-                    </option>
+                    <option value="free_launch">Campanha de lançamento — publicação gratuita</option>
                   ) : (
-                    <option value="free_launch">Campanha gratuita esgotada — pagamentos ainda indisponíveis</option>
+                    <option value="bank_transfer">Pagamento por transferência — 1.500 CVE</option>
                   )}
                 </select>
               </div>
 
+              <div style={{ ...subCardStyle, border: "1px solid rgba(96,165,250,.38)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".8rem", flexWrap: "wrap" }}>
+                  <div>
+                    <strong style={{ color: "#F8FAFC", fontSize: ".95rem" }}>Pré-visualização do anúncio</strong>
+                    <p style={{ margin: ".25rem 0 0", color: "#AFC0D6", fontSize: ".78rem" }}>Veja como os dados principais ficarão antes de publicar.</p>
+                  </div>
+                  <button type="button" onClick={() => setPublicationPreviewOpen((open) => !open)} style={{ ...secondaryBtnStyle, borderColor: "#60A5FA", color: "#BFDBFE" }}>
+                    {publicationPreviewOpen ? "Ocultar pré-visualização" : "Ver pré-visualização"}
+                  </button>
+                </div>
+                {publicationPreviewOpen && (
+                  <article style={{ border: "1px solid rgba(96,165,250,.5)", borderRadius: 13, overflow: "hidden", background: "linear-gradient(145deg,#111D31,#0B1220)", display: "grid", gap: ".7rem", padding: "1rem" }}>
+                    <div style={{ display: "flex", gap: ".4rem", flexWrap: "wrap" }}>
+                      <span style={{ ...badgeStyle("#1D4ED8"), fontSize: ".72rem" }}>{previewCategory || "Categoria"}</span>
+                      <span style={{ ...badgeStyle("#334155"), fontSize: ".72rem" }}>{previewSubcategory || "Subcategoria"}</span>
+                    </div>
+                    <h3 style={{ margin: 0, color: "#F8FAFC", fontSize: "1.12rem", lineHeight: 1.35 }}>{previewTitle}</h3>
+                    <div style={{ color: "#93C5FD", fontSize: ".82rem", fontWeight: 700 }}>{pubMunicipality}, {pubIsland}</div>
+                    <strong style={{ color: "#6EE7B7", fontSize: "1.05rem" }}>{price.trim() || "Preço a indicar"}</strong>
+                    <p style={{ margin: 0, color: "#D3DEEC", fontSize: ".86rem", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{previewDescription}</p>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap", borderTop: "1px solid rgba(181,195,216,.16)", paddingTop: ".65rem", color: "#AFC0D6", fontSize: ".78rem" }}>
+                      <span>{previewContacts}</span>
+                      <span>{mediaFiles.length} ficheiro(s) selecionado(s)</span>
+                    </div>
+                    <span style={{ color: "#FCD34D", fontSize: ".74rem", fontWeight: 750 }}>Pré-visualização privada · ainda não publicado</span>
+                  </article>
+                )}
+              </div>
+
               <button type="submit" disabled={isSubmitting} style={{ ...primaryBtnStyle, opacity: isSubmitting ? 0.72 : 1, cursor: isSubmitting ? "wait" : "pointer", minHeight: 48 }}>
-                {isSubmitting ? "A enviar anúncio… Não feche esta página" : "Submeter Anúncio para Análise"}
+                {isSubmitting ? "A publicar anúncio… Não feche esta página" : "Publicar Anúncio"}
               </button>
             </form>
           </section>
@@ -1519,6 +1562,7 @@ export default function App() {
 
         {tab === "account" && (
           <section style={panelStyle}>
+            {authUser && <React.Suspense fallback={<span style={{ color: "#AFC0D6" }}>A carregar pagamentos…</span>}><ListingPaymentsPanel userId={authUser.id} listings={accountListings} canAdmin={false} /></React.Suspense>}
             <span style={eyebrowStyle("#38D6A0")}>ÁREA DO ANUNCIANTE</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>Minha Conta</h1>
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
@@ -1529,7 +1573,7 @@ export default function App() {
               {authLoading ? (
                 <span style={{ color: "#B5C3D8", fontSize: "0.88rem" }}>A verificar sessão segura...</span>
               ) : (
-                <AuthPanel user={authUser} onSignedIn={(user) => { setAuthUser(user); setAccountEmail(user.email ?? ""); }} onSignedOut={() => { setAuthUser(null); setAccountEmail(""); setListings([]); }} />
+                <React.Suspense fallback={<span style={{ color: "#AFC0D6" }}>A carregar autenticação segura…</span>}><AuthPanel user={authUser} onSignedIn={(user) => { setAuthUser(user); setAccountEmail(user.email ?? ""); }} onSignedOut={() => { setAuthUser(null); setAccountEmail(""); setListings([]); }} /></React.Suspense>
               )}
             </div>
 
@@ -1550,6 +1594,7 @@ export default function App() {
             )}
 
             <div style={{ display: "grid", gap: "0.85rem" }}>
+              {editFeedback && <div style={feedbackBoxStyle}>{editFeedback}</div>}
               {!authUser ? (
                 <div style={subCardStyle}>
                   <strong>Entre para consultar os seus anúncios</strong>
@@ -1596,6 +1641,8 @@ export default function App() {
                       <span style={badgeStyle("#6D28D9")}>Anúncio: {item.listingStatus}</span>
                     </div>
 
+                    {item.listingStatus === "suspended" && item.moderationNote && <div style={{ color: "#FDE68A", fontSize: ".82rem" }}>Melhorias pedidas pela equipa: {item.moderationNote}</div>}
+                    {item.listingStatus === "suspended" && <button type="button" onClick={() => void republishListing(item)} style={actionBtnStyle("#15803D")}>Voltar a publicar</button>}
                     {item.listingStatus !== "rejected" && (
                       <div>
                         <button
@@ -1609,12 +1656,7 @@ export default function App() {
                     )}
 
                     {authUser && item.ownerAccountId === authUser.id && (
-                      <ListingMediaManager
-                        listingId={item.id}
-                        ownerId={authUser.id}
-                        currentCover={item.image}
-                        onCoverChange={(url) => setListings((prev) => prev.map((current) => current.id === item.id ? { ...current, image: url } : current))}
-                      />
+                      <React.Suspense fallback={<span style={{ color: "#AFC0D6" }}>A carregar fotografias…</span>}><ListingMediaManager listingId={item.id} ownerId={authUser.id} currentCover={item.image} listingStatus={item.listingStatus} onCoverChange={(url) => setListings((prev) => prev.map((current) => current.id === item.id ? { ...current, image: url } : current))} /></React.Suspense>
                     )}
 
                     {editingListingId === item.id && editDraft && (
@@ -1622,7 +1664,7 @@ export default function App() {
                         <strong>Editar dados do anúncio</strong>
                         <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
                           Título
-                          <input required minLength={5} maxLength={100} value={editDraft.title} onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })} style={inputStyle} />
+                          <input required minLength={1} maxLength={100} value={editDraft.title} onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })} style={inputStyle} />
                         </label>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.65rem" }}>
                           <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
@@ -1651,7 +1693,7 @@ export default function App() {
                           </label>
                           <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
                             Preço / valor
-                            <input required maxLength={60} value={editDraft.price} onChange={(e) => setEditDraft({ ...editDraft, price: e.target.value })} style={inputStyle} />
+                            <input maxLength={60} value={editDraft.price} onChange={(e) => setEditDraft({ ...editDraft, price: e.target.value })} style={inputStyle} />
                           </label>
                           <label style={{ display: "grid", gap: "0.3rem", color: "#B5C3D8", fontSize: "0.82rem" }}>
                             WhatsApp
@@ -1686,6 +1728,14 @@ export default function App() {
 
         {tab === "admin" && (
           <section style={panelStyle}>
+            <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><MonetizationPanel canAdmin={canAdmin} /></React.Suspense>
+            <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><ListingPaymentsPanel userId={authUser?.id ?? null} listings={accountListings} canAdmin={canAdmin} onPaymentReviewed={(listingId) => {
+              void supabase.from("listings").select("*").eq("id", listingId).maybeSingle().then(({ data, error }) => {
+                if (error) { console.error("Falha ao atualizar o anúncio após rever pagamento:", error.message); return; }
+                if (data) setListings((prev) => prev.map((item) => item.id === listingId ? mapDatabaseListing(data as Record<string, unknown>) : item));
+              });
+            }} /></React.Suspense>
+            <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><ProcuroAdminPanel canAdmin={canAdmin} /></React.Suspense>
             <span style={eyebrowStyle("#EC4899")}>GOVERNANÇA E MODERAÇÃO</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>
               Painel Administrativo
@@ -1693,36 +1743,6 @@ export default function App() {
             <p style={{ margin: "0 0 1.2rem", color: "#B5C3D8", fontSize: "0.92rem" }}>
               Painel ligado à base de dados partilhada. As ações de moderação são validadas pelo servidor e registadas na auditoria.
             </p>
-
-            <div style={{ ...subCardStyle, marginBottom: "1.1rem" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.7rem", flexWrap: "wrap" }}>
-                <strong style={{ fontSize: "0.98rem" }}>Sugestões de categorias e serviços</strong>
-                <span style={badgeStyle(categorySuggestions.length ? "#B45309" : "#166534")}>{categorySuggestions.length} pendentes</span>
-              </div>
-              {categoryReviewFeedback && <div role="status" aria-live="polite" style={{ color: "#6EE7B7", fontSize: "0.84rem" }}>{categoryReviewFeedback}</div>}
-              {categorySuggestionsLoading ? (
-                <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.86rem" }}>A carregar sugestões…</p>
-              ) : categorySuggestions.length === 0 ? (
-                <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.86rem" }}>Não existem sugestões pendentes neste momento.</p>
-              ) : (
-                <div style={{ display: "grid", gap: "0.65rem" }}>
-                  {categorySuggestions.map((suggestion) => (
-                    <div key={suggestion.id} style={{ padding: "0.85rem", border: "1px solid rgba(181,195,216,0.18)", borderRadius: 10, display: "grid", gap: "0.55rem" }}>
-                      <div>
-                        <strong style={{ color: "#F8FAFC" }}>{suggestion.requested_category}</strong>
-                        {suggestion.requested_subcategory && <span style={{ color: "#93C5FD" }}> › {suggestion.requested_subcategory}</span>}
-                        {suggestion.description && <p style={{ margin: "0.35rem 0 0", color: "#B5C3D8", fontSize: "0.84rem" }}>{suggestion.description}</p>}
-                        <span style={{ display: "block", marginTop: 5, color: "#8294AE", fontSize: "0.74rem" }}>Recebida em {new Date(suggestion.created_at).toLocaleDateString("pt-PT")}</span>
-                      </div>
-                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                        <button type="button" onClick={() => reviewCategorySuggestion(suggestion.id, "approved")} style={actionBtnStyle("#15803D")}>Aprovar e adicionar à lista</button>
-                        <button type="button" onClick={() => reviewCategorySuggestion(suggestion.id, "rejected")} style={actionBtnStyle("#B91C1C")}>Rejeitar</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
             <div style={{ display: "grid", gap: "0.9rem", marginBottom: "1.5rem" }}>
               {listings.map((item) => (
@@ -1741,6 +1761,7 @@ export default function App() {
                       <span style={badgeStyle("#6D28D9")}>Anúncio: {item.listingStatus}</span>
                     </div>
                   </div>
+                  {item.moderationNote && item.listingStatus === "suspended" && <div style={{ color: "#FDE68A", fontSize: ".82rem" }}>Motivo da suspensão: {item.moderationNote}</div>}
 
                   <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.25rem" }}>
                     <button
@@ -1759,7 +1780,7 @@ export default function App() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => updatePaymentAndListing(item.id, item.paymentStatus, "suspended")}
+                      onClick={() => { const reason = window.prompt("Indique o que o anunciante deve melhorar:"); if (reason?.trim()) void updatePaymentAndListing(item.id, item.paymentStatus, "suspended", reason.trim().slice(0, 1000)); }}
                       style={actionBtnStyle("#D97706")}
                     >
                       Suspender
@@ -1770,6 +1791,13 @@ export default function App() {
                       style={actionBtnStyle("#DC2626")}
                     >
                       Rejeitar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void deleteListingAsAdmin(item)}
+                      style={actionBtnStyle("#991B1B")}
+                    >
+                      Autorizar eliminação
                     </button>
                   </div>
                 </div>
@@ -1787,6 +1815,34 @@ export default function App() {
           </section>
         )}
       </main>
+
+      <footer
+        style={{
+          marginTop: "2rem",
+          padding: "2rem 1.25rem",
+          background: "linear-gradient(180deg, #10182A 0%, #0B1220 100%)",
+          borderTop: "1px solid rgba(181,195,216,0.18)",
+        }}
+      >
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1.25rem", flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 260px" }}>
+            <strong style={{ display: "block", color: "#F8FAFC", fontSize: "1.05rem", marginBottom: "0.35rem" }}>Precisa de ajuda? Estamos aqui para si.</strong>
+            <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.88rem", lineHeight: 1.6 }}>Fale diretamente com a nossa equipa de suporte humano pelo WhatsApp. Teremos todo o gosto em esclarecer as suas dúvidas.</p>
+          </div>
+          <a
+            href="https://wa.me/2389823835?text=Ol%C3%A1%21%20Preciso%20de%20ajuda%20com%20o%20CaboVerde%20Conecta."
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Falar com o suporte humano do CaboVerde Conecta pelo WhatsApp"
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.6rem", padding: "0.85rem 1.15rem", borderRadius: 12, background: "#16A34A", border: "1px solid #22C55E", color: "#FFFFFF", textDecoration: "none", fontWeight: 750, fontSize: "0.92rem", boxShadow: "0 8px 22px rgba(22,163,74,.2)" }}
+          >
+            <span aria-hidden="true">✆</span> Suporte humano · WhatsApp
+          </a>
+        </div>
+        <div style={{ maxWidth: 1200, margin: "1.25rem auto 0", paddingTop: "0.85rem", borderTop: "1px solid rgba(181,195,216,0.1)", color: "#8192AA", fontSize: "0.76rem" }}>
+          CaboVerde Conecta · Estamos disponíveis para ajudar.
+        </div>
+      </footer>
 
       {/* Assistente Flutuante */}
       <div
@@ -1973,6 +2029,27 @@ export default function App() {
         </button>
       </div>
 
+      {selectedListing && (
+        <div role="dialog" aria-modal="true" aria-label={"Detalhes: " + selectedListing.title} onClick={() => setSelectedListing(null)} style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(3,6,15,.88)", backdropFilter: "blur(8px)", overflowY: "auto", padding: "1rem" }}>
+          <section onClick={(e) => e.stopPropagation()} style={{ width: "min(920px,100%)", margin: "2rem auto", background: "#10182A", border: "1px solid rgba(181,195,216,.22)", borderRadius: 20, overflow: "hidden", boxShadow: "0 30px 80px rgba(0,0,0,.5)" }}>
+            <div style={{ padding: "1rem 1.2rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, borderBottom: "1px solid rgba(181,195,216,.14)" }}><span style={{ color: "#93C5FD", fontWeight: 750, fontSize: ".8rem" }}>DETALHES DO ANÚNCIO</span><button type="button" onClick={() => setSelectedListing(null)} style={secondaryBtnStyle}>Fechar ×</button></div>
+            <div style={{ padding: "1.1rem", display: "grid", gap: "1rem" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}><span style={{ ...badgeStyle("#1D4ED8"), fontSize: ".8rem" }}>{selectedListing.category}</span>{selectedListing.subcategory && <span style={{ ...badgeStyle("#334155"), fontSize: ".8rem" }}>{selectedListing.subcategory}</span>}{clockNow - new Date(selectedListing.createdAt).getTime() < 86_400_000 && clockNow >= new Date(selectedListing.createdAt).getTime() && <span style={{ ...badgeStyle("#FACC15"), color: "#172033", fontSize: ".8rem" }}>Novo anúncio</span>}</div>
+              <h2 style={{ margin: 0, fontSize: "clamp(1.35rem,3vw,2rem)", lineHeight: 1.35, color: "#F8FAFC" }}>{selectedListing.title}</h2>
+              <div style={{ color: "#B5C3D8" }}>📍 {selectedListing.municipality}{selectedListing.island ? ", " + selectedListing.island : ""}</div>
+              <div style={{ padding: "1rem", borderRadius: 14, background: "linear-gradient(135deg,rgba(56,214,160,.13),rgba(96,165,250,.1))", border: "1px solid rgba(56,214,160,.25)" }}><strong style={{ color: "#5EEAD4", fontSize: "1.5rem" }}>{selectedListing.price || "Preço sob consulta"}</strong></div>
+              <ListingGallery title={selectedListing.title} images={(mediaByListing[selectedListing.id] || []).filter(m => m.type === "image").sort((a,b)=>a.sort-b.sort)} fallbackImage={selectedListing.image} onOpen={(src,images,index)=>setLightbox({src,title:selectedListing.title,images,index})}/>
+              <h3 style={{ margin: "0.25rem 0 0", color: "#E2E8F0" }}>Descrição</h3><p style={{ whiteSpace: "pre-wrap", color: "#D7E6F4", lineHeight: 1.7, margin: 0 }}>{selectedListing.description}</p>
+              {(mediaByListing[selectedListing.id] || []).filter(m=>m.type==="video").map(m=><video key={m.id} src={m.url} controls style={{ width: "100%", maxHeight: 400, borderRadius: 12, background: "#070B18" }}/>)}
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", paddingTop: ".3rem" }}>
+                {selectedListing.whatsapp && <a href={`https://api.whatsapp.com/send?phone=${selectedListing.whatsapp.replace(/\\D/g,"")}&text=${encodeURIComponent("Olá! Tenho interesse no anúncio "+selectedListing.title+" publicado no CaboVerde Conecta. Gostaria de obter mais informações. Obrigado(a)!")}`} target="_blank" rel="noopener noreferrer" style={{ ...whatsappBtnStyle, padding: ".85rem", minWidth: 220 }}>Contactar via WhatsApp</a>}
+                {selectedListing.phone && <a href={`tel:${selectedListing.phone.replace(/\\D/g,"")}`} style={{ ...callLinkStyle, padding: ".85rem" }}>Ligar ao anunciante</a>}
+              </div>
+              <p style={{ margin: 0, color: "#94A3B8", fontSize: ".82rem" }}>Contacte diretamente o anunciante e confirme os detalhes antes de qualquer negócio.</p>
+            </div>
+          </section>
+        </div>
+      )}
       {lightbox && (
         <div
           onClick={() => setLightbox(null)}
@@ -1992,8 +2069,29 @@ export default function App() {
             onClick={(e) => e.stopPropagation()}
             style={{ position: "relative", width: "min(1100px, 100%)", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.85rem" }}
           >
-            <button type="button" aria-label="Fechar galeria" onClick={() => setLightbox(null)} style={{ position: "absolute", top: -42, right: 0, width: 38, height: 38, borderRadius: "50%", border: "1px solid rgba(255,255,255,.3)", background: "rgba(21,31,51,.88)", color: "#fff", fontSize: 24, cursor: "pointer", zIndex: 2 }}>×</button>
-            <div style={{ position: "relative", width: "100%", minHeight: "min(68vh, 680px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <button type="button" aria-label="Fechar galeria" onClick={() => setLightbox(null)} style={{ position: "fixed", top: "max(12px, env(safe-area-inset-top))", right: "max(12px, env(safe-area-inset-right))", minWidth: 88, height: 44, padding: "0 13px", borderRadius: 999, border: "1px solid rgba(255,255,255,.42)", background: "rgba(21,31,51,.96)", color: "#fff", fontSize: 15, fontWeight: 750, cursor: "pointer", zIndex: 110, boxShadow: "0 4px 18px rgba(0,0,0,.35)" }}>Fechar ×</button>
+            <div
+              onTouchStart={(event) => {
+                const touch = event.touches[0];
+                if (touch) lightboxTouchStartRef.current = { x: touch.clientX, y: touch.clientY };
+              }}
+              onTouchEnd={(event) => {
+                const start = lightboxTouchStartRef.current;
+                lightboxTouchStartRef.current = null;
+                const touch = event.changedTouches[0];
+                if (!start || !touch || lightbox.images.length < 2) return;
+                const deltaX = touch.clientX - start.x;
+                const deltaY = touch.clientY - start.y;
+                if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+                const direction = deltaX < 0 ? 1 : -1;
+                setLightbox((current) => {
+                  if (!current || current.images.length < 2) return current;
+                  const index = (current.index + direction + current.images.length) % current.images.length;
+                  return { ...current, index, src: current.images[index].url };
+                });
+              }}
+              style={{ position: "relative", width: "100%", minHeight: "min(68vh, 680px)", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "pan-y" }}
+            >
               <img
                 key={lightbox.src}
                 src={lightbox.src}
@@ -2002,8 +2100,8 @@ export default function App() {
               />
               {lightbox.images.length > 1 && (
                 <>
-                  <button type="button" aria-label="Fotografia anterior" onClick={() => setLightbox((current) => current ? { ...current, index: (current.index - 1 + current.images.length) % current.images.length, src: current.images[(current.index - 1 + current.images.length) % current.images.length].url } : null)} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 48, height: 48, borderRadius: "50%", border: "1px solid rgba(255,255,255,.55)", background: "rgba(7,11,24,.78)", color: "#fff", fontSize: 32, lineHeight: 1, cursor: "pointer" }}>‹</button>
-                  <button type="button" aria-label="Fotografia seguinte" onClick={() => setLightbox((current) => current ? { ...current, index: (current.index + 1) % current.images.length, src: current.images[(current.index + 1) % current.images.length].url } : null)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 48, height: 48, borderRadius: "50%", border: "1px solid rgba(255,255,255,.55)", background: "rgba(7,11,24,.78)", color: "#fff", fontSize: 32, lineHeight: 1, cursor: "pointer" }}>›</button>
+                  <button type="button" aria-label="Fotografia anterior" onClick={() => setLightbox((current) => current ? { ...current, index: (current.index - 1 + current.images.length) % current.images.length, src: current.images[(current.index - 1 + current.images.length) % current.images.length].url } : null)} style={{ position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", width: 28, height: 28, minHeight: 28, padding: 0, borderRadius: "50%", border: "1px solid rgba(255,255,255,.28)", background: "rgba(7,11,24,.42)", color: "#fff", fontSize: 19, lineHeight: 1, cursor: "pointer" }}>‹</button>
+                  <button type="button" aria-label="Fotografia seguinte" onClick={() => setLightbox((current) => current ? { ...current, index: (current.index + 1) % current.images.length, src: current.images[(current.index + 1) % current.images.length].url } : null)} style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", width: 28, height: 28, minHeight: 28, padding: 0, borderRadius: "50%", border: "1px solid rgba(255,255,255,.28)", background: "rgba(7,11,24,.42)", color: "#fff", fontSize: 19, lineHeight: 1, cursor: "pointer" }}>›</button>
                 </>
               )}
             </div>
@@ -2020,7 +2118,7 @@ export default function App() {
                 ))}
               </div>
             )}
-            <span style={{ color: "#9FB0C8", fontSize: "0.76rem" }}>Use as setas do teclado ou os controlos para percorrer as fotografias · Esc para fechar</span>
+            <span style={{ color: "#9FB0C8", fontSize: "0.76rem" }}>{lightbox.images.length > 1 ? "Deslize para a esquerda ou direita, ou use os controlos, para percorrer as fotografias" : "Toque em Fechar para regressar ao anúncio"} · Esc para fechar</span>
           </div>
         </div>
       )}

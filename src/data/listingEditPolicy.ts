@@ -26,10 +26,10 @@ export function validateListingEdit(input: EditableListingFields): ListingEditRe
     image: input.image.trim(),
   };
   const errors: string[] = [];
-  if (value.title.length < 5 || value.title.length > 100) errors.push("Título: 5 a 100 caracteres.");
-  if (!value.category || !value.subcategory) errors.push("Categoria e subcategoria são obrigatórias.");
-  if (!value.island || !value.municipality) errors.push("Ilha e concelho são obrigatórios.");
-  if (!value.price || value.price.length > 60) errors.push("Preço ou valor obrigatório (máximo 60 caracteres).");
+  if (!value.title || value.title.length > 100) errors.push("Nome do anúncio obrigatório (máximo 100 caracteres).");
+  if (!value.category) errors.push("Categoria obrigatória.");
+  if (!value.island || !value.municipality) errors.push("Localização obrigatória.");
+  if (value.price.length > 60) errors.push("Preço ou valor: máximo 60 caracteres.");
   if (value.description.length > 3000) errors.push("Descrição: máximo 3.000 caracteres.");
   if (!value.whatsapp && !value.phone) errors.push("Indique WhatsApp ou telefone.");
   for (const contact of [value.whatsapp, value.phone].filter(Boolean)) {

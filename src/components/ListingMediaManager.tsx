@@ -2,11 +2,11 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type Media = { id: string; url: string; type: "image" | "video"; sort: number };
-type Props = { listingId: string; ownerId: string; currentCover: string; onCoverChange: (url: string) => void };
+type Props = { listingId: string; ownerId: string; currentCover: string; listingStatus: "pending" | "published" | "rejected" | "suspended"; onCoverChange: (url: string) => void };
 
 const accepted = ["image/jpeg", "image/png", "image/webp", "image/avif", "video/mp4", "video/webm", "video/quicktime"];
 
-export default function ListingMediaManager({ listingId, ownerId, currentCover, onCoverChange }: Props) {
+export default function ListingMediaManager({ listingId, ownerId, currentCover, listingStatus, onCoverChange }: Props) {
   const [items, setItems] = useState<Media[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -46,24 +46,41 @@ export default function ListingMediaManager({ listingId, ownerId, currentCover, 
   }
 
   async function remove(item: Media) {
+    if (item.type === "image" && listingStatus === "published" &&
+        items.filter((candidate) => candidate.type === "image").length <= 1) {
+      setMessage("Um anúncio publicado precisa de manter pelo menos uma fotografia. Adicione outra fotografia antes de remover esta.");
+      return;
+    }
     if (!window.confirm("Remover este ficheiro do anúncio?")) return;
     setBusy(true); setMessage("");
     try {
+      if (item.url === currentCover) {
+        const nextCover = items.find((candidate) => candidate.id !== item.id && candidate.type === "image")?.url ?? "";
+        const { error: coverError } = await supabase.from("listings")
+          .update({ image_url: nextCover }).eq("id", listingId).eq("owner_id", ownerId);
+        if (coverError) throw coverError;
+        onCoverChange(nextCover);
+      }
+
+      // Remove the database reference first; a storage cleanup failure then leaves only
+      // an orphaned object, never a published gallery row pointing to a deleted file.
+      const { error: rowError } = await supabase.from("listing_media")
+        .delete().eq("id", item.id).eq("owner_id", ownerId);
+      if (rowError) throw rowError;
+
       const marker = "/object/public/listing-media/";
       const path = decodeURIComponent(item.url.split(marker)[1] ?? "");
       if (path) {
         const { error: storageError } = await supabase.storage.from("listing-media").remove([path]);
-        if (storageError) throw storageError;
-      }
-      const { error } = await supabase.from("listing_media").delete().eq("id", item.id).eq("owner_id", ownerId);
-      if (error) throw error;
-      if (item.url === currentCover) {
-        const nextCover = items.find((candidate) => candidate.id !== item.id && candidate.type === "image")?.url ?? "";
-        await supabase.from("listings").update({ image_url: nextCover }).eq("id", listingId).eq("owner_id", ownerId);
-        onCoverChange(nextCover);
+        if (storageError) {
+          await load();
+          setMessage("A fotografia foi retirada da galeria, mas o ficheiro antigo não pôde ser limpo do armazenamento. Contacte o suporte se continuar a aparecer.");
+          return;
+        }
       }
       await load(); setMessage("Ficheiro removido.");
     } catch (error) {
+      await load();
       setMessage("Não foi possível remover: " + (error instanceof Error ? error.message : "erro desconhecido"));
     } finally { setBusy(false); }
   }

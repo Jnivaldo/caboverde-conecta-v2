@@ -1,0 +1,35 @@
+name: Build and typecheck
+
+on:
+  pull_request:
+    branches:
+      - feat/conecta-assistant-llama-migration
+  push:
+    branches:
+      - feat/procuro-ofereco-persistence-foundation
+
+permissions:
+  contents: read
+
+concurrency:
+  group: conecta-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: TypeScript and production build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run TypeScript and Vite build
+        run: npm run build

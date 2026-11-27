@@ -1,6 +1,6 @@
 export type ListingStatus = "pending" | "published" | "rejected" | "suspended";
 export type PaymentStatus = "pending" | "confirmed" | "rejected";
-export type PaymentMethod = "free_launch";
+export type PaymentMethod = "free_launch" | "bank_transfer" | "other";
 
 export interface Listing {
   id: string;
@@ -21,6 +21,7 @@ export interface Listing {
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   proofRef?: string;
+  moderationNote?: string;
   slotNumber?: number;
   createdAt: string;
 }
@@ -58,7 +59,7 @@ function isStoredListing(value: unknown): value is Listing {
     (item.ownerAccountId === undefined || typeof item.ownerAccountId === "string") &&
     ["pending", "published", "rejected", "suspended"].includes(item.listingStatus || "") &&
     ["pending", "confirmed", "rejected"].includes(item.paymentStatus || "") &&
-    item.paymentMethod === "free_launch" &&
+    ["free_launch", "bank_transfer", "other"].includes(item.paymentMethod || "") &&
     typeof item.createdAt === "string"
   );
 }
