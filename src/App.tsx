@@ -1327,6 +1327,7 @@ export default function App() {
                 {(query || category || subcategory || island || municipality || minPrice || maxPrice) && <button type="button" onClick={() => { setQuery(""); setCategory(""); setSubcategory(""); setIsland(""); setMunicipality(""); setMinPrice(""); setMaxPrice(""); setSortOrder("newest"); }} style={secondaryBtnStyle}>Ver todos os anúncios</button>}
               </div>
             ) : (
+              <>
               {publicListings.some((ad) => ad.isFeatured) && (
                 <section style={{ marginBottom: "1.25rem", padding: "1.1rem", borderRadius: 16, border: "1px solid rgba(212,175,55,.5)", background: "linear-gradient(135deg, rgba(120,82,18,.12), rgba(16,24,42,.94))" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: ".85rem" }}>
@@ -1410,6 +1411,7 @@ export default function App() {
                 </article>
               ))}
               </div>
+              </>
             )}
           </>
         )}
