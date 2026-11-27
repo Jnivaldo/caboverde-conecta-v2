@@ -300,3 +300,38 @@ p, h1, h2, h3, strong, span, a, li, label {
   }
   main .listing-card-price strong { font-size: 1.28rem !important; }
 }
+
+
+/* Keep Minha Conta unmistakable in the first visible navigation position. */
+header nav button.account-nav-button {
+  background: linear-gradient(135deg, #38D6A0, #22BFA0) !important;
+  border: 1px solid #75F0C7 !important;
+  color: #06251F !important;
+  font-weight: 850 !important;
+  box-shadow: 0 0 0 2px rgba(56,214,160,.16), 0 5px 16px rgba(16,185,129,.2);
+}
+header nav button.account-nav-button[aria-current="page"] {
+  background: #A7F3D0 !important;
+  border-color: #D1FAE5 !important;
+  color: #052E27 !important;
+}
+header nav button.account-nav-button:focus-visible {
+  outline: 3px solid #FDE68A;
+  outline-offset: 3px;
+}
+
+/* Photo carousel controls are intentionally discreet and do not cover the image. */
+main article.listing-card button[aria-label="Fotografia anterior"],
+main article.listing-card button[aria-label="Fotografia seguinte"] {
+  width: 20px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+}
+main article.listing-card button[aria-label^="Ver fotografia"] {
+  min-height: 3px !important;
+  height: 3px !important;
+  width: 10px !important;
+  padding: 0 !important;
+}
