@@ -920,11 +920,11 @@ export default function App() {
             flexWrap: "wrap",
           }}
         >
-          <div>
-            <strong style={{ fontSize: "1.18rem", letterSpacing: "-0.01em" }}>
-              CaboVerde Conecta
+          <div className="site-brand">
+            <strong className="site-brand-title">
+              <span>CABOVERDE</span> <span>CONECTA</span>
             </strong>
-            <div style={{ fontSize: "0.82rem", color: "#38D6A0", fontWeight: 600 }}>
+            <div className="site-brand-campaign" style={{ fontSize: "0.82rem", color: "#38D6A0", fontWeight: 600 }}>
               Campanha de lançamento: até 50 anúncios gratuitos · Após campanha: 1.500 CVE
             </div>
           </div>
