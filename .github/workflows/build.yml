@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - feat/procuro-ofereco-persistence-foundation
+      - feat/unified-search-procuro-ofereco
 
 permissions:
   contents: read
