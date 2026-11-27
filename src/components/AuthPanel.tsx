@@ -80,26 +80,35 @@ export default function AuthPanel({ user, onSignedIn, onSignedOut }: AuthPanelPr
     }
     setLoading(true);
     setFeedback("");
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: getAuthRedirectUrl(),
-    });
-    setLoading(false);
-    setFeedback(error ? error.message : "Enviámos um link de recuperação para o seu email.");
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: getAuthRedirectUrl(),
+      });
+      if (error) throw error;
+      setFeedback("Enviámos um link de recuperação para o seu email. Verifique também a pasta de spam.");
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "Não foi possível enviar o link de recuperação. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function updateRecoveredPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    setLoading(false);
-    if (error) {
-      setFeedback(error.message);
-      return;
+    setFeedback("");
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setRecoveryMode(false);
+      setNewPassword("");
+      setFeedback("Palavra-passe atualizada com sucesso.");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "Não foi possível atualizar a palavra-passe. Solicite um novo link de recuperação.");
+    } finally {
+      setLoading(false);
     }
-    setRecoveryMode(false);
-    setNewPassword("");
-    setFeedback("Palavra-passe atualizada com sucesso.");
-    window.history.replaceState({}, document.title, window.location.pathname);
   }
 
   async function signOut() {
