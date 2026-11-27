@@ -21,6 +21,7 @@ export interface Listing {
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   proofRef?: string;
+  moderationNote?: string;
   slotNumber?: number;
   createdAt: string;
 }
