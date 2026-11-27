@@ -1221,16 +1221,16 @@ export default function App() {
             </div>
 
             <div id="public-listings-results" style={{ margin: "-0.85rem 0 1rem", color: "#9FB0C8", fontSize: "0.84rem", scrollMarginTop: 24 }} aria-live="polite">
-              {publicListings.length} anúncio(s) encontrado(s)
+              {publicListings.length} anúncio(s) no Marketplace
               {query.trim() && publicListings.some((ad) => getSearchMatch(query, [ad.title, ad.description, ad.category, ad.subcategory, ad.island, ad.municipality]) === "related") && <span style={{ display: "block", marginTop: ".4rem", color: "#FDE68A", lineHeight: 1.5 }}>{getRelatedSearchReason(query)} Os resultados exatos aparecem primeiro; as alternativas estão identificadas.</span>}
             </div>
             <React.Suspense fallback={<div style={{ minHeight: 40 }} />}><UnifiedProcurementSearch query={query} onOpenProcurement={() => setTab("requests")} /></React.Suspense>
             {publicListings.length === 0 ? (
               <div style={{ ...panelStyle, textAlign: "center", color: "#B5C3D8", padding: "2rem 1.25rem", border: "1px solid rgba(96,165,250,0.25)" }}>
                 <div style={{ width: 54, height: 54, margin: "0 auto 0.9rem", borderRadius: 16, display: "grid", placeItems: "center", background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.22)", fontSize: 24 }}>⌕</div>
-                <strong style={{ color: "#F8FAFC", fontSize: "1.05rem" }}>{query || category || subcategory || island || municipality || minPrice || maxPrice ? "Nenhum anúncio corresponde aos filtros" : "Ainda não existem anúncios publicados"}</strong>
+                <strong style={{ color: "#F8FAFC", fontSize: "1.05rem" }}>{query || category || subcategory || island || municipality || minPrice || maxPrice ? "Nenhum anúncio do Marketplace corresponde aos filtros" : "Ainda não existem anúncios publicados"}</strong>
                 <p style={{ margin: "0.55rem auto 1rem", fontSize: "0.9rem", lineHeight: 1.6, maxWidth: 480 }}>
-                  {query || category || subcategory || island || municipality || minPrice || maxPrice ? "Experimente alterar as palavras, aumentar o intervalo de preço ou retirar alguns filtros." : "Os anúncios aprovados aparecerão aqui. Entretanto, pode explorar Procuro & Ofereço para encontrar oportunidades."}
+                  {query || category || subcategory || island || municipality || minPrice || maxPrice ? "Experimente alterar as palavras, aumentar o intervalo de preço ou retirar alguns filtros. Os resultados de Procuro & Ofereço, quando existirem, aparecem separadamente acima." : "Os anúncios aprovados aparecerão aqui. Entretanto, pode explorar Procuro & Ofereço para encontrar oportunidades."}
                 </p>
                 {(query || category || subcategory || island || municipality || minPrice || maxPrice) && <button type="button" onClick={() => { setQuery(""); setCategory(""); setSubcategory(""); setIsland(""); setMunicipality(""); setMinPrice(""); setMaxPrice(""); setSortOrder("newest"); }} style={secondaryBtnStyle}>Ver todos os anúncios</button>}
               </div>
