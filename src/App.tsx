@@ -208,14 +208,14 @@ function ListingGallery({ title, images, fallbackImage, onOpen }: ListingGallery
       />
       {slides.length > 1 && (
         <>
-          <button type="button" aria-label="Fotografia anterior" onClick={() => move(-1)} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 27, height: 27, minHeight: 0, padding: 0, borderRadius: "50%", border: "1px solid rgba(255,255,255,.38)", background: "rgba(7,11,24,.58)", color: "#fff", fontSize: 18, lineHeight: 1, cursor: "pointer", display: "grid", placeItems: "center" }}>‹</button>
-          <button type="button" aria-label="Fotografia seguinte" onClick={() => move(1)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 27, height: 27, minHeight: 0, padding: 0, borderRadius: "50%", border: "1px solid rgba(255,255,255,.38)", background: "rgba(7,11,24,.58)", color: "#fff", fontSize: 18, lineHeight: 1, cursor: "pointer", display: "grid", placeItems: "center" }}>›</button>
-          <div style={{ position: "absolute", left: 0, right: 0, bottom: 9, display: "flex", justifyContent: "center", alignItems: "center", gap: 5 }}>
+          <button type="button" aria-label="Fotografia anterior" onClick={() => move(-1)} style={{ position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, minHeight: 0, padding: 0, borderRadius: "50%", border: "1px solid rgba(255,255,255,.3)", background: "rgba(7,11,24,.48)", color: "#fff", fontSize: 14, lineHeight: 1, cursor: "pointer", display: "grid", placeItems: "center" }}>‹</button>
+          <button type="button" aria-label="Fotografia seguinte" onClick={() => move(1)} style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, minHeight: 0, padding: 0, borderRadius: "50%", border: "1px solid rgba(255,255,255,.3)", background: "rgba(7,11,24,.48)", color: "#fff", fontSize: 14, lineHeight: 1, cursor: "pointer", display: "grid", placeItems: "center" }}>›</button>
+          <div style={{ position: "absolute", left: 0, right: 0, bottom: 6, display: "flex", justifyContent: "center", alignItems: "center", gap: 4 }}>
             {slides.map((slide, index) => (
-              <button key={slide.id} type="button" aria-label={"Ver fotografia " + (index + 1)} onClick={() => setActiveIndex(index)} style={{ width: index === activeIndex ? 14 : 5, height: 5, minHeight: 0, padding: 0, border: 0, borderRadius: 99, background: index === activeIndex ? "#fff" : "rgba(255,255,255,.58)", cursor: "pointer", transition: "all .2s ease" }} />
+              <button key={slide.id} type="button" aria-label={"Ver fotografia " + (index + 1)} onClick={() => setActiveIndex(index)} style={{ width: index === activeIndex ? 10 : 3, height: 3, minHeight: 0, padding: 0, border: 0, borderRadius: 99, background: index === activeIndex ? "#fff" : "rgba(255,255,255,.58)", cursor: "pointer", transition: "all .2s ease" }} />
             ))}
           </div>
-          <span style={{ position: "absolute", top: 9, right: 9, padding: "4px 8px", borderRadius: 99, background: "rgba(7,11,24,.72)", color: "#fff", fontSize: 11, fontWeight: 650 }}>{activeIndex + 1}/{slides.length}</span>
+          <span style={{ position: "absolute", top: 6, right: 6, padding: "2px 5px", borderRadius: 99, background: "rgba(7,11,24,.72)", color: "#fff", fontSize: 11, fontWeight: 650 }}>{activeIndex + 1}/{slides.length}</span>
         </>
       )}
       <style>{`@keyframes conecta-gallery-fade { from { opacity: .55; transform: scale(1.015); } to { opacity: 1; transform: scale(1); } }`}</style>
@@ -931,10 +931,10 @@ export default function App() {
 
           <nav style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap" }}>
             {[
+              { key: "account", label: "Minha Conta" },
               { key: "home", label: "Início" },
               { key: "publish", label: "Publicar Anúncio" },
               { key: "requests", label: "Procuro & Ofereço" },
-              { key: "account", label: "Minha Conta" },
               ...(canAdmin ? [{ key: "admin", label: "Administração" }] : []),
             ].map((item) => {
               const active = tab === item.key;
@@ -942,6 +942,8 @@ export default function App() {
                 <button
                   key={item.key}
                   type="button"
+                  className={item.key === "account" ? "account-nav-button" : undefined}
+                  aria-current={active ? "page" : undefined}
                   onClick={() => setTab(item.key as typeof tab)}
                   style={{
                     padding: "0.5rem 0.9rem",
