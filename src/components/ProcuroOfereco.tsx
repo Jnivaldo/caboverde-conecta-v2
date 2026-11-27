@@ -274,9 +274,9 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
         .from("procurement_offers")
         .delete()
         .eq("id", offer.id)
+        .abortSignal(controller.signal)
         .select("id")
-        .maybeSingle()
-        .abortSignal(controller.signal);
+        .maybeSingle();
       if (error) throw error;
       if (!data) throw new Error("A proposta já não existe ou não foi possível eliminá-la.");
       setOffers((current) => current.filter((row) => row.id !== offer.id));
