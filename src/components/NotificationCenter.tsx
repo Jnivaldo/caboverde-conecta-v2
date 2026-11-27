@@ -36,6 +36,7 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
   const [feedback, setFeedback] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const currentUserId = useRef(userId);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   currentUserId.current = userId;
 
   const loadNotifications = useCallback(async () => {
@@ -84,6 +85,22 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
     return () => { void supabase.removeChannel(channel); };
   }, [userId, loadNotifications]);
 
+  useEffect(() => {
+    if (!open) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
   async function markRead(id: string) {
     if (!userId) return;
     const now = new Date().toISOString();
@@ -118,7 +135,7 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
   }
 
   return (
-    <div style={{ position: "relative", flex: "0 0 auto" }}>
+    <div ref={panelRef} style={{ position: "relative", flex: "0 0 auto" }}>
       <button
         type="button"
         onClick={() => { setOpen((value) => !value); if (!open) void loadNotifications(); }}
@@ -134,7 +151,7 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
       >
         <svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></svg>
         Avisos
-        {unreadCount > 0 && <span style={{ minWidth: 19, height: 19, display: "grid", placeItems: "center", padding: "0 4px", borderRadius: 99, background: "#FACC15", color: "#172033", fontSize: ".68rem", fontWeight: 900, boxShadow: "0 0 0 2px #15233A" }}>{unreadCount > 99 ? "99+" : unreadCount}</span>}
+        {unreadCount > 0 && <span aria-live="polite" aria-atomic="true" style={{ minWidth: 19, height: 19, display: "grid", placeItems: "center", padding: "0 4px", borderRadius: 99, background: "#FACC15", color: "#172033", fontSize: ".68rem", fontWeight: 900, boxShadow: "0 0 0 2px #15233A" }}>{unreadCount > 99 ? "99+" : unreadCount}</span>}
       </button>
 
       {open && (
