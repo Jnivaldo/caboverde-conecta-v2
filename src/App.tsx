@@ -1327,6 +1327,28 @@ export default function App() {
                 {(query || category || subcategory || island || municipality || minPrice || maxPrice) && <button type="button" onClick={() => { setQuery(""); setCategory(""); setSubcategory(""); setIsland(""); setMunicipality(""); setMinPrice(""); setMaxPrice(""); setSortOrder("newest"); }} style={secondaryBtnStyle}>Ver todos os anúncios</button>}
               </div>
             ) : (
+              {publicListings.some((ad) => ad.isFeatured) && (
+                <section style={{ marginBottom: "1.25rem", padding: "1.1rem", borderRadius: 16, border: "1px solid rgba(212,175,55,.5)", background: "linear-gradient(135deg, rgba(120,82,18,.12), rgba(16,24,42,.94))" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: ".85rem" }}>
+                    <div>
+                      <span style={{ color: "#FDE68A", fontSize: ".72rem", fontWeight: 900, letterSpacing: ".1em" }}>✦ SELEÇÃO PREMIUM</span>
+                      <h2 style={{ margin: ".2rem 0 0", color: "#F8FAFC", fontSize: "1.3rem" }}>Anúncios em Destaque</h2>
+                    </div>
+                    <span style={{ color: "#E8D59B", fontSize: ".8rem" }}>Maior visibilidade na página inicial</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: ".8rem" }}>
+                    {publicListings.filter((ad) => ad.isFeatured).map((ad) => (
+                      <button key={ad.id} type="button" onClick={() => setSelectedListing(ad)} style={{ textAlign: "left", display: "grid", gap: ".5rem", padding: ".65rem", borderRadius: 12, border: "1px solid rgba(253,230,138,.42)", background: "rgba(7,11,24,.72)", color: "#F8FAFC", cursor: "pointer" }}>
+                        {ad.image ? <img src={ad.image} alt={ad.title} style={{ width: "100%", height: 118, objectFit: "cover", borderRadius: 8 }} /> : <div style={{ height: 118, display: "grid", placeItems: "center", color: "#B5C3D8", background: "#10182A", borderRadius: 8 }}>Sem fotografia</div>}
+                        <span className="listing-featured-badge">✦ EM DESTAQUE</span>
+                        <strong style={{ lineHeight: 1.35 }}>{ad.title}</strong>
+                        <span style={{ color: "#B5C3D8", fontSize: ".8rem" }}>{ad.municipality}{ad.island ? ", " + ad.island : ""}</span>
+                        <strong style={{ color: "#FDE68A" }}>{ad.price || "Preço sob consulta"}</strong>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
               <div
                 className="listing-card-grid"
                 style={{
@@ -1335,7 +1357,7 @@ export default function App() {
                   gap: "1.2rem",
                 }}
               >
-              {publicListings.map((ad) => (
+              {publicListings.filter((ad) => !ad.isFeatured).map((ad) => (
                 <article key={ad.id} className={`listing-card${ad.isFeatured ? " listing-card-featured" : ""}`} style={cardStyle}>
                   <ListingGallery
                     title={ad.title}
