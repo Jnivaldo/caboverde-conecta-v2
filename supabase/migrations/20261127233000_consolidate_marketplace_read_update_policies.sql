@@ -69,3 +69,24 @@ with check (
     and payment_status in ('pending','confirmed','rejected')
   )
 );
+
+
+-- Preserve the supplier INSERT permission in the version-controlled schema.
+-- Suppliers may submit only pending proposals for another user's approved,
+-- active, non-expired request; moderation remains admin-only.
+drop policy if exists procurement_offers_supplier_insert_public_request
+  on public.procurement_offers;
+create policy procurement_offers_supplier_insert_public_request
+  on public.procurement_offers
+  for insert to authenticated
+  with check (
+    supplier_id = (select auth.uid())
+    and moderation_status = 'pending'
+    and (select private.can_offer_to_procurement_request(request_id))
+    and exists (
+      select 1
+      from public.profiles p
+      where p.id = (select auth.uid())
+        and p.account_state = 'active'
+    )
+  );
