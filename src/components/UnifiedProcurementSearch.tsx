@@ -25,7 +25,7 @@ type PublicOffer = {
   created_at: string;
 };
 
-type Props = { query: string; onOpenProcurement: (target: { requestId: string; offerId?: string }) => void };
+type Props = { query: string; onOpenProcurement: (target?: { requestId: string; offerId?: string }) => void };
 
 const panelStyle: React.CSSProperties = {
   padding: "1rem",
