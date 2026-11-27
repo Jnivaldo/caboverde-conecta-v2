@@ -34,20 +34,17 @@ export function getSearchMatch(query: string, fields: string[]): "exact" | "rela
 
   const tokens = normalizedQuery.split(/\s+/).filter((token) => token.length > 1);
   if (!tokens.length) return "none";
-  const expanded = new Set<string>();
-  for (const token of tokens) {
-    expanded.add(token);
-    for (const related of RELATED_TERMS[token] ?? []) expanded.add(normalizeSearchText(related));
-  }
   const fieldTokens = new Set(normalizedFields.split(/\s+/));
-  const matched = [...expanded].filter((term) => {
-    if (term.includes(" ")) return normalizedFields.includes(term);
-    return fieldTokens.has(term);
+  const everyQueryTermIsCovered = tokens.every((token) => {
+    if (fieldTokens.has(token)) return true;
+    return (RELATED_TERMS[token] ?? []).some((related) => {
+      const normalizedRelated = normalizeSearchText(related);
+      return normalizedRelated.includes(" ")
+        ? normalizedFields.includes(normalizedRelated)
+        : fieldTokens.has(normalizedRelated);
+    });
   });
-  const directTokenMatches = tokens.filter((token) => fieldTokens.has(token)).length;
-  if (directTokenMatches > 0) return "related";
-  if (matched.length > 0) return "related";
-  return "none";
+  return everyQueryTermIsCovered ? "related" : "none";
 }
 
 export function getRelatedSearchReason(query: string): string {
