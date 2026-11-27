@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 
@@ -59,8 +59,10 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
   const [offerWhatsapp, setOfferWhatsapp] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const loadSequence = useRef(0);
 
   const loadData = useCallback(async () => {
+    const requestId = ++loadSequence.current;
     setLoading(true);
     try {
       let requestData: RequestRow[] = [];
@@ -97,13 +99,16 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
         requestData = (requestResult.data ?? []) as RequestRow[];
         offerData = (offerResult.data ?? []) as OfferRow[];
       }
+      if (requestId !== loadSequence.current) return;
       setItems(requestData);
       setOffers(offerData);
       setNotice("");
     } catch (error) {
-      setNotice("Não foi possível carregar os pedidos do servidor: " + errorText(error));
+      if (requestId === loadSequence.current) {
+        setNotice("Não foi possível carregar os pedidos do servidor: " + errorText(error));
+      }
     } finally {
-      setLoading(false);
+      if (requestId === loadSequence.current) setLoading(false);
     }
   }, [user]);
 
