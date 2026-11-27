@@ -122,6 +122,10 @@ export default function ProcuroAdminPanel({ canAdmin }: Props) {
     () => new Map(requests.map((item) => [item.id, item.title])),
     [requests],
   );
+  const requestById = useMemo(
+    () => new Map(requests.map((item) => [item.id, item])),
+    [requests],
+  );
 
   async function moderateRequest(id: string, decision: "approved" | "rejected") {
     if (!canAdmin || busyId) return;
@@ -142,6 +146,18 @@ export default function ProcuroAdminPanel({ canAdmin }: Props) {
 
   async function moderateOffer(id: string, decision: "approved" | "rejected") {
     if (!canAdmin || busyId) return;
+    if (decision === "approved") {
+      const offer = offers.find((item) => item.id === id);
+      const parentRequest = offer ? requestById.get(offer.request_id) : undefined;
+      const requestIsPublic = !!parentRequest
+        && parentRequest.moderation_status === "approved"
+        && parentRequest.status !== "completed"
+        && new Date(parentRequest.expires_at).getTime() > Date.now();
+      if (!requestIsPublic) {
+        setFeedback("A proposta só pode ser aprovada depois de o pedido associado estar publicado, ativo e dentro da validade.");
+        return;
+      }
+    }
     setBusyId(id);
     setFeedback("");
     try {
@@ -218,6 +234,11 @@ export default function ProcuroAdminPanel({ canAdmin }: Props) {
     const accent = accents[index % accents.length];
     const isBusy = busyId === item.id;
     const contact = whatsappUrl(item.supplier_whatsapp);
+    const parentRequest = requestById.get(item.request_id);
+    const requestIsPublic = !!parentRequest
+      && parentRequest.moderation_status === "approved"
+      && parentRequest.status !== "completed"
+      && new Date(parentRequest.expires_at).getTime() > Date.now();
     return (
       <article key={item.id} style={{ border: "1px solid " + accent, borderLeft: "5px solid " + accent, borderRadius: 12, padding: ".95rem", background: "linear-gradient(135deg,rgba(255,255,255,.035),rgba(12,20,36,.92))", display: "grid", gap: ".65rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
@@ -235,10 +256,13 @@ export default function ProcuroAdminPanel({ canAdmin }: Props) {
           {contact && <a href={contact} target="_blank" rel="noreferrer" style={{ color: "#86EFAC", fontWeight: 800 }}>WhatsApp do fornecedor</a>}
           {item.photo_url && <a href={item.photo_url} target="_blank" rel="noreferrer" style={{ color: "#93C5FD", fontWeight: 800 }}>Ver fotografia</a>}
         </div>
-        {item.moderation_status === "pending" && <div style={{ display: "flex", gap: ".45rem", flexWrap: "wrap" }}>
-          <button type="button" disabled={!!busyId} onClick={() => void moderateOffer(item.id, "approved")} style={button("#15803D")}>{isBusy ? "A guardar…" : "Aprovar proposta"}</button>
-          <button type="button" disabled={!!busyId} onClick={() => void moderateOffer(item.id, "rejected")} style={button("#991B1B")}>Rejeitar proposta</button>
-        </div>}
+        {item.moderation_status === "pending" && <>
+          {!requestIsPublic && <p style={{ ...muted, margin: 0, color: "#FCD34D" }}>Aguarda: o pedido associado precisa de estar aprovado, publicado, ativo e dentro da validade antes de aprovar esta proposta.</p>}
+          <div style={{ display: "flex", gap: ".45rem", flexWrap: "wrap" }}>
+            <button type="button" disabled={!!busyId || !requestIsPublic} onClick={() => void moderateOffer(item.id, "approved")} style={button("#15803D")}>{isBusy ? "A guardar…" : "Aprovar proposta"}</button>
+            <button type="button" disabled={!!busyId} onClick={() => void moderateOffer(item.id, "rejected")} style={button("#991B1B")}>Rejeitar proposta</button>
+          </div>
+        </>}
       </article>
     );
   };
