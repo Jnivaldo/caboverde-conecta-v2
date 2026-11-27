@@ -1096,6 +1096,7 @@ export default function App() {
             <ProcuroHomeHighlights onOpen={() => setTab("requests")} />
 
             <div
+              className="listing-search-filters"
               style={{
                 backgroundColor: "#10182A",
                 border: "1px solid rgba(181,195,216,0.16)",
@@ -1108,13 +1109,17 @@ export default function App() {
               }}
             >
               <input
-                type="text"
+                className="filter-search"
+                type="search"
+                aria-label="Pesquisar anúncios"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Pesquisar por título ou ilha..."
                 style={inputStyle}
               />
               <select
+                className="filter-wide"
+                aria-label="Categoria"
                 value={category}
                 onChange={(e) => {
                   setCategory(e.target.value);
@@ -1130,6 +1135,8 @@ export default function App() {
                 ))}
               </select>
               <select
+                className="filter-wide"
+                aria-label="Subcategoria"
                 value={subcategory}
                 onChange={(e) => setSubcategory(e.target.value)}
                 disabled={!category}
@@ -1143,6 +1150,8 @@ export default function App() {
                 ))}
               </select>
               <select
+                className="filter-half"
+                aria-label="Ilha"
                 value={island}
                 onChange={(e) => {
                   setIsland(e.target.value);
@@ -1158,6 +1167,8 @@ export default function App() {
                 ))}
               </select>
               <select
+                className="filter-half"
+                aria-label="Concelho"
                 value={municipality}
                 onChange={(e) => setMunicipality(e.target.value)}
                 disabled={!island}
@@ -1170,14 +1181,15 @@ export default function App() {
                   </option>
                 ))}
               </select>
-              <input type="number" min="0" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} placeholder="Preço mínimo" aria-label="Preço mínimo" style={{ ...inputStyle, minWidth: 120 }} />
-              <input type="number" min="0" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="Preço máximo" aria-label="Preço máximo" style={{ ...inputStyle, minWidth: 120 }} />
-              <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} aria-label="Ordenar anúncios" style={inputStyle}>
+              <input className="filter-half" type="number" min="0" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} placeholder="Preço mínimo" aria-label="Preço mínimo" style={{ ...inputStyle, minWidth: 120 }} />
+              <input className="filter-half" type="number" min="0" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="Preço máximo" aria-label="Preço máximo" style={{ ...inputStyle, minWidth: 120 }} />
+              <select className="filter-half" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} aria-label="Ordenar anúncios" style={inputStyle}>
                 <option value="newest">Mais recentes</option>
                 <option value="low">Preço mais baixo</option>
                 <option value="high">Preço mais alto</option>
               </select>
               <button
+                className="filter-half filter-clear"
                 type="button"
                 onClick={() => {
                   setQuery("");
