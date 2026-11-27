@@ -60,6 +60,7 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
   const [offerPhoto, setOfferPhoto] = useState("");
   const [offerWhatsapp, setOfferWhatsapp] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [focusedRequestId, setFocusedRequestId] = useState<string | null>(null);
   const [focusedOfferId, setFocusedOfferId] = useState<string | null>(null);
@@ -223,6 +224,54 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
     }
   }
 
+  async function deleteRequest(item: RequestRow) {
+    if (!user || !canAdmin || deletingId) return;
+    const confirmed = window.confirm(
+      `Eliminar definitivamente o pedido "${item.title}" e todas as propostas associadas? Esta ação não pode ser desfeita.`
+    );
+    if (!confirmed) return;
+    setDeletingId(`request:${item.id}`);
+    setNotice("");
+    try {
+      const { data, error } = await supabase.rpc("admin_delete_procurement_request", { p_request_id: item.id });
+      if (error) throw error;
+      if (!data) throw new Error("O pedido já não existe ou não foi possível eliminá-lo.");
+      setItems((current) => current.filter((row) => row.id !== item.id));
+      setOffers((current) => current.filter((row) => row.request_id !== item.id));
+      setNotice("Pedido e respetivas propostas eliminados com sucesso.");
+    } catch (error) {
+      setNotice("Não foi possível eliminar o pedido: " + errorText(error));
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function deleteOffer(offer: OfferRow) {
+    if (!user || !canAdmin || deletingId) return;
+    const confirmed = window.confirm(
+      `Eliminar definitivamente a proposta "${offer.model}" de "${offer.business_name}"?`
+    );
+    if (!confirmed) return;
+    setDeletingId(`offer:${offer.id}`);
+    setNotice("");
+    try {
+      const { data, error } = await supabase
+        .from("procurement_offers")
+        .delete()
+        .eq("id", offer.id)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("A proposta já não existe ou não foi possível eliminá-la.");
+      setOffers((current) => current.filter((row) => row.id !== offer.id));
+      setNotice("Proposta eliminada com sucesso.");
+    } catch (error) {
+      setNotice("Não foi possível eliminar a proposta: " + errorText(error));
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   function waLink(phone: string, message: string) {
     const number = cleanPhone(phone);
     return number ? `https://wa.me/${number}?text=${encodeURIComponent(message)}` : "";
@@ -307,6 +356,7 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
               <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap", marginTop: ".8rem" }}>
                 {isPublicApproved && item.status !== "completed" && !isOwner && <button type="button" onClick={() => { if (!user) { setNotice("Entre na sua conta para apresentar uma proposta."); onAuthClick(); return; } setActiveOffer(activeOffer === item.id ? null : item.id); }} style={{ ...btnStyle, background: "#2563EB", color: "white" }}>Enviar uma proposta</button>}
                 {isOwner && item.status !== "completed" && <button type="button" onClick={() => void updateRequestStatus(item, "completed")} style={{ border: "1px solid rgba(181,195,216,.25)", borderRadius: 9, padding: ".6rem .75rem", background: "transparent", color: "#B5C3D8", cursor: "pointer" }}>Marcar como concluído</button>}
+                {canAdmin && <button type="button" disabled={!!deletingId} onClick={() => void deleteRequest(item)} style={deleteButtonStyle}>{deletingId === `request:${item.id}` ? "A eliminar..." : "Eliminar pedido"}</button>}
               </div>
               {activeOffer === item.id && <form onSubmit={(event) => void submitOffer(event, item.id)} style={{ marginTop: ".85rem", padding: ".9rem", borderRadius: 11, border: "1px solid rgba(96,165,250,.35)", background: "#111D31", display: "grid", gap: ".7rem" }}>
                 <strong style={{ color: "#93C5FD" }}>Apresentar proposta para: {item.title}</strong>
@@ -331,6 +381,7 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
                 {offer.moderation_status === "pending" && <p style={{ color: "#FCD34D", fontSize: ".75rem" }}>Proposta pendente de aprovação.</p>}
                 <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
                   {offer.supplier_whatsapp && (offer.moderation_status === "approved" || (!offer.moderation_status && !offer.supplier_id) || (!!user && offer.supplier_id === user.id) || canAdmin) && <a href={waLink(offer.supplier_whatsapp, `Olá! Vi a sua proposta para "${item.title}" no CaboVerde Conecta.`)} target="_blank" rel="noreferrer" style={{ color: "#8EF0C8", fontWeight: 750, fontSize: ".8rem" }}>Contactar fornecedor no WhatsApp</a>}
+                  {canAdmin && <button type="button" disabled={!!deletingId} onClick={() => void deleteOffer(offer)} style={deleteButtonStyle}>{deletingId === `offer:${offer.id}` ? "A eliminar..." : "Eliminar proposta"}</button>}
                 </div>
               </div>)}</div>}
             </article>;
@@ -344,3 +395,14 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
     </section>
   );
 }
+
+const deleteButtonStyle: React.CSSProperties = {
+  border: "1px solid rgba(248,113,113,.72)",
+  borderRadius: 9,
+  padding: ".6rem .8rem",
+  background: "linear-gradient(180deg,#991B1B,#7F1D1D)",
+  color: "#FFFFFF",
+  cursor: "pointer",
+  fontWeight: 800,
+  fontSize: ".78rem",
+};
