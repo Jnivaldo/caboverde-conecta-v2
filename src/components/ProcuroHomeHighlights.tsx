@@ -62,7 +62,22 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }
       setLoading(false);
     }
     void load();
-    return () => { active = false; };
+
+    // Keep homepage highlights fresh when a request is approved while visitors
+    // are browsing, without requiring a manual page refresh.
+    const refreshTimer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void load();
+    }, 60000);
+    const refreshOnFocus = () => { if (document.visibilityState === "visible") void load(); };
+    window.addEventListener("focus", refreshOnFocus);
+    document.addEventListener("visibilitychange", refreshOnFocus);
+
+    return () => {
+      active = false;
+      window.clearInterval(refreshTimer);
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener("visibilitychange", refreshOnFocus);
+    };
   }, []);
 
   useEffect(() => {
