@@ -1670,36 +1670,6 @@ export default function App() {
               Painel ligado à base de dados partilhada. As ações de moderação são validadas pelo servidor e registadas na auditoria.
             </p>
 
-            <div style={{ ...subCardStyle, marginBottom: "1.1rem" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.7rem", flexWrap: "wrap" }}>
-                <strong style={{ fontSize: "0.98rem" }}>Sugestões de categorias e serviços</strong>
-                <span style={badgeStyle(categorySuggestions.length ? "#B45309" : "#166534")}>{categorySuggestions.length} pendentes</span>
-              </div>
-              {categoryReviewFeedback && <div role="status" aria-live="polite" style={{ color: "#6EE7B7", fontSize: "0.84rem" }}>{categoryReviewFeedback}</div>}
-              {categorySuggestionsLoading ? (
-                <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.86rem" }}>A carregar sugestões…</p>
-              ) : categorySuggestions.length === 0 ? (
-                <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.86rem" }}>Não existem sugestões pendentes neste momento.</p>
-              ) : (
-                <div style={{ display: "grid", gap: "0.65rem" }}>
-                  {categorySuggestions.map((suggestion) => (
-                    <div key={suggestion.id} style={{ padding: "0.85rem", border: "1px solid rgba(181,195,216,0.18)", borderRadius: 10, display: "grid", gap: "0.55rem" }}>
-                      <div>
-                        <strong style={{ color: "#F8FAFC" }}>{suggestion.requested_category}</strong>
-                        {suggestion.requested_subcategory && <span style={{ color: "#93C5FD" }}> › {suggestion.requested_subcategory}</span>}
-                        {suggestion.description && <p style={{ margin: "0.35rem 0 0", color: "#B5C3D8", fontSize: "0.84rem" }}>{suggestion.description}</p>}
-                        <span style={{ display: "block", marginTop: 5, color: "#8294AE", fontSize: "0.74rem" }}>Recebida em {new Date(suggestion.created_at).toLocaleDateString("pt-PT")}</span>
-                      </div>
-                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                        <button type="button" onClick={() => reviewCategorySuggestion(suggestion.id, "approved")} style={actionBtnStyle("#15803D")}>Aprovar e adicionar à lista</button>
-                        <button type="button" onClick={() => reviewCategorySuggestion(suggestion.id, "rejected")} style={actionBtnStyle("#B91C1C")}>Rejeitar</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
             <div style={{ display: "grid", gap: "0.9rem", marginBottom: "1.5rem" }}>
               {listings.map((item) => (
                 <div key={item.id} style={subCardStyle}>
