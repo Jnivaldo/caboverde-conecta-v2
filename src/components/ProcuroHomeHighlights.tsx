@@ -10,6 +10,8 @@ type PublicRequest = {
   description: string;
   budget: string | null;
   created_at: string;
+  status: string;
+  expires_at: string;
 };
 
 function getRequestHighlight(title: string) {
@@ -49,7 +51,7 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: (requestId?:
     async function load() {
       const { data, error } = await supabase
         .from("public_procurement_requests")
-        .select("id,title,category,island,municipality,description,budget,created_at")
+        .select("id,title,category,island,municipality,description,budget,created_at,status,expires_at")
         .order("created_at", { ascending: false })
         .limit(8);
       if (!active) return;
@@ -57,7 +59,10 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: (requestId?:
         console.error("Não foi possível carregar os pedidos em destaque:", error.message);
         setItems([]);
       } else {
-        setItems((data ?? []) as PublicRequest[]);
+        const now = Date.now();
+        setItems(((data ?? []) as PublicRequest[]).filter((item) =>
+          item.status !== "completed" && Date.parse(item.expires_at) > now
+        ));
       }
       setLoading(false);
     }
