@@ -72,14 +72,27 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
       let requestData: RequestRow[] = [];
       let offerData: OfferRow[] = [];
       if (user) {
-        const [requestResult, offerResult] = await Promise.all([
+        // Public discovery uses safe projections; base tables return only rows
+        // owned by/associated with this user (or all rows for an administrator).
+        const [publicRequests, privateRequests, publicOffers, privateOffers] = await Promise.all([
+          supabase.from("public_procurement_requests").select("*").order("created_at", { ascending: false }),
           supabase.from("procurement_requests").select("*").order("created_at", { ascending: false }),
+          supabase.from("public_procurement_offers").select("*").order("created_at", { ascending: false }),
           supabase.from("procurement_offers").select("*").order("created_at", { ascending: false }),
         ]);
-        if (requestResult.error) throw requestResult.error;
-        if (offerResult.error) throw offerResult.error;
-        requestData = (requestResult.data ?? []) as RequestRow[];
-        offerData = (offerResult.data ?? []) as OfferRow[];
+        for (const result of [publicRequests, privateRequests, publicOffers, privateOffers]) {
+          if (result.error) throw result.error;
+        }
+        const requestMap = new Map<string, RequestRow>();
+        for (const row of [...((publicRequests.data ?? []) as RequestRow[]), ...((privateRequests.data ?? []) as RequestRow[])]) {
+          requestMap.set(row.id, row);
+        }
+        const offerMap = new Map<string, OfferRow>();
+        for (const row of [...((publicOffers.data ?? []) as OfferRow[]), ...((privateOffers.data ?? []) as OfferRow[])]) {
+          offerMap.set(row.id, row);
+        }
+        requestData = [...requestMap.values()].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+        offerData = [...offerMap.values()].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
       } else {
         const [requestResult, offerResult] = await Promise.all([
           supabase.from("public_procurement_requests").select("*").order("created_at", { ascending: false }),
