@@ -25,7 +25,6 @@ type PublicOffer = {
   created_at: string;
 };
 
-type Match<T> = { item: T; kind: "exact" | "related" };
 type Props = { query: string; onOpenProcurement: () => void };
 
 const panelStyle: React.CSSProperties = {
@@ -102,6 +101,7 @@ export default function UnifiedProcurementSearch({ query, onOpenProcurement }: P
 
   if (!query.trim()) return null;
 
+  const requestById = new Map(requests.map((item) => [item.id, item]));
   const exactTotal = results.exactRequests.length + results.exactOffers.length;
   const relatedTotal = results.relatedRequests.length + results.relatedOffers.length;
   const total = exactTotal + relatedTotal;
@@ -111,7 +111,7 @@ export default function UnifiedProcurementSearch({ query, onOpenProcurement }: P
       <strong style={{ color: "#FCA5A5", fontSize: ".9rem" }}>Pessoas que procuram ({items.length})</strong>
       {items.map((item) => (
         <article key={item.id} style={{ padding: ".8rem", borderRadius: 10, border: "1px solid rgba(248,113,113,.35)", background: "rgba(127,29,29,.12)" }}>
-          <strong>{item.title}</strong>
+          <div style={{ display: "flex", alignItems: "center", gap: ".45rem", flexWrap: "wrap" }}><span style={{ padding: ".16rem .45rem", borderRadius: 6, background: "rgba(248,113,113,.14)", color: "#FCA5A5", fontSize: ".67rem", fontWeight: 850, letterSpacing: ".04em" }}>PROCURO &amp; OFEREÇO · PEDIDO</span><strong>{item.title}</strong></div>
           <p style={{ margin: ".3rem 0", color: "#C2D0E3", fontSize: ".82rem", lineHeight: 1.45 }}>{item.description}</p>
           <span style={{ color: "#AFC0D6", fontSize: ".74rem" }}>{item.category} · {item.municipality}, {item.island}</span>
         </article>
@@ -123,11 +123,11 @@ export default function UnifiedProcurementSearch({ query, onOpenProcurement }: P
     <div style={{ display: "grid", gap: ".55rem" }}>
       <strong style={{ color: "#8EF0C8", fontSize: ".9rem" }}>Pessoas / empresas que oferecem ({items.length})</strong>
       {items.map((offer) => {
-        const parent = requests.find((item) => item.id === offer.request_id);
+        const parent = requestById.get(offer.request_id);
         return (
           <article key={offer.id} style={{ padding: ".8rem", borderRadius: 10, border: "1px solid rgba(56,214,160,.32)", background: "rgba(6,78,59,.14)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: ".5rem", flexWrap: "wrap" }}>
-              <strong>{offer.model}</strong>
+              <div style={{ display: "grid", gap: ".25rem" }}><span style={{ color: "#8EF0C8", fontSize: ".67rem", fontWeight: 850, letterSpacing: ".04em" }}>PROCURO &amp; OFEREÇO · PROPOSTA</span><strong>{offer.model}</strong></div>
               <strong style={{ color: "#8EF0C8" }}>{Number(offer.price_cve).toLocaleString("pt-PT")} CVE</strong>
             </div>
             <p style={{ margin: ".3rem 0", color: "#C2D0E3", fontSize: ".82rem", lineHeight: 1.45 }}>{offer.description}</p>
