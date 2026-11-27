@@ -144,6 +144,25 @@ export default function ListingPaymentsPanel({ userId, listings, canAdmin, onPay
   );
 
   if (!userId && !canAdmin) return null;
+  if (!canAdmin) {
+    return (
+      <section style={{ ...card, marginBottom: "1rem" }}>
+        <div>
+          <span style={{ color: "#FBBF24", fontSize: ".72rem", fontWeight: 800, letterSpacing: ".08em" }}>
+            PAGAMENTOS TEMPORARIAMENTE INDISPONÍVEIS
+          </span>
+          <h2 style={{ margin: ".25rem 0", color: "#F8FAFC", fontSize: "1.2rem" }}>
+            Pagamento por anúncio
+          </h2>
+          <p style={{ margin: 0, color: "#B5C3D8", fontSize: ".84rem", lineHeight: 1.5 }}>
+            A cobrança ainda não está ativa. Não faça transferências nem envie comprovativos.
+            Quando os pagamentos forem oficialmente disponibilizados, esta área será atualizada
+            com instruções verificadas.
+          </p>
+        </div>
+      </section>
+    );
+  }
   return (
     <section style={{ ...card, marginBottom: "1rem" }}>
       <div>
