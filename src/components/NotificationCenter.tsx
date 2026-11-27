@@ -35,11 +35,11 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
-  const currentUserId = useRef(userId);
+  const requestSequence = useRef(0);
   const panelRef = useRef<HTMLDivElement | null>(null);
-  currentUserId.current = userId;
 
   const loadNotifications = useCallback(async () => {
+    const requestId = ++requestSequence.current;
     if (!userId) {
       setItems([]);
       setUnreadCount(0);
@@ -47,24 +47,31 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
       return;
     }
     setLoading(true);
-    const [listResult, countResult] = await Promise.all([
-      supabase.from("user_notifications")
-        .select("id, notification_type, title, message, target_path, entity_id, created_at, read_at")
-        .eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
-      supabase.from("user_notifications")
-        .select("id", { count: "exact", head: true }).eq("user_id", userId).is("read_at", null),
-    ]);
-    if (currentUserId.current !== userId) return;
-    if (listResult.error || countResult.error) {
-      const error = listResult.error || countResult.error;
-      setFeedback("Não foi possível carregar as notificações.");
-      console.error("Falha ao carregar notificações:", error?.message);
-    } else {
-      setItems((listResult.data ?? []) as NotificationRow[]);
-      setUnreadCount(countResult.count ?? 0);
-      setFeedback("");
+    try {
+      const [listResult, countResult] = await Promise.all([
+        supabase.from("user_notifications")
+          .select("id, notification_type, title, message, target_path, entity_id, created_at, read_at")
+          .eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
+        supabase.from("user_notifications")
+          .select("id", { count: "exact", head: true }).eq("user_id", userId).is("read_at", null),
+      ]);
+      if (requestId !== requestSequence.current) return;
+      if (listResult.error || countResult.error) {
+        const error = listResult.error || countResult.error;
+        setFeedback("Não foi possível carregar as notificações.");
+        console.error("Falha ao carregar notificações:", error?.message);
+      } else {
+        setItems((listResult.data ?? []) as NotificationRow[]);
+        setUnreadCount(countResult.count ?? 0);
+        setFeedback("");
+      }
+    } catch (error) {
+      if (requestId !== requestSequence.current) return;
+      setFeedback("Não foi possível carregar as notificações. Verifique a ligação e tente novamente.");
+      console.error("Falha inesperada ao carregar notificações:", error);
+    } finally {
+      if (requestId === requestSequence.current) setLoading(false);
     }
-    setLoading(false);
   }, [userId]);
 
   useEffect(() => {
