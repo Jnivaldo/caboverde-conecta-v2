@@ -21,6 +21,8 @@ import {
 import { countListingsByStatus, getPreviewListingsByEmail } from "./data/listingManagement";
 import { applyListingEdit, validateListingEdit, type EditableListingFields } from "./data/listingEditPolicy";
 
+import { getSearchMatch, getRelatedSearchReason } from "./lib/smartSearch";
+
 interface ChatMessage {
   id: string;
   sender: "user" | "assistant";
@@ -470,26 +472,29 @@ export default function App() {
       if (island && ad.island !== island) return false;
       if (municipality && ad.municipality !== municipality) return false;
       if (query.trim()) {
-        const q = query.trim().toLocaleLowerCase("pt");
-        const searchable = [ad.title, ad.description, ad.category, ad.subcategory, ad.island, ad.municipality].join(" ").toLocaleLowerCase("pt");
-        if (!searchable.includes(q)) return false;
+        const match = getSearchMatch(query, [ad.title, ad.description, ad.category, ad.subcategory, ad.island, ad.municipality]);
+        if (match === "none") return false;
       }
       const numericPrice = parsePrice(ad.price);
       if (min !== null && (numericPrice === null || numericPrice < min)) return false;
       if (max !== null && (numericPrice === null || numericPrice > max)) return false;
       return true;
     });
-    if (sortOrder === "low" || sortOrder === "high") {
-      filtered.sort((a, b) => {
+    filtered.sort((a, b) => {
+      if (query.trim()) {
+        const aMatch = getSearchMatch(query, [a.title, a.description, a.category, a.subcategory]);
+        const bMatch = getSearchMatch(query, [b.title, b.description, b.category, b.subcategory]);
+        if (aMatch !== bMatch) return aMatch === "exact" ? -1 : 1;
+      }
+      if (sortOrder === "low" || sortOrder === "high") {
         const pa = parsePrice(a.price), pb = parsePrice(b.price);
         if (pa === null && pb === null) return 0;
         if (pa === null) return 1;
         if (pb === null) return -1;
         return sortOrder === "low" ? pa - pb : pb - pa;
-      });
-    } else {
-      filtered.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-    }
+      }
+      return String(b.createdAt).localeCompare(String(a.createdAt));
+    });
     return filtered;
   }, [listings, category, subcategory, island, municipality, query, minPrice, maxPrice, sortOrder]);
 
@@ -1214,7 +1219,10 @@ export default function App() {
               })}
             </div>
 
-            <div id="public-listings-results" style={{ margin: "-0.85rem 0 1rem", color: "#9FB0C8", fontSize: "0.84rem", scrollMarginTop: 24 }} aria-live="polite">{publicListings.length} anúncio(s) encontrado(s)</div>
+            <div id="public-listings-results" style={{ margin: "-0.85rem 0 1rem", color: "#9FB0C8", fontSize: "0.84rem", scrollMarginTop: 24 }} aria-live="polite">
+              {publicListings.length} anúncio(s) encontrado(s)
+              {query.trim() && publicListings.some((ad) => getSearchMatch(query, [ad.title, ad.description, ad.category, ad.subcategory, ad.island, ad.municipality]) === "related") && <span style={{ display: "block", marginTop: ".4rem", color: "#FDE68A", lineHeight: 1.5 }}>{getRelatedSearchReason(query)} Os resultados exatos aparecem primeiro; as alternativas estão identificadas.</span>}
+            </div>
             {publicListings.length === 0 ? (
               <div style={{ ...panelStyle, textAlign: "center", color: "#B5C3D8", padding: "2rem 1.25rem", border: "1px solid rgba(96,165,250,0.25)" }}>
                 <div style={{ width: 54, height: 54, margin: "0 auto 0.9rem", borderRadius: 16, display: "grid", placeItems: "center", background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.22)", fontSize: 24 }}>⌕</div>
@@ -1244,6 +1252,7 @@ export default function App() {
                   <div className="listing-card-content" style={{ padding: "1.1rem", display: "flex", flexDirection: "column", gap: "0.65rem", flex: 1 }}>
                     <div className="listing-card-categories" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <span style={{ padding: "0.32rem 0.65rem", borderRadius: 999, background: "rgba(96,165,250,0.14)", border: "1px solid rgba(96,165,250,0.28)", color: "#BFDBFE", fontSize: "0.76rem", fontWeight: 750 }}>{ad.category}</span>
+                      {query.trim() && getSearchMatch(query, [ad.title, ad.description, ad.category, ad.subcategory, ad.island, ad.municipality]) === "related" && <span title={getRelatedSearchReason(query)} style={{ padding: ".3rem .58rem", borderRadius: 999, background: "rgba(251,191,36,.12)", border: "1px solid rgba(251,191,36,.38)", color: "#FDE68A", fontSize: ".7rem", fontWeight: 800 }}>Alternativa relacionada</span>}
                       {clockNow - new Date(ad.createdAt).getTime() < 86_400_000 && clockNow >= new Date(ad.createdAt).getTime() && <span style={{ padding: ".28rem .6rem", borderRadius: 999, background: "#FACC15", color: "#172033", fontSize: ".7rem", fontWeight: 900 }}>Novo anúncio</span>}
                       {ad.subcategory && <span style={{ color: "#9FB0C8", fontSize: "0.76rem" }}>{ad.subcategory}</span>}
                     </div>
