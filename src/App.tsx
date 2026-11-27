@@ -1319,7 +1319,7 @@ export default function App() {
                 <input
                   type="text"
                   required
-                  minLength={5}
+                  minLength={1}
                   maxLength={100}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
