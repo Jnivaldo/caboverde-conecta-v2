@@ -127,45 +127,51 @@ export default function ProcuroAdminPanel({ canAdmin }: Props) {
     if (!canAdmin || busyId) return;
     setBusyId(id);
     setFeedback("");
-    const { error } = await supabase.from("procurement_requests")
-      .update({ moderation_status: decision }).eq("id", id);
-    setBusyId(null);
-    if (error) {
-      setFeedback("Não foi possível atualizar o pedido: " + error.message);
-      return;
+    try {
+      const { error } = await supabase.from("procurement_requests")
+        .update({ moderation_status: decision }).eq("id", id);
+      if (error) throw error;
+      setFeedback(decision === "approved" ? "Pedido aprovado e publicado." : "Pedido rejeitado.");
+      await loadData();
+    } catch (error) {
+      setFeedback("Não foi possível atualizar o pedido: " + (error instanceof Error ? error.message : "erro inesperado"));
+    } finally {
+      setBusyId(null);
     }
-    setFeedback(decision === "approved" ? "Pedido aprovado e publicado." : "Pedido rejeitado.");
-    await loadData();
   }
 
   async function moderateOffer(id: string, decision: "approved" | "rejected") {
     if (!canAdmin || busyId) return;
     setBusyId(id);
     setFeedback("");
-    const { error } = await supabase.from("procurement_offers")
-      .update({ moderation_status: decision }).eq("id", id);
-    setBusyId(null);
-    if (error) {
-      setFeedback("Não foi possível atualizar a proposta: " + error.message);
-      return;
+    try {
+      const { error } = await supabase.from("procurement_offers")
+        .update({ moderation_status: decision }).eq("id", id);
+      if (error) throw error;
+      setFeedback(decision === "approved" ? "Proposta aprovada." : "Proposta rejeitada.");
+      await loadData();
+    } catch (error) {
+      setFeedback("Não foi possível atualizar a proposta: " + (error instanceof Error ? error.message : "erro inesperado"));
+    } finally {
+      setBusyId(null);
     }
-    setFeedback(decision === "approved" ? "Proposta aprovada." : "Proposta rejeitada.");
-    await loadData();
   }
 
   async function updateRequestStatus(id: string, status: RequestRow["status"]) {
     if (!canAdmin || busyId) return;
     setBusyId(id);
     setFeedback("");
-    const { error } = await supabase.from("procurement_requests")
-      .update({ status }).eq("id", id);
-    setBusyId(null);
-    if (error) {
-      setFeedback("Não foi possível atualizar o estado do pedido: " + error.message);
-      return;
+    try {
+      const { error } = await supabase.from("procurement_requests")
+        .update({ status }).eq("id", id);
+      if (error) throw error;
+      setFeedback("Estado do pedido atualizado.");
+      await loadData();
+    } catch (error) {
+      setFeedback("Não foi possível atualizar o estado do pedido: " + (error instanceof Error ? error.message : "erro inesperado"));
+    } finally {
+      setBusyId(null);
     }
-    setFeedback("Estado do pedido atualizado.");
-    await loadData();
   }
 
   if (!canAdmin) return null;
