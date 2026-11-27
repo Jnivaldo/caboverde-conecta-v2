@@ -784,9 +784,34 @@ export default function App() {
   async function deleteListingAsAdmin(item: Listing) {
     if (!authUser || !canAdmin) return;
     const confirmed = window.confirm(
-      `Tem a certeza de que pretende eliminar definitivamente o anúncio “${item.title}”? Esta ação não pode ser desfeita.`
+      `Tem a certeza de que pretende eliminar definitivamente o anúncio “${item.title}”? O anúncio e as respetivas fotografias/vídeos serão removidos. Esta ação não pode ser desfeita.`
     );
     if (!confirmed) return;
+
+    const { data: mediaRows, error: mediaReadError } = await supabase
+      .from("listing_media")
+      .select("media_url")
+      .eq("listing_id", item.id);
+    if (mediaReadError) {
+      setFeedback("Não foi possível preparar a eliminação dos ficheiros do anúncio: " + mediaReadError.message);
+      return;
+    }
+
+    const objectPaths = (mediaRows ?? []).flatMap((row) => {
+      const marker = "/listing-media/";
+      const url = String(row.media_url ?? "");
+      const index = url.indexOf(marker);
+      if (index < 0) return [];
+      const path = url.slice(index + marker.length).split("?")[0];
+      try { return [decodeURIComponent(path)]; } catch { return [path]; }
+    });
+    if (objectPaths.length) {
+      const { error: storageError } = await supabase.storage.from("listing-media").remove(objectPaths);
+      if (storageError) {
+        setFeedback("Não foi possível remover as fotografias/vídeos. O anúncio foi mantido: " + storageError.message);
+        return;
+      }
+    }
 
     const { error } = await supabase.from("listings").delete().eq("id", item.id);
     if (error) {
@@ -806,7 +831,7 @@ export default function App() {
       action: "listing_deleted",
       details: { title: item.title, owner_email: item.ownerEmail },
     });
-    addAudit(`Anúncio ${item.id} eliminado pelo administrador.`);
+    addAudit(`Anúncio ${item.id} eliminado pelo administrador, incluindo os respetivos ficheiros multimédia.`);
     if (auditError) console.error("Não foi possível gravar a auditoria da eliminação:", auditError.message);
   }
 
