@@ -25,6 +25,9 @@ const cleanPhone = (value: string) => value.replace(/[^0-9]/g, "");
 const errorText = (error: unknown) => error instanceof Error ? error.message : "Ocorreu um erro inesperado.";
 const dateText = (value: string) => new Date(value).toLocaleDateString("pt-PT");
 const statusLabel = (value: RequestRow["status"]) => value === "completed" ? "Concluído" : value === "negotiating" ? "Em negociação" : "Ativo";
+const requestDisplayStatus = (item: RequestRow) =>
+  item.moderation_status === "rejected" ? "Rejeitado pela moderação" :
+  item.moderation_status === "pending" ? "Pendente de aprovação" : statusLabel(item.status);
 const moderationLabel = (value?: string) => value === "approved" ? "Publicado" : value === "rejected" ? "Rejeitado" : "A aguardar aprovação";
 const requestPalettes: Array<{ border: string; background: string; accent: string; glow: string }> = [
   { border: "#F87171", background: "linear-gradient(145deg,#321B2A,#171C30 72%)", accent: "#FCA5A5", glow: "rgba(248,113,113,.14)" },
@@ -232,16 +235,26 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
     if (!confirmed) return;
     setDeletingId(`request:${item.id}`);
     setNotice("");
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 20000);
     try {
-      const { data, error } = await supabase.rpc("admin_delete_procurement_request", { p_request_id: item.id });
-      if (error) throw error;
-      if (!data) throw new Error("O pedido já não existe ou não foi possível eliminá-lo.");
+      const { data, error } = await supabase
+        .rpc("admin_delete_procurement_request", { p_request_id: item.id })
+        .abortSignal(controller.signal);
+      if (error) {
+        const detail = [error.message, error.code ? `Código: ${error.code}` : ""].filter(Boolean).join(" · ");
+        throw new Error(detail || "O servidor recusou a eliminação.");
+      }
+      if (data !== true) throw new Error("O servidor não confirmou a eliminação. O pedido pode já não existir ou a sua conta pode não ter permissões administrativas.");
       setItems((current) => current.filter((row) => row.id !== item.id));
       setOffers((current) => current.filter((row) => row.request_id !== item.id));
       setNotice("Pedido e respetivas propostas eliminados com sucesso.");
     } catch (error) {
-      setNotice("Não foi possível eliminar o pedido: " + errorText(error));
+      setNotice(controller.signal.aborted
+        ? "A eliminação demorou mais de 20 segundos e foi interrompida no navegador. Atualize a lista antes de tentar novamente, para confirmar se o pedido foi eliminado."
+        : "Não foi possível eliminar o pedido: " + errorText(error));
     } finally {
+      window.clearTimeout(timeoutId);
       setDeletingId(null);
     }
   }
@@ -254,20 +267,26 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
     if (!confirmed) return;
     setDeletingId(`offer:${offer.id}`);
     setNotice("");
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 20000);
     try {
       const { data, error } = await supabase
         .from("procurement_offers")
         .delete()
         .eq("id", offer.id)
         .select("id")
-        .maybeSingle();
+        .maybeSingle()
+        .abortSignal(controller.signal);
       if (error) throw error;
       if (!data) throw new Error("A proposta já não existe ou não foi possível eliminá-la.");
       setOffers((current) => current.filter((row) => row.id !== offer.id));
       setNotice("Proposta eliminada com sucesso.");
     } catch (error) {
-      setNotice("Não foi possível eliminar a proposta: " + errorText(error));
+      setNotice(controller.signal.aborted
+        ? "A eliminação da proposta demorou mais de 20 segundos e foi interrompida no navegador. Atualize a lista antes de tentar novamente."
+        : "Não foi possível eliminar a proposta: " + errorText(error));
     } finally {
+      window.clearTimeout(timeoutId);
       setDeletingId(null);
     }
   }
@@ -353,10 +372,10 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
               <div style={{ display: "flex", justifyContent: "space-between", gap: ".5rem", flexWrap: "wrap" }}><span style={{ display: "inline-flex", alignItems: "center", padding: ".22rem .55rem", borderRadius: 6, border: `1px solid ${palette.border}`, background: palette.glow, color: palette.accent, fontSize: ".74rem", fontWeight: 850 }}>{item.category}</span><span style={{ color: "#8498B4", fontSize: ".72rem" }}>{dateText(item.created_at)} · válido até {dateText(item.expires_at)}</span></div>
               <h3 style={{ margin: ".5rem 0 .4rem", fontSize: "1.1rem", lineHeight: 1.35, fontWeight: 850, display: "flex", alignItems: "center", flexWrap: "wrap", gap: ".45rem" }}>{/^procuro\b/i.test(item.title) ? <><span style={{ display: "inline-flex", alignItems: "center", padding: ".2rem .52rem", borderRadius: 6, background: "#B91C1C", color: "#FFFFFF", fontSize: ".73rem", fontWeight: 900, letterSpacing: ".08em", boxShadow: "0 2px 8px rgba(185,28,28,.3)" }}>PROCURO</span><span>{item.title.replace(/^procuro\s*/i, "")}</span></> : item.title}</h3>
               <p style={{ margin: 0, color: "#B5C3D8", fontSize: ".85rem", lineHeight: 1.5 }}>{item.description}</p>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: ".5rem", flexWrap: "wrap", marginTop: ".65rem", color: "#93A8C4", fontSize: ".76rem" }}><span>⌖ {item.municipality}, {item.island}</span><span style={{ color: item.status === "completed" ? "#FCD34D" : "#8EF0C8", fontWeight: 750 }}>{statusLabel(item.status)}</span>{item.budget && <strong style={{ color: "#F8FAFC" }}>Orçamento: {item.budget}</strong>}</div>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: ".5rem", flexWrap: "wrap", marginTop: ".65rem", color: "#93A8C4", fontSize: ".76rem" }}><span>⌖ {item.municipality}, {item.island}</span><span style={{ color: item.moderation_status === "rejected" ? "#FDA4AF" : item.moderation_status === "pending" ? "#FCD34D" : item.status === "completed" ? "#FCD34D" : "#8EF0C8", fontWeight: 850 }}>{requestDisplayStatus(item)}</span>{item.budget && <strong style={{ color: "#F8FAFC" }}>Orçamento: {item.budget}</strong>}</div>
               {item.moderation_status === "pending" && <p style={{ color: "#FCD34D", fontSize: ".78rem", margin: ".65rem 0 0" }}>Pedido recebido · {moderationLabel(item.moderation_status)}. Só o titular e a administração o podem ver nesta fase.</p>}
               {item.moderation_status === "rejected" && <p style={{ color: "#FDA4AF", fontSize: ".78rem", margin: ".65rem 0 0" }}>Este pedido foi rejeitado pela moderação.</p>}
-              {item.show_whatsapp && item.requester_whatsapp && <a href={waLink(item.requester_whatsapp, `Olá! Vi o seu pedido "${item.title}" no CaboVerde Conecta e gostaria de apresentar uma proposta.`)} target="_blank" rel="noreferrer" style={{ display: "inline-flex", marginTop: ".7rem", padding: ".55rem .75rem", borderRadius: 9, background: "#15803D", color: "white", textDecoration: "none", fontWeight: 750, fontSize: ".8rem" }}>Contactar quem procura pelo WhatsApp</a>}
+              {isPublicApproved && item.show_whatsapp && item.requester_whatsapp && <a href={waLink(item.requester_whatsapp, `Olá! Vi o seu pedido "${item.title}" no CaboVerde Conecta e gostaria de apresentar uma proposta.`)} target="_blank" rel="noreferrer" style={{ display: "inline-flex", marginTop: ".7rem", padding: ".55rem .75rem", borderRadius: 9, background: "#15803D", color: "white", textDecoration: "none", fontWeight: 750, fontSize: ".8rem" }}>Contactar quem procura pelo WhatsApp</a>}
               <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap", marginTop: ".8rem" }}>
                 {isPublicApproved && item.status !== "completed" && !isOwner && <button type="button" onClick={() => { if (!user) { setNotice("Entre na sua conta para apresentar uma proposta."); onAuthClick(); return; } setActiveOffer(activeOffer === item.id ? null : item.id); }} style={{ ...btnStyle, background: "#2563EB", color: "white" }}>Enviar uma proposta</button>}
                 {isOwner && item.status !== "completed" && <button type="button" onClick={() => void updateRequestStatus(item, "completed")} style={{ border: "1px solid rgba(181,195,216,.25)", borderRadius: 9, padding: ".6rem .75rem", background: "transparent", color: "#B5C3D8", cursor: "pointer" }}>Marcar como concluído</button>}
@@ -384,7 +403,7 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarge
                 <p style={{ color: "#B5C3D8", fontSize: ".83rem", lineHeight: 1.5 }}>{offer.description}</p>
                 {offer.moderation_status === "pending" && <p style={{ color: "#FCD34D", fontSize: ".75rem" }}>Proposta pendente de aprovação.</p>}
                 <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
-                  {offer.supplier_whatsapp && (offer.moderation_status === "approved" || (!offer.moderation_status && !offer.supplier_id) || (!!user && offer.supplier_id === user.id) || canAdmin) && <a href={waLink(offer.supplier_whatsapp, `Olá! Vi a sua proposta para "${item.title}" no CaboVerde Conecta.`)} target="_blank" rel="noreferrer" style={{ color: "#8EF0C8", fontWeight: 750, fontSize: ".8rem" }}>Contactar fornecedor no WhatsApp</a>}
+                  {isPublicApproved && offer.supplier_whatsapp && (offer.moderation_status === "approved" || (!offer.moderation_status && !offer.supplier_id) || (!!user && offer.supplier_id === user.id) || canAdmin) && <a href={waLink(offer.supplier_whatsapp, `Olá! Vi a sua proposta para "${item.title}" no CaboVerde Conecta.`)} target="_blank" rel="noreferrer" style={{ color: "#8EF0C8", fontWeight: 750, fontSize: ".8rem" }}>Contactar fornecedor no WhatsApp</a>}
                   {canAdmin && <button type="button" disabled={!!deletingId} onClick={() => void deleteOffer(offer)} style={deleteButtonStyle}>{deletingId === `offer:${offer.id}` ? "A eliminar..." : "Eliminar proposta"}</button>}
                 </div>
               </div>)}</div>}
