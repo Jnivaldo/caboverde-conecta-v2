@@ -146,6 +146,7 @@ function mapDatabaseListing(row: Record<string, unknown>): Listing {
     ownerEmail: String(row.owner_email ?? ""),
     ownerAccountId: String(row.owner_id ?? ""),
     listingStatus: row.listing_status as ListingStatus,
+    isFeatured: row.is_featured === true,
     paymentStatus: (row.payment_status ?? "pending") as PaymentStatus,
     paymentMethod: (row.payment_method ?? "free_launch") as PaymentMethod,
     proofRef: row.proof_ref ? String(row.proof_ref) : undefined,
@@ -240,6 +241,7 @@ export default function App() {
   const [tab, setTab] = useState<"home" | "publish" | "account" | "admin" | "requests">("home");
   const [procurementFocus, setProcurementFocus] = useState<{ requestId: string; offerId?: string } | null>(null);
   const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
+  const [featuredSchemaAvailable, setFeaturedSchemaAvailable] = useState(false);
   const [auditLogs, setAuditLogs] = useState<string[]>([]);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -291,6 +293,10 @@ export default function App() {
       }
       const loadedListings = (data ?? []).map((row) => mapDatabaseListing(row as Record<string, unknown>));
       setListings(loadedListings);
+      if (authUser) {
+        const { error: featuredColumnError } = await supabase.from("listings").select("is_featured").limit(1);
+        if (active) setFeaturedSchemaAvailable(!featuredColumnError);
+      }
       if (loadedListings.length) {
         const { data: mediaRows } = await supabase.from("listing_media").select("id, listing_id, media_url, media_type, sort_order").in("listing_id", loadedListings.map((item) => item.id));
         if (active && mediaRows) {
@@ -488,6 +494,7 @@ export default function App() {
         const bMatch = getSearchMatch(query, [b.title, b.description, b.category, b.subcategory]);
         if (aMatch !== bMatch) return aMatch === "exact" ? -1 : 1;
       }
+      if (a.isFeatured !== b.isFeatured) return a.isFeatured ? -1 : 1;
       if (sortOrder === "low" || sortOrder === "high") {
         const pa = parsePrice(a.price), pb = parsePrice(b.price);
         if (pa === null && pb === null) return 0;
@@ -806,6 +813,38 @@ export default function App() {
     if (error) { setEditFeedback("Não foi possível voltar a publicar. Confirme fotografia, localização e contacto: " + error.message); return; }
     setListings((previous) => previous.map((current) => current.id === item.id ? { ...current, listingStatus: "published" } : current));
     setEditFeedback("O anúncio voltou a estar publicado.");
+  }
+
+  async function toggleListingFeatured(item: Listing) {
+    if (!authUser || !canAdmin) return;
+    if (!featuredSchemaAvailable) {
+      setFeedback("O destaque premium está preparado, mas aguarda a ativação da migração no ambiente de teste.");
+      return;
+    }
+    if (item.listingStatus !== "published") {
+      setFeedback("Só é possível destacar anúncios publicados.");
+      return;
+    }
+
+    const nextFeatured = !item.isFeatured;
+    const { data, error } = await supabase
+      .from("listings")
+      .update({ is_featured: nextFeatured })
+      .eq("id", item.id)
+      .select("is_featured")
+      .maybeSingle();
+
+    if (error || !data) {
+      setFeedback("Não foi possível atualizar o destaque: " + (error?.message || "anúncio não encontrado ou sem permissão."));
+      return;
+    }
+
+    setListings((previous) => previous.map((current) =>
+      current.id === item.id ? { ...current, isFeatured: data.is_featured === true } : current
+    ));
+    const action = nextFeatured ? "recebeu destaque premium" : "perdeu o destaque premium";
+    addAudit(`Anúncio ${item.id} ${action} por ${authUser.email || "administrador"}.`);
+    setFeedback(nextFeatured ? "Destaque premium ativado." : "Destaque premium removido.");
   }
 
   async function deleteListingAsAdmin(item: Listing) {
@@ -1245,7 +1284,7 @@ export default function App() {
                 }}
               >
               {publicListings.map((ad) => (
-                <article key={ad.id} className="listing-card" style={cardStyle}>
+                <article key={ad.id} className={`listing-card${ad.isFeatured ? " listing-card-featured" : ""}`} style={cardStyle}>
                   <ListingGallery
                     title={ad.title}
                     images={(mediaByListing[ad.id] || []).filter((media) => media.type === "image").sort((a, b) => a.sort - b.sort)}
@@ -1255,6 +1294,7 @@ export default function App() {
                   <div className="listing-card-content" style={{ padding: "1.1rem", display: "flex", flexDirection: "column", gap: "0.65rem", flex: 1 }}>
                     <div className="listing-card-categories" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <span style={{ padding: "0.32rem 0.65rem", borderRadius: 999, background: "rgba(96,165,250,0.14)", border: "1px solid rgba(96,165,250,0.28)", color: "#BFDBFE", fontSize: "0.76rem", fontWeight: 750 }}>{ad.category}</span>
+                      {ad.isFeatured && <span className="listing-featured-badge"><span aria-hidden="true">✦</span> EM DESTAQUE</span>}
                       {query.trim() && getSearchMatch(query, [ad.title, ad.description, ad.category, ad.subcategory, ad.island, ad.municipality]) === "related" && <span title={getRelatedSearchReason(query)} style={{ padding: ".3rem .58rem", borderRadius: 999, background: "rgba(251,191,36,.12)", border: "1px solid rgba(251,191,36,.38)", color: "#FDE68A", fontSize: ".7rem", fontWeight: 800 }}>Alternativa relacionada</span>}
                       {clockNow - new Date(ad.createdAt).getTime() < 86_400_000 && clockNow >= new Date(ad.createdAt).getTime() && <span style={{ padding: ".28rem .6rem", borderRadius: 999, background: "#FACC15", color: "#172033", fontSize: ".7rem", fontWeight: 900 }}>Novo anúncio</span>}
                       {ad.subcategory && <span style={{ color: "#9FB0C8", fontSize: "0.76rem" }}>{ad.subcategory}</span>}
@@ -1767,6 +1807,15 @@ export default function App() {
                   {item.moderationNote && item.listingStatus === "suspended" && <div style={{ color: "#FDE68A", fontSize: ".82rem" }}>Motivo da suspensão: {item.moderationNote}</div>}
 
                   <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.25rem" }}>
+                    <button
+                      type="button"
+                      disabled={!featuredSchemaAvailable || item.listingStatus !== "published"}
+                      title={!featuredSchemaAvailable ? "Aguarda a migração da base de dados no ambiente de teste." : item.listingStatus !== "published" ? "Só anúncios publicados podem ser destacados." : undefined}
+                      onClick={() => void toggleListingFeatured(item)}
+                      style={{ ...actionBtnStyle("#B8860B"), opacity: !featuredSchemaAvailable || item.listingStatus !== "published" ? 0.55 : 1, cursor: !featuredSchemaAvailable || item.listingStatus !== "published" ? "not-allowed" : "pointer" }}
+                    >
+                      {item.isFeatured ? "Retirar destaque premium" : "Destacar anúncio"}
+                    </button>
                     <button
                       type="button"
                       onClick={() => updatePaymentAndListing(item.id, "confirmed", "published")}
