@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 type RequestRow = {
@@ -73,8 +73,10 @@ export default function ProcuroAdminPanel({ canAdmin }: Props) {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState("");
+  const loadSequence = useRef(0);
 
   const loadData = useCallback(async () => {
+    const requestId = ++loadSequence.current;
     if (!canAdmin) {
       setRequests([]);
       setOffers([]);
@@ -82,19 +84,28 @@ export default function ProcuroAdminPanel({ canAdmin }: Props) {
       return;
     }
     setLoading(true);
-    const [requestResult, offerResult] = await Promise.all([
-      supabase.from("procurement_requests").select("*").order("created_at", { ascending: false }),
-      supabase.from("procurement_offers").select("*").order("created_at", { ascending: false }),
-    ]);
-    if (requestResult.error || offerResult.error) {
-      setFeedback("Não foi possível carregar toda a gestão: " +
-        (requestResult.error?.message || offerResult.error?.message || "erro desconhecido"));
-    } else {
-      setRequests((requestResult.data ?? []) as RequestRow[]);
-      setOffers((offerResult.data ?? []) as OfferRow[]);
-      setFeedback("");
+    try {
+      const [requestResult, offerResult] = await Promise.all([
+        supabase.from("procurement_requests").select("*").order("created_at", { ascending: false }),
+        supabase.from("procurement_offers").select("*").order("created_at", { ascending: false }),
+      ]);
+      if (requestId !== loadSequence.current) return;
+      if (requestResult.error || offerResult.error) {
+        setFeedback("Não foi possível carregar toda a gestão: " +
+          (requestResult.error?.message || offerResult.error?.message || "erro desconhecido"));
+      } else {
+        setRequests((requestResult.data ?? []) as RequestRow[]);
+        setOffers((offerResult.data ?? []) as OfferRow[]);
+        setFeedback("");
+      }
+    } catch (error) {
+      if (requestId === loadSequence.current) {
+        setFeedback("Não foi possível carregar a gestão: " +
+          (error instanceof Error ? error.message : "erro inesperado"));
+      }
+    } finally {
+      if (requestId === loadSequence.current) setLoading(false);
     }
-    setLoading(false);
   }, [canAdmin]);
 
   useEffect(() => { void loadData(); }, [loadData]);
