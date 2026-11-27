@@ -26,15 +26,6 @@ interface ChatMessage {
   text: string;
 }
 
-interface CategorySuggestion {
-  id: string;
-  requester_id: string;
-  requested_category: string;
-  requested_subcategory: string;
-  description: string;
-  created_at: string;
-}
-
 const CATEGORIES: Record<string, string[]> = {
   Imóveis: [
     "Casas", "Moradias", "Prédios", "Edifícios completos", "Apartamentos", "Estúdios e Kitnets",
@@ -322,14 +313,6 @@ export default function App() {
   }, [authUser]);
 
   const [marketplaceCategoryOptions, setMarketplaceCategoryOptions] = useState<{ category_name: string; subcategory_name: string | null }[]>([]);
-  const [categorySuggestions, setCategorySuggestions] = useState<CategorySuggestion[]>([]);
-  const [categorySuggestionsLoading, setCategorySuggestionsLoading] = useState(false);
-  const [categoryReviewFeedback, setCategoryReviewFeedback] = useState("");
-  const [suggestionCategory, setSuggestionCategory] = useState("");
-  const [suggestionSubcategory, setSuggestionSubcategory] = useState("");
-  const [suggestionDescription, setSuggestionDescription] = useState("");
-  const [suggestionFeedback, setSuggestionFeedback] = useState("");
-  const [suggestionSubmitting, setSuggestionSubmitting] = useState(false);
 
   const accountListings = useMemo(
     () => authUser ? getPreviewListingsByEmail(listings, authUser.email ?? "") : [],
@@ -374,31 +357,6 @@ export default function App() {
     loadMarketplaceCategories();
     return () => { active = false; };
   }, []);
-
-  useEffect(() => {
-    if (!canAdmin) {
-      setCategorySuggestions([]);
-      return;
-    }
-    let active = true;
-    setCategorySuggestionsLoading(true);
-    async function loadPendingCategorySuggestions() {
-      const { data, error } = await supabase
-        .from("category_suggestions")
-        .select("id, requester_id, requested_category, requested_subcategory, description, created_at")
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
-      if (!active) return;
-      if (error) {
-        setCategoryReviewFeedback("Não foi possível carregar as sugestões: " + error.message);
-      } else {
-        setCategorySuggestions((data ?? []) as CategorySuggestion[]);
-      }
-      setCategorySuggestionsLoading(false);
-    }
-    loadPendingCategorySuggestions();
-    return () => { active = false; };
-  }, [canAdmin]);
 
   // Filtros públicos (apenas anúncios publicados)
   const [query, setQuery] = useState("");
@@ -581,68 +539,6 @@ export default function App() {
       }]);
     } finally {
       setChatLoading(false);
-    }
-  }
-
-  async function submitCategorySuggestion() {
-    setSuggestionFeedback("");
-    if (!authUser) {
-      setSuggestionFeedback("Entre na sua conta para enviar uma sugestão.");
-      setTab("account");
-      return;
-    }
-    const requestedCategory = (suggestionCategory.trim() || (useCustomCategory ? customCategory.trim() : pubCategory)).trim();
-    const requestedSubcategory = (suggestionSubcategory.trim() || ((useCustomCategory || useCustomSubcategory) ? customSubcategory.trim() : "")).trim();
-    if (requestedCategory.length < 2) {
-      setSuggestionFeedback("Indique uma categoria com pelo menos 2 caracteres.");
-      return;
-    }
-    if (!requestedSubcategory && !suggestionDescription.trim()) {
-      setSuggestionFeedback("Indique um produto, subproduto ou serviço, ou explique a nova categoria.");
-      return;
-    }
-    setSuggestionSubmitting(true);
-    const { error } = await supabase.from("category_suggestions").insert({
-      requester_id: authUser.id,
-      requested_category: requestedCategory,
-      requested_subcategory: requestedSubcategory,
-      description: suggestionDescription.trim(),
-      status: "pending",
-    });
-    if (error) {
-      setSuggestionFeedback("Não foi possível enviar a sugestão: " + error.message);
-    } else {
-      setSuggestionFeedback("Sugestão enviada! A administração irá analisá-la. Se for aprovada, ficará disponível na lista para todos.");
-      setSuggestionCategory("");
-      setSuggestionSubcategory("");
-      setSuggestionDescription("");
-    }
-    setSuggestionSubmitting(false);
-  }
-
-  async function reviewCategorySuggestion(id: string, decision: "approved" | "rejected") {
-    setCategoryReviewFeedback("");
-    const { error } = await supabase.rpc("review_category_suggestion", {
-      p_suggestion_id: id,
-      p_decision: decision,
-      p_admin_notes: null,
-    });
-    if (error) {
-      setCategoryReviewFeedback("Não foi possível atualizar a sugestão: " + error.message);
-      return;
-    }
-    setCategorySuggestions((current) => current.filter((item) => item.id !== id));
-    if (decision === "approved") {
-      const { data, error: categoriesError } = await supabase
-        .from("marketplace_categories")
-        .select("category_name, subcategory_name")
-        .eq("is_active", true);
-      if (!categoriesError && data) {
-        setMarketplaceCategoryOptions(data as { category_name: string; subcategory_name: string | null }[]);
-      }
-      setCategoryReviewFeedback("Sugestão aprovada e adicionada às opções de publicação.");
-    } else {
-      setCategoryReviewFeedback("Sugestão rejeitada.");
     }
   }
 
@@ -1437,39 +1333,6 @@ export default function App() {
                       </option>
                     ))}
                   </select>
-                </div>
-
-                <div style={{ marginTop: "0.75rem", padding: "0.9rem", border: "1px dashed rgba(96,165,250,0.55)", borderRadius: 12, background: "rgba(37,99,235,0.07)", display: "grid", gap: "0.6rem" }}>
-                  <strong style={{ color: "#F8FAFC", fontSize: "0.9rem" }}>Não encontrou uma categoria, produto ou serviço?</strong>
-                  <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.82rem", lineHeight: 1.45 }}>Envie uma sugestão à administração. Depois de aprovada, a nova opção ficará disponível para todos os anunciantes.</p>
-                  <input
-                    type="text"
-                    maxLength={60}
-                    value={suggestionCategory}
-                    onChange={(e) => setSuggestionCategory(e.target.value)}
-                    placeholder={`Categoria (por defeito: ${useCustomCategory ? customCategory || "nova categoria" : pubCategory})`}
-                    style={inputStyle}
-                  />
-                  <input
-                    type="text"
-                    maxLength={80}
-                    value={suggestionSubcategory}
-                    onChange={(e) => setSuggestionSubcategory(e.target.value)}
-                    placeholder="Novo produto, subproduto ou serviço (opcional para categoria nova)"
-                    style={inputStyle}
-                  />
-                  <textarea
-                    rows={2}
-                    maxLength={500}
-                    value={suggestionDescription}
-                    onChange={(e) => setSuggestionDescription(e.target.value)}
-                    placeholder="Explique brevemente a sugestão (opcional)"
-                    style={inputStyle}
-                  />
-                  {suggestionFeedback && <div role="status" aria-live="polite" style={{ color: suggestionFeedback.startsWith("Sugestão enviada") ? "#6EE7B7" : "#FBBF24", fontSize: "0.82rem" }}>{suggestionFeedback}</div>}
-                  <button type="button" onClick={submitCategorySuggestion} disabled={suggestionSubmitting} style={{ ...secondaryBtnStyle, borderColor: "rgba(96,165,250,0.55)", color: "#BFDBFE", opacity: suggestionSubmitting ? 0.65 : 1 }}>
-                    {suggestionSubmitting ? "A enviar sugestão…" : "Enviar sugestão para aprovação"}
-                  </button>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", gap: "0.65rem" }}>
