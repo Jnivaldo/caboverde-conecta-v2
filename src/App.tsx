@@ -1346,9 +1346,14 @@ export default function App() {
                     </div>
                     <span className="premium-showcase-mark">✦ PREMIUM</span>
                   </div>
-                  <div className="premium-showcase-grid">
-                    {publicListings.filter((ad) => ad.isFeatured).map((ad) => (
-                      <article key={ad.id} className="premium-showcase-card">
+                  {(() => {
+                    const premiumListings = publicListings.filter((ad) => ad.isFeatured);
+                    const carouselListings = premiumListings.length > 1 ? [...premiumListings, ...premiumListings] : premiumListings;
+                    return (
+                      <div className="premium-carousel" aria-label="Carrossel de anúncios Premium">
+                        <div className={premiumListings.length > 1 ? "premium-showcase-track is-moving" : "premium-showcase-track"}>
+                          {carouselListings.map((ad, index) => (
+                      <article key={ad.id + "-" + index} className="premium-showcase-card" aria-hidden={index >= premiumListings.length}>
                         <div className="premium-showcase-media">
                           <ListingGallery
                             title={ad.title}
@@ -1366,8 +1371,11 @@ export default function App() {
                           <button type="button" onClick={() => setSelectedListing(ad)} className="premium-details-button">Ver anúncio completo <span aria-hidden="true">→</span></button>
                         </div>
                       </article>
-                    ))}
-                  </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </section>
               )}
               <div
