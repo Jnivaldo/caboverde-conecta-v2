@@ -335,3 +335,53 @@ main article.listing-card button[aria-label^="Ver fotografia"] {
   width: 10px !important;
   padding: 0 !important;
 }
+
+
+/* Stronger mobile brand identity for CaboVerde Conecta. */
+.site-brand {
+  display: grid;
+  gap: .28rem;
+  min-width: 0;
+  padding: .18rem 0;
+}
+.site-brand-title {
+  display: block;
+  color: #F8FAFC;
+  font-size: clamp(1.28rem, 4.5vw, 1.72rem);
+  line-height: 1.05;
+  letter-spacing: -.055em;
+  font-weight: 950;
+  text-shadow: 0 2px 14px rgba(0,0,0,.22);
+}
+.site-brand-title span:last-child {
+  color: #38D6A0;
+}
+.site-brand-campaign {
+  font-size: .76rem !important;
+  line-height: 1.35;
+  letter-spacing: .005em;
+}
+@media (max-width: 700px) {
+  .site-brand {
+    width: 100%;
+    padding: .28rem .1rem .48rem;
+    gap: .38rem;
+  }
+  .site-brand-title {
+    font-size: clamp(1.55rem, 7vw, 2.05rem);
+    letter-spacing: -.06em;
+    line-height: 1;
+  }
+  .site-brand-campaign {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    padding: .32rem .55rem;
+    border: 1px solid rgba(56,214,160,.32);
+    border-radius: 7px;
+    background: rgba(56,214,160,.08);
+    font-size: .72rem !important;
+    line-height: 1.35;
+  }
+}
