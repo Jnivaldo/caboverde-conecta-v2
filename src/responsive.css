@@ -385,3 +385,48 @@ main article.listing-card button[aria-label^="Ver fotografia"] {
     line-height: 1.35;
   }
 }
+
+
+/* Procuro & Ofereço carousel: override generic mobile 44px touch targets.
+   Keep the pagination dots horizontal and the arrows compact. */
+.procuro-carousel-controls {
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: .45rem !important;
+}
+.procuro-carousel-controls .procuro-carousel-arrow {
+  display: inline-flex !important;
+  flex: 0 0 30px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 30px !important;
+  min-width: 30px !important;
+  max-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+.procuro-carousel-controls .procuro-carousel-dot {
+  display: inline-block !important;
+  flex: 0 0 auto !important;
+  width: 7px !important;
+  min-width: 7px !important;
+  max-width: 7px !important;
+  height: 7px !important;
+  min-height: 7px !important;
+  max-height: 7px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 99px !important;
+}
+.procuro-carousel-controls .procuro-carousel-dot[aria-current="true"] {
+  width: 15px !important;
+  min-width: 15px !important;
+  max-width: 15px !important;
+  height: 7px !important;
+  min-height: 7px !important;
+  max-height: 7px !important;
+}
