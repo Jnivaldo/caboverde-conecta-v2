@@ -57,7 +57,7 @@ export default function ListingMediaPicker({ files, onChange, disabled = false }
         </div>
       ) : (
         <div style={{ border: "1px dashed rgba(181,195,216,0.35)", borderRadius: 10, padding: "1rem", color: "#94A3B8", fontSize: "0.84rem", textAlign: "center" }}>
-          Ainda não adicionou fotografias ou vídeos. Pode continuar sem ficheiros e acrescentá-los mais tarde.
+          Adicione pelo menos uma fotografia para publicar o anúncio. Os vídeos são opcionais.
         </div>
       )}
     </div>
