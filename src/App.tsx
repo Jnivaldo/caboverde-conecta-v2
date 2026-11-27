@@ -427,6 +427,8 @@ export default function App() {
   }, [messages, chatLoading, chatOpen]);
 
   const totalFreeSlots = 50;
+  // Ativar apenas depois de validar e publicar o fluxo de cobrança.
+  const paidListingsEnabled = false;
   const [usedFreeSlots, setUsedFreeSlots] = useState(0);
   const freeSlotsRemaining = Math.max(0, totalFreeSlots - usedFreeSlots);
   const canClaimFreeSlot = freeSlotsRemaining > 0;
@@ -603,6 +605,10 @@ export default function App() {
       }
     }
 
+    if (paymentMethod === "bank_transfer" && !paidListingsEnabled) {
+      setFeedback("As 50 vagas gratuitas já foram preenchidas. Os pagamentos ainda não estão ativos; não faça transferências. Neste momento não é possível submeter novos anúncios pagos.");
+      return;
+    }
     if (paymentMethod === "free_launch" && !canClaimFreeSlot) {
       setFeedback("As 50 vagas gratuitas já foram preenchidas. Atualize a página para consultar a modalidade de pagamento.");
       return;
