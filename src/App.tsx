@@ -6,6 +6,7 @@ const ListingMediaPicker = React.lazy(() => import("./components/ListingMediaPic
 const ListingMediaManager = React.lazy(() => import("./components/ListingMediaManager"));
 const ProcuroOfereco = React.lazy(() => import("./components/ProcuroOfereco"));
 const ProcuroHomeHighlights = React.lazy(() => import("./components/ProcuroHomeHighlights"));
+const HomeSearchSpotlight = React.lazy(() => import("./components/HomeSearchSpotlight"));
 const ProcuroAdminPanel = React.lazy(() => import("./components/ProcuroAdminPanel"));
 const NotificationCenter = React.lazy(() => import("./components/NotificationCenter"));
 const MonetizationPanel = React.lazy(() => import("./components/MonetizationPanel"));
@@ -999,6 +1000,19 @@ export default function App() {
               </p>
             </section>
 
+            <React.Suspense fallback={<div style={{ minHeight: 260 }} />}>
+              <HomeSearchSpotlight
+                query={query}
+                setQuery={setQuery}
+                category={category}
+                setCategory={setCategory}
+                island={island}
+                setIsland={setIsland}
+                categories={availableCategories}
+                islands={Object.keys(LOCATIONS)}
+              />
+            </React.Suspense>
+
             <section
               aria-label="Progresso da campanha de lançamento"
               style={{
@@ -1080,15 +1094,6 @@ export default function App() {
                 gap: "0.65rem",
               }}
             >
-              <input
-                className="filter-search"
-                type="search"
-                aria-label="Pesquisar anúncios"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Pesquisar por título ou ilha..."
-                style={inputStyle}
-              />
               <select
                 className="filter-wide"
                 aria-label="Categoria"
@@ -1209,7 +1214,7 @@ export default function App() {
               })}
             </div>
 
-            <div style={{ margin: "-0.85rem 0 1rem", color: "#9FB0C8", fontSize: "0.84rem" }} aria-live="polite">{publicListings.length} anúncio(s) encontrado(s)</div>
+            <div id="public-listings-results" style={{ margin: "-0.85rem 0 1rem", color: "#9FB0C8", fontSize: "0.84rem", scrollMarginTop: 24 }} aria-live="polite">{publicListings.length} anúncio(s) encontrado(s)</div>
             {publicListings.length === 0 ? (
               <div style={{ ...panelStyle, textAlign: "center", color: "#B5C3D8", padding: "2rem 1.25rem", border: "1px solid rgba(96,165,250,0.25)" }}>
                 <div style={{ width: 54, height: 54, margin: "0 auto 0.9rem", borderRadius: 16, display: "grid", placeItems: "center", background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.22)", fontSize: 24 }}>⌕</div>
