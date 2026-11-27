@@ -113,10 +113,14 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
     const now = new Date().toISOString();
     setItems((current) => current.map((item) => item.id === id ? { ...item, read_at: now } : item));
     setUnreadCount((count) => Math.max(0, count - 1));
-    const { error } = await supabase.from("user_notifications")
-      .update({ read_at: now }).eq("id", id).eq("user_id", userId);
-    if (error) {
-      setFeedback("Não foi possível atualizar esta notificação.");
+    try {
+      const { error } = await supabase.from("user_notifications")
+        .update({ read_at: now }).eq("id", id).eq("user_id", userId);
+      if (error) throw error;
+      setFeedback("");
+    } catch (error) {
+      console.error("Falha ao marcar notificação como lida:", error);
+      setFeedback("Não foi possível atualizar esta notificação. Tente novamente.");
       await loadNotifications();
     }
   }
@@ -126,10 +130,14 @@ export default function NotificationCenter({ userId, onNavigate }: Props) {
     const now = new Date().toISOString();
     setItems((current) => current.map((item) => item.read_at ? item : { ...item, read_at: now }));
     setUnreadCount(0);
-    const { error } = await supabase.from("user_notifications")
-      .update({ read_at: now }).eq("user_id", userId).is("read_at", null);
-    if (error) {
-      setFeedback("Não foi possível marcar todas como lidas.");
+    try {
+      const { error } = await supabase.from("user_notifications")
+        .update({ read_at: now }).eq("user_id", userId).is("read_at", null);
+      if (error) throw error;
+      setFeedback("");
+    } catch (error) {
+      console.error("Falha ao marcar todas as notificações como lidas:", error);
+      setFeedback("Não foi possível marcar todas como lidas. Tente novamente.");
       await loadNotifications();
     }
   }
