@@ -131,17 +131,22 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
       setNotice("Indique um WhatsApp válido ou retire a autorização de divulgação."); return;
     }
     setBusy(true); setNotice("");
-    const { data, error } = await supabase.from("procurement_requests").insert({
-      requester_id: user.id, title: cleanTitle, category, island, municipality,
-      description: cleanDescription, budget: budget.trim() || null,
-      requester_whatsapp: cleanPhone(requestWhatsapp) || null, show_whatsapp: showWhatsapp,
-    }).select("*").single();
-    setBusy(false);
-    if (error) { setNotice("Não foi possível publicar o pedido: " + error.message); return; }
-    setTitle(""); setCategory(""); setIsland(""); setMunicipality(""); setDescription("");
-    setBudget(""); setRequestWhatsapp(""); setShowWhatsapp(false);
-    setNotice("Pedido recebido no servidor. Está pendente de moderação e ficará visível aos fornecedores após aprovação.");
-    await loadData();
+    try {
+      const { error } = await supabase.from("procurement_requests").insert({
+        requester_id: user.id, title: cleanTitle, category, island, municipality,
+        description: cleanDescription, budget: budget.trim() || null,
+        requester_whatsapp: cleanPhone(requestWhatsapp) || null, show_whatsapp: showWhatsapp,
+      });
+      if (error) throw error;
+      setTitle(""); setCategory(""); setIsland(""); setMunicipality(""); setDescription("");
+      setBudget(""); setRequestWhatsapp(""); setShowWhatsapp(false);
+      setNotice("Pedido recebido no servidor. Está pendente de moderação e ficará visível aos fornecedores após aprovação.");
+      await loadData();
+    } catch (error) {
+      setNotice("Não foi possível publicar o pedido: " + errorText(error));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function submitOffer(event: React.FormEvent<HTMLFormElement>, requestId: string) {
@@ -155,18 +160,23 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
       catch { setNotice("A fotografia deve utilizar um endereço HTTPS válido."); return; }
     }
     setBusy(true); setNotice("");
-    const { error } = await supabase.from("procurement_offers").insert({
-      request_id: requestId, supplier_id: user.id, business_name: offerBusiness.trim(),
-      model: offerModel.trim(), price_cve: price, condition: offerCondition,
-      description: offerDescription.trim(), photo_url: offerPhoto.trim() || null,
-      supplier_whatsapp: cleanPhone(offerWhatsapp),
-    });
-    setBusy(false);
-    if (error) { setNotice("Não foi possível enviar a proposta: " + error.message); return; }
-    setActiveOffer(null); setOfferBusiness(""); setOfferModel(""); setOfferPrice("");
-    setOfferCondition("new"); setOfferDescription(""); setOfferPhoto(""); setOfferWhatsapp("");
-    setNotice("Proposta recebida no servidor. Será apresentada depois da moderação.");
-    await loadData();
+    try {
+      const { error } = await supabase.from("procurement_offers").insert({
+        request_id: requestId, supplier_id: user.id, business_name: offerBusiness.trim(),
+        model: offerModel.trim(), price_cve: price, condition: offerCondition,
+        description: offerDescription.trim(), photo_url: offerPhoto.trim() || null,
+        supplier_whatsapp: cleanPhone(offerWhatsapp),
+      });
+      if (error) throw error;
+      setActiveOffer(null); setOfferBusiness(""); setOfferModel(""); setOfferPrice("");
+      setOfferCondition("new"); setOfferDescription(""); setOfferPhoto(""); setOfferWhatsapp("");
+      setNotice("Proposta recebida no servidor. Será apresentada depois da moderação.");
+      await loadData();
+    } catch (error) {
+      setNotice("Não foi possível enviar a proposta: " + errorText(error));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function updateRequestStatus(item: RequestRow, status: RequestRow["status"]) {
