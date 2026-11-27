@@ -233,8 +233,19 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
           <select aria-label="Filtrar pedidos por categoria" value={filter} onChange={(e) => setFilter(e.target.value)} style={{ ...fieldStyle, margin: ".75rem 0 1rem" }}><option>Todos</option>{categories.map((value) => <option key={value}>{value}</option>)}</select>
           {loading ? <p style={{ color: "#AFC0D6" }}>A carregar pedidos publicados...</p> : visibleItems.length === 0 ? <div style={{ padding: "1.5rem .5rem", textAlign: "center", color: "#AFC0D6" }}><div style={{ fontSize: "2rem" }}>⌕</div><strong style={{ color: "#F8FAFC" }}>Ainda não há pedidos publicados nesta categoria</strong><p style={{ fontSize: ".84rem", lineHeight: 1.5 }}>Quando um pedido for aprovado, ficará disponível aqui para os fornecedores.</p></div> : <div style={{ display: "grid", gap: ".8rem" }}>{visibleItems.map((item, index) => {
             const palette = requestPalettes[index % requestPalettes.length];
-            const itemOffers = offers.filter((offer) => offer.request_id === item.id);
+            const itemOffers = offers.filter((offer) =>
+              offer.request_id === item.id && (
+                offer.moderation_status === "approved" ||
+                (!offer.moderation_status && !offer.supplier_id) ||
+                (!!user && offer.supplier_id === user.id) ||
+                canAdmin
+              )
+            );
             const isOwner = !!user && item.requester_id === user.id;
+            // Anonymous safe-view rows omit moderation_status because the view
+            // already restricts them to approved requests.
+            const isPublicApproved = item.moderation_status === "approved" ||
+              (!item.moderation_status && !item.requester_id);
             return <article key={item.id} style={{ padding: "1rem", borderRadius: 14, border: `2px solid ${palette.border}`, background: palette.background, boxShadow: `0 8px 24px ${palette.glow}, inset 0 1px 0 rgba(255,255,255,.045)`, position: "relative", overflow: "hidden" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: ".5rem", flexWrap: "wrap" }}><span style={{ display: "inline-flex", alignItems: "center", padding: ".22rem .55rem", borderRadius: 6, border: `1px solid ${palette.border}`, background: palette.glow, color: palette.accent, fontSize: ".74rem", fontWeight: 850 }}>{item.category}</span><span style={{ color: "#8498B4", fontSize: ".72rem" }}>{dateText(item.created_at)} · válido até {dateText(item.expires_at)}</span></div>
               <h3 style={{ margin: ".5rem 0 .4rem", fontSize: "1.1rem", lineHeight: 1.35, fontWeight: 850, display: "flex", alignItems: "center", flexWrap: "wrap", gap: ".45rem" }}>{/^procuro\b/i.test(item.title) ? <><span style={{ display: "inline-flex", alignItems: "center", padding: ".2rem .52rem", borderRadius: 6, background: "#B91C1C", color: "#FFFFFF", fontSize: ".73rem", fontWeight: 900, letterSpacing: ".08em", boxShadow: "0 2px 8px rgba(185,28,28,.3)" }}>PROCURO</span><span>{item.title.replace(/^procuro\s*/i, "")}</span></> : item.title}</h3>
@@ -244,7 +255,7 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
               {item.moderation_status === "rejected" && <p style={{ color: "#FDA4AF", fontSize: ".78rem", margin: ".65rem 0 0" }}>Este pedido foi rejeitado pela moderação.</p>}
               {item.show_whatsapp && item.requester_whatsapp && <a href={waLink(item.requester_whatsapp, `Olá! Vi o seu pedido "${item.title}" no CaboVerde Conecta e gostaria de apresentar uma proposta.`)} target="_blank" rel="noreferrer" style={{ display: "inline-flex", marginTop: ".7rem", padding: ".55rem .75rem", borderRadius: 9, background: "#15803D", color: "white", textDecoration: "none", fontWeight: 750, fontSize: ".8rem" }}>Contactar quem procura pelo WhatsApp</a>}
               <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap", marginTop: ".8rem" }}>
-                {item.moderation_status === "approved" && item.status !== "completed" && !isOwner && <button type="button" onClick={() => { if (!user) { setNotice("Entre na sua conta para apresentar uma proposta."); onAuthClick(); return; } setActiveOffer(activeOffer === item.id ? null : item.id); }} style={{ ...btnStyle, background: "#2563EB", color: "white" }}>Enviar uma proposta</button>}
+                {isPublicApproved && item.status !== "completed" && !isOwner && <button type="button" onClick={() => { if (!user) { setNotice("Entre na sua conta para apresentar uma proposta."); onAuthClick(); return; } setActiveOffer(activeOffer === item.id ? null : item.id); }} style={{ ...btnStyle, background: "#2563EB", color: "white" }}>Enviar uma proposta</button>}
                 {isOwner && item.status !== "completed" && <button type="button" onClick={() => void updateRequestStatus(item, "completed")} style={{ border: "1px solid rgba(181,195,216,.25)", borderRadius: 9, padding: ".6rem .75rem", background: "transparent", color: "#B5C3D8", cursor: "pointer" }}>Marcar como concluído</button>}
               </div>
               {activeOffer === item.id && <form onSubmit={(event) => void submitOffer(event, item.id)} style={{ marginTop: ".85rem", padding: ".9rem", borderRadius: 11, border: "1px solid rgba(96,165,250,.35)", background: "#111D31", display: "grid", gap: ".7rem" }}>
