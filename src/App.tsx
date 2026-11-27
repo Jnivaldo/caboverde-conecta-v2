@@ -1086,7 +1086,7 @@ export default function App() {
               </div>
             </section>
 
-            <React.Suspense fallback={<div style={{ minHeight: 80 }} />}><ProcuroHomeHighlights onOpen={() => setTab("requests")} /></React.Suspense>
+            <React.Suspense fallback={<div style={{ minHeight: 80 }} />}><ProcuroHomeHighlights onOpen={(requestId) => { setProcurementFocus(requestId ? { requestId } : null); setTab("requests"); }} /></React.Suspense>
 
             <div
               className="listing-search-filters"
@@ -1225,7 +1225,7 @@ export default function App() {
               {publicListings.length} anúncio(s) no Marketplace
               {query.trim() && publicListings.some((ad) => getSearchMatch(query, [ad.title, ad.description, ad.category, ad.subcategory, ad.island, ad.municipality]) === "related") && <span style={{ display: "block", marginTop: ".4rem", color: "#FDE68A", lineHeight: 1.5 }}>{getRelatedSearchReason(query)} Os resultados exatos aparecem primeiro; as alternativas estão identificadas.</span>}
             </div>
-            <React.Suspense fallback={<div style={{ minHeight: 40 }} />}><UnifiedProcurementSearch query={query} onOpenProcurement={(target) => { setProcurementFocus(target); setTab("requests"); }} /></React.Suspense>
+            <React.Suspense fallback={<div style={{ minHeight: 40 }} />}><UnifiedProcurementSearch query={query} onOpenProcurement={(target) => { setProcurementFocus(target ?? null); setTab("requests"); }} /></React.Suspense>
             {publicListings.length === 0 ? (
               <div style={{ ...panelStyle, textAlign: "center", color: "#B5C3D8", padding: "2rem 1.25rem", border: "1px solid rgba(96,165,250,0.25)" }}>
                 <div style={{ width: 54, height: 54, margin: "0 auto 0.9rem", borderRadius: 16, display: "grid", placeItems: "center", background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.22)", fontSize: 24 }}>⌕</div>
