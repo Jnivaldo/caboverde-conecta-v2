@@ -14,7 +14,7 @@ type OfferRow = {
   photo_url: string | null; supplier_whatsapp: string; moderation_status?: "pending" | "approved" | "rejected";
   created_at: string;
 };
-type Props = { user: User | null; canAdmin: boolean; onAuthClick: () => void };
+type Props = { user: User | null; canAdmin: boolean; onAuthClick: () => void; focusTarget?: { requestId: string; offerId?: string } | null };
 
 const islandNames = ["Santiago", "São Vicente", "Sal", "Boa Vista", "Santo Antão", "São Nicolau", "Fogo", "Maio", "Brava"];
 const categories = ["Imóveis", "Viaturas", "Produtos", "Hospedagem", "Profissionais", "Empresas", "Serviços", "Turismo e Experiências", "Agricultura e Pecuária", "Máquinas e Equipamentos", "Desporto e Lazer", "Oportunidades", "Outro"];
@@ -36,7 +36,7 @@ const requestPalettes: Array<{ border: string; background: string; accent: strin
   { border: "#2DD4BF", background: "linear-gradient(145deg,#103A3A,#171C30 72%)", accent: "#99F6E4", glow: "rgba(45,212,191,.14)" },
 ];
 
-export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
+export default function ProcuroOfereco({ user, canAdmin, onAuthClick, focusTarget }: Props) {
   const [items, setItems] = useState<RequestRow[]>([]);
   const [offers, setOffers] = useState<OfferRow[]>([]);
   const [title, setTitle] = useState("");
@@ -59,6 +59,8 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
   const [offerWhatsapp, setOfferWhatsapp] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [focusedRequestId, setFocusedRequestId] = useState<string | null>(null);
+  const [focusedOfferId, setFocusedOfferId] = useState<string | null>(null);
   const loadSequence = useRef(0);
 
   const loadData = useCallback(async () => {
@@ -113,6 +115,22 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
   }, [user]);
 
   useEffect(() => { void loadData(); }, [loadData]);
+
+  useEffect(() => {
+    if (!focusTarget || loading) return;
+    const request = items.find((item) => item.id === focusTarget.requestId);
+    if (!request) return;
+    const timer = window.setTimeout(() => {
+      const targetId = focusTarget.offerId ? `procurement-offer-${focusTarget.offerId}` : `procurement-request-${focusTarget.requestId}`;
+      const targetElement = document.getElementById(targetId);
+      const requestElement = document.getElementById(`procurement-request-${focusTarget.requestId}`);
+      (targetElement || requestElement)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setFocusedRequestId(focusTarget.requestId);
+      setFocusedOfferId(focusTarget.offerId ?? null);
+    }, 80);
+    const clear = window.setTimeout(() => { setFocusedRequestId(null); setFocusedOfferId(null); }, 5200);
+    return () => { window.clearTimeout(timer); window.clearTimeout(clear); };
+  }, [focusTarget, loading, items, offers]);
 
   const visibleItems = useMemo(() => {
     const active = items.filter((item) => item.status !== "completed" && new Date(item.expires_at) > new Date());
@@ -259,7 +277,7 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
             // already restricts them to approved requests.
             const isPublicApproved = item.moderation_status === "approved" ||
               (!item.moderation_status && !item.requester_id);
-            return <article key={item.id} style={{ padding: "1rem", borderRadius: 14, border: `2px solid ${palette.border}`, background: palette.background, boxShadow: `0 8px 24px ${palette.glow}, inset 0 1px 0 rgba(255,255,255,.045)`, position: "relative", overflow: "hidden" }}>
+            return <article id={`procurement-request-${item.id}`} key={item.id} style={{ padding: "1rem", borderRadius: 14, border: focusedRequestId === item.id ? "3px solid #FDE047" : `2px solid ${palette.border}`, background: focusedRequestId === item.id ? "linear-gradient(145deg,#443716,#171C30 72%)" : palette.background, boxShadow: focusedRequestId === item.id ? "0 0 0 5px rgba(253,224,71,.2), 0 0 34px rgba(253,224,71,.35)" : `0 8px 24px ${palette.glow}, inset 0 1px 0 rgba(255,255,255,.045)`, position: "relative", overflow: "hidden", transition: "box-shadow .35s ease, border .35s ease, background .35s ease" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: ".5rem", flexWrap: "wrap" }}><span style={{ display: "inline-flex", alignItems: "center", padding: ".22rem .55rem", borderRadius: 6, border: `1px solid ${palette.border}`, background: palette.glow, color: palette.accent, fontSize: ".74rem", fontWeight: 850 }}>{item.category}</span><span style={{ color: "#8498B4", fontSize: ".72rem" }}>{dateText(item.created_at)} · válido até {dateText(item.expires_at)}</span></div>
               <h3 style={{ margin: ".5rem 0 .4rem", fontSize: "1.1rem", lineHeight: 1.35, fontWeight: 850, display: "flex", alignItems: "center", flexWrap: "wrap", gap: ".45rem" }}>{/^procuro\b/i.test(item.title) ? <><span style={{ display: "inline-flex", alignItems: "center", padding: ".2rem .52rem", borderRadius: 6, background: "#B91C1C", color: "#FFFFFF", fontSize: ".73rem", fontWeight: 900, letterSpacing: ".08em", boxShadow: "0 2px 8px rgba(185,28,28,.3)" }}>PROCURO</span><span>{item.title.replace(/^procuro\s*/i, "")}</span></> : item.title}</h3>
               <p style={{ margin: 0, color: "#B5C3D8", fontSize: ".85rem", lineHeight: 1.5 }}>{item.description}</p>
@@ -286,7 +304,7 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
                 <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}><button type="submit" disabled={busy} style={btnStyle}>{busy ? "A enviar..." : "Enviar proposta"}</button><button type="button" onClick={() => setActiveOffer(null)} style={{ border: "1px solid rgba(181,195,216,.25)", borderRadius: 9, padding: ".6rem .75rem", background: "transparent", color: "#B5C3D8", cursor: "pointer" }}>Cancelar</button></div>
                 <p style={{ margin: 0, color: "#8498B4", fontSize: ".73rem" }}>A proposta fica guardada no servidor e aguarda moderação antes de ser mostrada publicamente.</p>
               </form>}
-              {itemOffers.length > 0 && <div style={{ display: "grid", gap: ".65rem", marginTop: ".9rem" }}><strong style={{ color: "#8EF0C8", fontSize: ".86rem" }}>{itemOffers.length} proposta(s)</strong>{itemOffers.map((offer) => <div key={offer.id} style={{ padding: ".8rem", borderRadius: 10, border: "1px solid rgba(56,214,160,.22)", background: "#10182A" }}>
+              {itemOffers.length > 0 && <div style={{ display: "grid", gap: ".65rem", marginTop: ".9rem" }}><strong style={{ color: "#8EF0C8", fontSize: ".86rem" }}>{itemOffers.length} proposta(s)</strong>{itemOffers.map((offer) => <div id={`procurement-offer-${offer.id}`} key={offer.id} style={{ padding: ".8rem", borderRadius: 10, border: focusedOfferId === offer.id ? "3px solid #FDE047" : "1px solid rgba(56,214,160,.22)", background: focusedOfferId === offer.id ? "rgba(113,83,13,.32)" : "#10182A", boxShadow: focusedOfferId === offer.id ? "0 0 0 4px rgba(253,224,71,.16), 0 0 26px rgba(253,224,71,.3)" : "none", transition: "box-shadow .35s ease, border .35s ease, background .35s ease" }}>
                 {offer.photo_url && <img src={offer.photo_url} alt={offer.model} style={{ width: "100%", maxHeight: 180, objectFit: "contain", borderRadius: 8, marginBottom: ".55rem" }} />}
                 <div style={{ display: "flex", justifyContent: "space-between", gap: ".5rem", flexWrap: "wrap" }}><strong>{offer.model}</strong><strong style={{ color: "#8EF0C8" }}>{Number(offer.price_cve).toLocaleString("pt-PT")} CVE</strong></div>
                 <div style={{ color: "#AFC0D6", fontSize: ".78rem", marginTop: ".25rem" }}>{offer.business_name} · {offer.condition === "new" ? "Novo" : offer.condition === "used" ? "Usado" : "Recondicionado"}</div>
