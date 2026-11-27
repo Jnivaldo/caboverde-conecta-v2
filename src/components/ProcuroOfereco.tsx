@@ -279,7 +279,7 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
                 <p style={{ color: "#B5C3D8", fontSize: ".83rem", lineHeight: 1.5 }}>{offer.description}</p>
                 {offer.moderation_status === "pending" && <p style={{ color: "#FCD34D", fontSize: ".75rem" }}>Proposta pendente de aprovação.</p>}
                 <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
-                  {offer.supplier_whatsapp && <a href={waLink(offer.supplier_whatsapp, `Olá! Vi a sua proposta para "${item.title}" no CaboVerde Conecta.`)} target="_blank" rel="noreferrer" style={{ color: "#8EF0C8", fontWeight: 750, fontSize: ".8rem" }}>Contactar fornecedor no WhatsApp</a>}
+                  {offer.supplier_whatsapp && (offer.moderation_status === "approved" || (!offer.moderation_status && !offer.supplier_id) || (!!user && offer.supplier_id === user.id) || canAdmin) && <a href={waLink(offer.supplier_whatsapp, `Olá! Vi a sua proposta para "${item.title}" no CaboVerde Conecta.`)} target="_blank" rel="noreferrer" style={{ color: "#8EF0C8", fontWeight: 750, fontSize: ".8rem" }}>Contactar fornecedor no WhatsApp</a>}
                 </div>
               </div>)}</div>}
             </article>;
