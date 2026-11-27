@@ -171,7 +171,7 @@ export default function UnifiedProcurementSearch({ query, onOpenProcurement }: P
           )}
         </>}
       <div>
-        <button type="button" onClick={onOpenProcurement} style={{ border: "1px solid rgba(96,165,250,.45)", borderRadius: 9, padding: ".58rem .8rem", background: "#1E3A5F", color: "#DBEAFE", fontWeight: 750, cursor: "pointer" }}>
+        <button type="button" onClick={() => onOpenProcurement()} style={{ border: "1px solid rgba(96,165,250,.45)", borderRadius: 9, padding: ".58rem .8rem", background: "#1E3A5F", color: "#DBEAFE", fontWeight: 750, cursor: "pointer" }}>
           Abrir Procuro &amp; Ofereço
         </button>
       </div>
