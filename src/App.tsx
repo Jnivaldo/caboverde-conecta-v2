@@ -1249,6 +1249,7 @@ export default function App() {
               </div>
             ) : (
               <div
+                className="listing-card-grid"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fill, minmax(275px, 1fr))",
@@ -1256,21 +1257,21 @@ export default function App() {
                 }}
               >
               {publicListings.map((ad) => (
-                <article key={ad.id} style={cardStyle}>
+                <article key={ad.id} className="listing-card" style={cardStyle}>
                   <ListingGallery
                     title={ad.title}
                     images={(mediaByListing[ad.id] || []).filter((media) => media.type === "image").sort((a, b) => a.sort - b.sort)}
                     fallbackImage={ad.image}
                     onOpen={(src, images, index) => setLightbox({ src, title: ad.title, images, index })}
                   />
-                  <div style={{ padding: "1.1rem", display: "flex", flexDirection: "column", gap: "0.65rem", flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <div className="listing-card-content" style={{ padding: "1.1rem", display: "flex", flexDirection: "column", gap: "0.65rem", flex: 1 }}>
+                    <div className="listing-card-categories" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <span style={{ padding: "0.32rem 0.65rem", borderRadius: 999, background: "rgba(96,165,250,0.14)", border: "1px solid rgba(96,165,250,0.28)", color: "#BFDBFE", fontSize: "0.76rem", fontWeight: 750 }}>{ad.category}</span>
                       {ad.subcategory && <span style={{ color: "#9FB0C8", fontSize: "0.76rem" }}>{ad.subcategory}</span>}
                     </div>
-                    <h2 style={{ margin: 0, fontSize: "1.16rem", lineHeight: 1.4, color: "#F8FAFC", letterSpacing: "-0.01em" }}>{ad.title}</h2>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#B5C3D8", fontSize: "0.84rem" }}><span aria-hidden="true">📍</span><span>{ad.municipality}{ad.island ? ", " + ad.island : ""}</span></div>
-                    <div style={{ padding: "0.7rem 0.85rem", borderRadius: 11, background: "linear-gradient(135deg, rgba(56,214,160,0.12), rgba(96,165,250,0.08))", border: "1px solid rgba(56,214,160,0.2)" }}>
+                    <h2 className="listing-card-title" style={{ margin: 0, fontSize: "1.16rem", lineHeight: 1.4, color: "#F8FAFC", letterSpacing: "-0.01em" }}>{ad.title}</h2>
+                    <div className="listing-card-location" style={{ display: "flex", alignItems: "center", gap: 6, color: "#B5C3D8", fontSize: "0.84rem" }}><span aria-hidden="true">📍</span><span>{ad.municipality}{ad.island ? ", " + ad.island : ""}</span></div>
+                    <div className="listing-card-price" style={{ padding: "0.7rem 0.85rem", borderRadius: 11, background: "linear-gradient(135deg, rgba(56,214,160,0.12), rgba(96,165,250,0.08))", border: "1px solid rgba(56,214,160,0.2)" }}>
                       <strong style={{ color: "#5EEAD4", fontSize: "1.2rem", lineHeight: 1.3 }}>{ad.price || "Preço sob consulta"}</strong>
                     </div>
                     <ListingDescription description={ad.description} />
