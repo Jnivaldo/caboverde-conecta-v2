@@ -39,7 +39,7 @@ const requestPalettes = [
   { badge: "#4D7C0F", text: "#BEF264", border: "rgba(163,230,53,.58)", glow: "rgba(132,204,22,.2)", surface: "linear-gradient(120deg,rgba(54,83,20,.48),rgba(7,11,24,.76))" },
 ];
 
-export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }) {
+export default function ProcuroHomeHighlights({ onOpen }: { onOpen: (requestId?: string) => void }) {
   const [items, setItems] = useState<PublicRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -127,7 +127,7 @@ export default function ProcuroHomeHighlights({ onOpen }: { onOpen: () => void }
         <p style={{ margin: 0, color: "#D0D9E7", fontSize: ".9rem", lineHeight: 1.6, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 3, overflow: "hidden" }}>{item.description}</p>
         {item.budget && <strong style={{ display: "block", marginTop: ".65rem", color: "#F8FAFC", fontSize: ".88rem" }}>Orçamento: {item.budget}</strong>}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".8rem", flexWrap: "wrap", marginTop: "1rem" }}>
-          <button type="button" onClick={onOpen} style={{ padding: ".62rem .9rem", border: `1px solid ${palette.border}`, borderRadius: 9, background: palette.glow, color: palette.text, fontWeight: 800, cursor: "pointer" }}>Ver pedido e responder →</button>
+          <button type="button" onClick={() => onOpen(item.id)} style={{ padding: ".62rem .9rem", border: `1px solid ${palette.border}`, borderRadius: 9, background: palette.glow, color: palette.text, fontWeight: 800, cursor: "pointer" }}>Ver pedido e responder →</button>
           <span style={{ color: "#9AABC2", fontSize: ".78rem", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>Pedido {activeIndex + 1} de {items.length}</span>
         </div>
       </article>
