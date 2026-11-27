@@ -181,9 +181,13 @@ export default function ProcuroOfereco({ user, canAdmin, onAuthClick }: Props) {
 
   async function updateRequestStatus(item: RequestRow, status: RequestRow["status"]) {
     if (!user || (item.requester_id !== user.id && !canAdmin)) return;
-    const { error } = await supabase.from("procurement_requests").update({ status }).eq("id", item.id);
-    if (error) { setNotice("Não foi possível atualizar o pedido: " + error.message); return; }
-    await loadData();
+    try {
+      const { error } = await supabase.from("procurement_requests").update({ status }).eq("id", item.id);
+      if (error) throw error;
+      await loadData();
+    } catch (error) {
+      setNotice("Não foi possível atualizar o pedido: " + errorText(error));
+    }
   }
 
   function waLink(phone: string, message: string) {
