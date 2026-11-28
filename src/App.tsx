@@ -1107,9 +1107,9 @@ export default function App() {
                 to { transform: translateX(-50%); }
               }
             }
-            @media (prefers-reduced-motion: reduce) {
-              .mobile-nav-marquee-track { animation: none !important; }
-              header nav.mobile-nav-marquee { overflow-x: auto; }
+            /* Cor da marca aplicada também sobre regras globais do tema. */
+            .site-brand-title > span:nth-child(2) {
+              color: #38D6A0 !important;
             }
           `}</style>
           <div className="header-utility-group" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: ".5rem", flex: "0 0 auto", minWidth: 0, position: "relative", zIndex: 50 }}>
