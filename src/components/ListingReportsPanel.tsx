@@ -48,7 +48,7 @@ export default function ListingReportsPanel({ canAdmin }: { canAdmin: boolean })
     setLoading(false);
   }, [canAdmin]);
 
-  useEffect(() => { void loadReports(); }, [loadReports]);
+  useEffect(() => { if (open) void loadReports(); }, [loadReports, open]);
   if (!canAdmin) return null;
 
   const pending = reports.filter((report) => report.status === "pending").length;
