@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./responsive.css";import type { User } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
 import AuthPanel from "./components/AuthPanel";
 import ListingMediaPicker from "./components/ListingMediaPicker";
 import ListingMediaManager from "./components/ListingMediaManager";
+import ProcuroOfereco from "./components/ProcuroOfereco";
 
 import {
   type Listing,
@@ -155,9 +156,9 @@ function mapDatabaseListing(row: Record<string, unknown>): Listing {
 
 
 const QUICK_PROMPTS = [
-  "Como funcionam as 50 vagas gratuitas?",
-  "Quanto custa após as 50 vagas e como pagar?",
-  "Como falar com o suporte oficial?",
+  "Quero vender ou divulgar algo",
+  "Procuro um produto ou serviço",
+  "Como evitar burlas e anúncios falsos?",
 ];
 
 type ListingGalleryProps = {
@@ -235,11 +236,13 @@ function ListingDescription({ description }: { description: string }) {
 }
 
 export default function App() {
-  const [tab, setTab] = useState<"home" | "publish" | "account" | "admin">("home");
+  const [tab, setTab] = useState<"home" | "publish" | "account" | "admin" | "requests">("home");
   const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
   const [auditLogs, setAuditLogs] = useState<string[]>([]);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutFeedback, setSignOutFeedback] = useState("");
   const [canAdmin, setCanAdmin] = useState(false);
   const [accountEmail, setAccountEmail] = useState("");
   const [editingListingId, setEditingListingId] = useState<string | null>(null);
@@ -250,20 +253,43 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getUser().then(({ data, error }) => {
-      if (!active) return;
-      if (!error) setAuthUser(data.user);
-      setAuthLoading(false);
-    });
+    let receivedAuthEvent = false;
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      receivedAuthEvent = true;
+      if (!active) return;
       setAuthUser(session?.user ?? null);
       setAuthLoading(false);
     });
+
+    void supabase.auth.getSession().then(({ data, error }) => {
+      if (!active || receivedAuthEvent) return;
+      if (error) console.error("Falha ao recuperar sessão:", error.message);
+      setAuthUser(data.session?.user ?? null);
+      setAuthLoading(false);
+    });
+
     return () => {
       active = false;
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  async function handleHeaderSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    setSignOutFeedback("");
+    const { error } = await supabase.auth.signOut({ scope: "local" });
+    setSigningOut(false);
+    if (error) {
+      setSignOutFeedback("Não foi possível terminar a sessão. Tente novamente.");
+      console.error("Falha ao terminar sessão:", error.message);
+      return;
+    }
+    setCanAdmin(false);
+    setAccountEmail("");
+    setTab("home");
+    setSignOutFeedback("Sessão terminada com sucesso.");
+  }
 
   useEffect(() => {
     setAccountEmail(authUser?.email ?? "");
@@ -436,13 +462,19 @@ export default function App() {
   // Assistente flutuante
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatMessagesEndRef = useRef<HTMLDivElement | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
       sender: "assistant",
-      text: "Olá! Sou o assistente do CaboVerde Conecta. Posso esclarecer dúvidas sobre a campanha de lançamento, publicação de anúncios e contacto direto. Nesta pré-visualização, os pagamentos e o suporte ainda não estão ativos.",
+      text: "Olá! 👋 Bem-vindo ao CaboVerde Conecta. Sou o assistente virtual e estou aqui para ajudar a divulgar os seus anúncios e serviços, esclarecer dúvidas sobre a campanha de lançamento e explicar como encontrar ou contactar anunciantes. Como posso ajudar hoje?",
     },
   ]);
+
+  useEffect(() => {
+    if (chatOpen) chatMessagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, chatLoading, chatOpen]);
 
   const totalFreeSlots = 50;
   const [usedFreeSlots, setUsedFreeSlots] = useState(0);
@@ -490,41 +522,55 @@ export default function App() {
     setAuditLogs((prev) => [`[${new Date().toLocaleTimeString()}] ${entry}`, ...prev]);
   }
 
-  function buildAssistantReply(rawText: string): string {
-    const t = rawText.toLowerCase();
-    if (t.includes("gratuit") || t.includes("50") || t.includes("vaga")) {
-      return `A campanha de lançamento oferece até 50 vagas gratuitas. Neste momento, o servidor indica ${freeSlotsRemaining} vaga(s) disponível(is). Ao submeter um anúncio, o sistema reserva a vaga de forma segura e guarda o anúncio como pendente de análise. Depois da campanha, o preço previsto é 1.500 CVE por anúncio.`;
-    }
-    if (t.includes("1.500") || t.includes("1500") || t.includes("pagar") || t.includes("bca") || t.includes("bcn") || t.includes("hotmart") || t.includes("visa")) {
-      return "Após a campanha, o preço previsto é 1.500 CVE por anúncio. O pagamento ainda não está ativo nesta versão de pré-lançamento. Não faça transferências nem envie comprovativos através desta pré-visualização.";
-    }
-    if (t.includes("suporte") || t.includes("contacto") || t.includes("whatsapp") || t.includes("telefone")) {
-      return "O contacto entre interessados e anunciantes é direto através dos dados indicados em cada anúncio. O canal de suporte da plataforma ainda não está ligado nesta pré-visualização.";
-    }
-    if (t.includes("estado") || t.includes("pendente") || t.includes("publicar")) {
-      return "Os estados de pagamento (pending, confirmed, rejected) e de anúncio (pending, published, rejected, suspended) são separados. Novos anúncios entram em análise até confirmação e publicação no painel administrativo.";
-    }
-    return `O CaboVerde Conecta reúne classificados, serviços, imóveis, viaturas, hospedagem e oportunidades em Cabo Verde. A campanha prevê até 50 anúncios gratuitos; neste momento há ${freeSlotsRemaining} vaga(s) disponível(is), segundo o servidor. Os anúncios submetidos ficam pendentes de análise. Depois da campanha, o valor previsto é 1.500 CVE.`;
-  }
-
-  function sendChatMessage(customText?: string) {
+  async function sendChatMessage(customText?: string) {
     const content = (customText ?? chatInput).trim();
-    if (!content) return;
+    if (!content || chatLoading) return;
 
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
       sender: "user",
       text: content,
     };
-    const replyMsg: ChatMessage = {
-      id: `a-${Date.now() + 1}`,
-      sender: "assistant",
-      text: buildAssistantReply(content),
-    };
+    const history = [...messages.filter((message) => message.id !== "welcome"), userMsg]
+      .slice(-8)
+      .map((message) => ({
+        role: message.sender === "user" ? "user" as const : "assistant" as const,
+        content: message.text,
+      }));
 
-    setMessages((prev) => [...prev, userMsg, replyMsg]);
-    if (!customText) {
-      setChatInput("");
+    setMessages((previous) => [...previous, userMsg]);
+    setChatInput("");
+    setChatLoading(true);
+
+    try {
+      const response = await fetch("/api/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history }),
+        signal: AbortSignal.timeout(30_000),
+      });
+      const result = await response.json().catch(() => ({})) as { reply?: string; error?: string };
+      if (!response.ok || typeof result.reply !== "string" || !result.reply.trim()) {
+        throw new Error(result.error || "Não foi possível obter uma resposta neste momento.");
+      }
+      setMessages((previous) => [...previous, {
+        id: `a-${Date.now()}`,
+        sender: "assistant",
+        text: result.reply!.trim(),
+      }]);
+    } catch (error) {
+      const message = error instanceof Error && error.name === "TimeoutError"
+        ? "A resposta está a demorar mais do que o esperado. Verifique a ligação e tente novamente."
+        : error instanceof Error && error.message
+          ? error.message
+          : "O assistente está temporariamente indisponível. Verifique a ligação e tente novamente.";
+      setMessages((previous) => [...previous, {
+        id: `a-${Date.now()}`,
+        sender: "assistant",
+        text: message,
+      }]);
+    } finally {
+      setChatLoading(false);
     }
   }
 
@@ -863,6 +909,7 @@ export default function App() {
             {[
               { key: "home", label: "Início" },
               { key: "publish", label: "Publicar Anúncio" },
+              { key: "requests", label: "Procuro & Ofereço" },
               { key: "account", label: "Minha Conta" },
               ...(canAdmin ? [{ key: "admin", label: "Administração" }] : []),
             ].map((item) => {
@@ -889,8 +936,72 @@ export default function App() {
                 </button>
               );
             })}
+            {authUser && (
+              <button
+                type="button"
+                onClick={handleHeaderSignOut}
+                disabled={signingOut}
+                aria-label="Terminar sessão"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: 132,
+                  minHeight: 42,
+                  padding: "0.55rem 0.9rem",
+                  borderRadius: 10,
+                  border: "1px solid #FCA5A5",
+                  background: "#991B1B",
+                  color: "#FFFFFF",
+                  cursor: signingOut ? "wait" : "pointer",
+                  fontSize: "0.85rem",
+                  fontWeight: 800,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {signingOut ? "A sair..." : "Terminar sessão"}
+              </button>
+            )}
           </nav>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.7rem", flex: "1 1 100%", width: "100%", minHeight: 52, paddingTop: "0.55rem", borderTop: "1px solid rgba(181,195,216,0.14)", flexWrap: "nowrap", minWidth: 0, position: "relative", zIndex: 50 }}>
+            <div
+              role="status"
+              aria-live="polite"
+              title={authUser ? "A sua conta está autenticada" : "Ainda não iniciou sessão"}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.48rem",
+                padding: "0.48rem 0.72rem",
+                borderRadius: 999,
+                border: authUser ? "1px solid rgba(56,214,160,.42)" : "1px solid rgba(181,195,216,.2)",
+                background: authUser ? "rgba(16,185,129,.12)" : "rgba(21,31,51,.72)",
+                color: authUser ? "#6EE7B7" : "#B5C3D8",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                whiteSpace: "nowrap",
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: authLoading ? "#94A3B8" : authUser ? "#34D399" : "#94A3B8",
+                  boxShadow: authUser && !authLoading ? "0 0 0 3px rgba(52,211,153,.14)" : "none",
+                }}
+              />
+              {authLoading ? "A verificar sessão..." : authUser ? "Sessão iniciada" : "Não autenticado"}
+            </div>
+
+          </div>
         </div>
+        {signOutFeedback && (
+          <div role="status" aria-live="polite" style={{ maxWidth: 1200, margin: "0.55rem auto 0", color: signOutFeedback.startsWith("Não foi") ? "#FCA5A5" : "#6EE7B7", fontSize: "0.8rem" }}>
+            {signOutFeedback}
+          </div>
+        )}
       </header>
 
       <main style={{ maxWidth: 1200, margin: "0 auto", padding: "1.85rem 1.25rem 5rem" }}>
@@ -1149,7 +1260,9 @@ export default function App() {
                       <div style={{ display: "flex", gap: "0.5rem", marginTop: "auto" }}>
                       {ad.whatsapp && (
                         <a
-                          href={`https://wa.me/${ad.whatsapp.replace(/\D/g, "")}`}
+                          href={`https://api.whatsapp.com/send?phone=${ad.whatsapp.replace(/\D/g, "")}&text=${encodeURIComponent(
+                            `Olá! Tenho interesse no anúncio "${ad.title}" publicado no CaboVerde Conecta. Categoria: ${ad.category}. Localização: ${ad.municipality}, ${ad.island}. ${ad.price ? `Preço anunciado: ${ad.price}. ` : ""}Gostaria de saber se ainda está disponível e obter mais informações. Obrigado(a)!`
+                          )}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={whatsappBtnStyle}
@@ -1169,6 +1282,10 @@ export default function App() {
               </div>
             )}
           </>
+        )}
+
+        {tab === "requests" && (
+          <ProcuroOfereco onOfferClick={() => setTab("publish")} />
         )}
 
         {tab === "publish" && (
@@ -1412,7 +1529,7 @@ export default function App() {
               {authLoading ? (
                 <span style={{ color: "#B5C3D8", fontSize: "0.88rem" }}>A verificar sessão segura...</span>
               ) : (
-                <AuthPanel user={authUser} onSignedOut={() => { setAccountEmail(""); setListings([]); }} />
+                <AuthPanel user={authUser} onSignedIn={(user) => { setAuthUser(user); setAccountEmail(user.email ?? ""); }} onSignedOut={() => { setAuthUser(null); setAccountEmail(""); setListings([]); }} />
               )}
             </div>
 
@@ -1707,28 +1824,50 @@ export default function App() {
             >
               <div>
                 <strong style={{ fontSize: "0.95rem" }}>Assistente CaboVerde Conecta</strong>
-                <div style={{ fontSize: "0.75rem", color: "#38D6A0" }}>Ajuda sobre vagas, 1.500 CVE e anúncios</div>
+                <div style={{ fontSize: "0.75rem", color: "#38D6A0" }}>Apoio a compradores, vendedores e anunciantes</div>
               </div>
-              <button
-                type="button"
-                onClick={() => setChatOpen(false)}
-                style={{
-                  background: "transparent",
-                  border: "1px solid rgba(181,195,216,0.2)",
-                  color: "#F8FAFC",
-                  borderRadius: 8,
-                  padding: "0.25rem 0.55rem",
-                  cursor: "pointer",
-                  fontSize: "0.8rem",
-                }}
-              >
-                Fechar
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMessages([{ id: "welcome", sender: "assistant", text: "Olá! 👋 Bem-vindo ao CaboVerde Conecta. Sou o assistente virtual e estou aqui para ajudar a divulgar os seus anúncios e serviços, esclarecer dúvidas sobre a campanha de lançamento e explicar como encontrar ou contactar anunciantes. Como posso ajudar hoje?" }]);
+                    setChatInput("");
+                  }}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(181,195,216,0.2)",
+                    color: "#B5C3D8",
+                    borderRadius: 8,
+                    padding: "0.25rem 0.5rem",
+                    cursor: "pointer",
+                    fontSize: "0.75rem",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Nova conversa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChatOpen(false)}
+                  aria-label="Fechar assistente"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid rgba(181,195,216,0.2)",
+                    color: "#F8FAFC",
+                    borderRadius: 8,
+                    padding: "0.25rem 0.55rem",
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  Fechar
+                </button>
+              </div>
             </div>
 
             <div
               style={{
-                maxHeight: 270,
+                maxHeight: "min(52vh, 420px)",
                 overflowY: "auto",
                 padding: "0.85rem",
                 display: "flex",
@@ -1752,18 +1891,22 @@ export default function App() {
                     color: "#F8FAFC",
                     fontSize: "0.84rem",
                     lineHeight: 1.42,
+                    whiteSpace: "pre-wrap",
                   }}
                 >
                   {m.text}
                 </div>
               ))}
 
+              {chatLoading && <div role="status" aria-live="polite" style={{ alignSelf: "flex-start", color: "#8EF0C8", fontSize: "0.78rem", padding: "0.25rem 0.2rem" }}>O assistente está a preparar a resposta…</div>}
+              <div ref={chatMessagesEndRef} aria-hidden="true" />
               <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginTop: "0.2rem" }}>
                 {QUICK_PROMPTS.map((q) => (
                   <button
                     key={q}
                     type="button"
                     onClick={() => sendChatMessage(q)}
+                    disabled={chatLoading}
                     style={{
                       padding: "0.34rem 0.6rem",
                       borderRadius: 999,
@@ -1796,13 +1939,16 @@ export default function App() {
             >
               <input
                 type="text"
+                maxLength={1000}
+                aria-label="Escreva a sua mensagem ao assistente"
                 value={chatInput}
+                disabled={chatLoading}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Escreva a sua dúvida..."
                 style={{ ...inputStyle, flex: 1, padding: "0.5rem 0.7rem", fontSize: "0.84rem" }}
               />
-              <button type="submit" style={{ ...actionBtnStyle("#2563EB"), padding: "0.5rem 0.8rem" }}>
-                Enviar
+              <button type="submit" disabled={chatLoading || !chatInput.trim()} style={{ ...actionBtnStyle("#2563EB"), padding: "0.5rem 0.8rem", opacity: chatLoading || !chatInput.trim() ? 0.6 : 1 }}>
+                {chatLoading ? "A enviar…" : "Enviar"}
               </button>
             </form>
           </div>

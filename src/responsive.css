@@ -98,3 +98,28 @@ p, h1, h2, h3, strong, span, a, li, label {
   main section { padding: 0.7rem !important; }
   header nav { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+/* Google OAuth button: refined premium treatment with accessible focus. */
+.google-auth-button {
+  font-family: Arial, Roboto, sans-serif;
+  letter-spacing: 0.005em;
+}
+.google-auth-button:hover:not(:disabled) {
+  background: #FFFFFF !important;
+  border-color: #C5C9CE !important;
+  box-shadow: 0 3px 9px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.95) !important;
+  transform: translateY(-1px);
+}
+.google-auth-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important;
+}
+.google-auth-button:focus-visible {
+  outline: 3px solid rgba(66,133,244,0.45);
+  outline-offset: 3px;
+}
+.google-auth-button:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
