@@ -98,7 +98,7 @@ export default function MonetizationPanel({ canAdmin }: { canAdmin: boolean }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: ".65rem" }}>
         <div style={{ border: "1px solid rgba(56,214,160,.3)", borderRadius: 10, padding: ".8rem", background: "rgba(22,101,52,.12)" }}>
           <strong style={{ color: "#86EFAC", fontSize: ".86rem" }}>Campanha de lançamento</strong>
-          <p style={{ ...muted, margin: ".3rem 0 0" }}>Os primeiros 50 anúncios recebem vaga gratuita. Pedidos e propostas em Procuro &amp; Ofereço continuam gratuitos.</p>
+          <p style={{ ...muted, margin: ".3rem 0 0" }}>Os primeiros 50 anúncios Normais recebem publicação gratuita. A administração pode selecionar anúncios para oferecer Destaque Premium. Pedidos e propostas em Procuro &amp; Ofereço continuam gratuitos.</p>
         </div>
         <div style={{ border: "1px solid rgba(96,165,250,.3)", borderRadius: 10, padding: ".8rem", background: "rgba(29,78,216,.1)" }}>
           <strong style={{ color: "#93C5FD", fontSize: ".86rem" }}>Tabela de preços</strong>
