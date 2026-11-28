@@ -13,6 +13,7 @@ const NotificationCenter = React.lazy(() => import("./components/NotificationCen
 const MonetizationPanel = React.lazy(() => import("./components/MonetizationPanel"));
 const ListingPaymentsPanel = React.lazy(() => import("./components/ListingPaymentsPanel"));
 const FinancePanel = React.lazy(() => import("./components/FinancePanel"));
+const ListingReportsPanel = React.lazy(() => import("./components/ListingReportsPanel"));
 
 import {
   type Listing,
@@ -399,6 +400,11 @@ export default function App() {
   const [lightbox, setLightbox] = useState<{ src: string; title: string; images: { id: string; url: string }[]; index: number } | null>(null);
   const lightboxTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("fraude");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportFeedback, setReportFeedback] = useState("");
+  const [reportBusy, setReportBusy] = useState(false);
   const [clockNow, setClockNow] = useState(Date.now());
   useEffect(() => { const timer = window.setInterval(() => setClockNow(Date.now()), 60_000); return () => window.clearInterval(timer); }, []);
 
@@ -1885,6 +1891,7 @@ export default function App() {
                 if (data) setListings((prev) => prev.map((item) => item.id === listingId ? mapDatabaseListing(data as Record<string, unknown>) : item));
               });
             }} /></React.Suspense>
+            <React.Suspense fallback={<div style={{ minHeight: 40 }} />}><ListingReportsPanel canAdmin={canAdmin} /></React.Suspense>
             <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><ProcuroAdminPanel canAdmin={canAdmin} /></React.Suspense>
             <span style={eyebrowStyle("#EC4899")}>GOVERNANÇA E MODERAÇÃO</span>
             <h1 style={{ margin: "0.25rem 0 0.4rem", fontSize: "1.65rem" }}>
@@ -2220,6 +2227,16 @@ export default function App() {
                 {selectedListing.phone && <a href={`tel:${selectedListing.phone.replace(/\\D/g,"")}`} style={{ ...callLinkStyle, padding: ".85rem" }}>Ligar ao anunciante</a>}
               </div>
               <p style={{ margin: 0, color: "#94A3B8", fontSize: ".82rem" }}>Contacte diretamente o anunciante e confirme os detalhes antes de qualquer negócio.</p>
+              {selectedListing.ownerAccountId !== authUser?.id && <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, flexWrap: "wrap", borderTop: "1px solid rgba(148,163,184,.14)", paddingTop: ".65rem" }}>
+                {reportFeedback && <span role="status" style={{ color: reportFeedback.startsWith("Denúncia enviada") ? "#86EFAC" : "#FCA5A5", fontSize: ".78rem" }}>{reportFeedback}</span>}
+                <button type="button" onClick={() => { if (!authUser) { setFeedback("Entre na sua conta para denunciar um anúncio."); setSelectedListing(null); setTab("account"); return; } setReportFeedback(""); setReportOpen((value) => !value); }} style={{ border: 0, padding: ".25rem .35rem", background: "transparent", color: "#94A3B8", textDecoration: "underline", fontSize: ".78rem", cursor: "pointer" }}>Denunciar anúncio</button>
+              </div>}
+              {reportOpen && <form onSubmit={async (event) => { event.preventDefault(); if (!authUser || reportBusy) return; setReportBusy(true); setReportFeedback(""); const { error } = await supabase.rpc("submit_listing_report", { p_listing_id: selectedListing.id, p_reason: reportReason, p_details: reportDetails.trim() || null }); setReportBusy(false); if (error) setReportFeedback(error.message.includes("Já enviou") ? "Já enviou uma denúncia para este anúncio." : "Não foi possível enviar. Tente novamente."); else { setReportFeedback("Denúncia enviada. Obrigado por ajudar a comunidade."); setReportOpen(false); setReportDetails(""); } }} style={{ display: "grid", gap: ".55rem", padding: ".75rem", borderRadius: 10, border: "1px solid rgba(148,163,184,.2)", background: "rgba(7,11,24,.48)" }}>
+                <strong style={{ color: "#E2E8F0", fontSize: ".82rem" }}>Qual é o problema?</strong>
+                <select required value={reportReason} onChange={(event) => setReportReason(event.target.value)} style={{ ...inputStyle, padding: ".55rem .65rem", fontSize: ".82rem" }}><option value="fraude">Suspeita de fraude</option><option value="informacao_falsa">Informação falsa</option><option value="conteudo_inadequado">Conteúdo inadequado</option><option value="anuncio_duplicado">Anúncio duplicado</option><option value="outro">Outro motivo</option></select>
+                <textarea rows={2} maxLength={1000} value={reportDetails} onChange={(event) => setReportDetails(event.target.value)} placeholder="Detalhes adicionais (opcional)" style={{ ...inputStyle, resize: "vertical", fontSize: ".82rem" }} />
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 7 }}><button type="button" onClick={() => setReportOpen(false)} style={{ ...secondaryBtnStyle, padding: ".45rem .7rem", fontSize: ".78rem" }}>Cancelar</button><button type="submit" disabled={reportBusy} style={{ ...primaryBtnStyle, padding: ".45rem .7rem", fontSize: ".78rem" }}>{reportBusy ? "A enviar…" : "Enviar denúncia"}</button></div>
+              </form>}
             </div>
           </section>
         </div>
