@@ -338,79 +338,43 @@ main article.listing-card button[aria-label^="Ver fotografia"] {
 }
 
 
-/* Stronger mobile brand identity for CaboVerde Conecta. */
-.site-brand {
-  display: grid;
-  gap: .28rem;
-  min-width: 0;
-  padding: .18rem 0;
-}
-.site-brand-title {
-  display: block;
-  color: #F8FAFC;
-  font-size: clamp(1.28rem, 4.5vw, 1.72rem);
-  line-height: 1.05;
-  letter-spacing: -.055em;
-  font-weight: 950;
-  text-shadow: 0 2px 14px rgba(0,0,0,.22);
-}
-.site-brand-title span:nth-child(2) {
-  color: #38D6A0;
-}
-.site-brand-title span:last-child {
-  color: #2563EB;
-}
-.site-brand-campaign {
-  font-size: .76rem !important;
-  line-height: 1.35;
-  letter-spacing: .005em;
-}
+/* Mobile brand: enlarge only the logo; preserve the original text column sizing. */
 @media (max-width: 700px) {
-  /* No telemóvel, o logótipo acompanha a altura total do título e da faixa da campanha. */
   .site-brand {
-    width: 100%;
-    padding: .28rem .1rem .48rem;
-    gap: .55rem;
-    align-items: stretch !important;
+    align-items: center !important;
+    gap: .55rem !important;
   }
   .site-brand > img {
-    width: clamp(76px, 22vw, 88px) !important;
-    height: auto !important;
-    min-height: 88px !important;
-    aspect-ratio: 1 / 1;
-    align-self: stretch;
-    flex: 0 0 clamp(76px, 22vw, 88px) !important;
+    width: clamp(76px, 20vw, 88px) !important;
+    height: clamp(76px, 20vw, 88px) !important;
+    min-height: 0 !important;
+    flex: 0 0 clamp(76px, 20vw, 88px) !important;
+    align-self: center !important;
     object-fit: contain;
   }
   .site-brand > div {
-    min-width: 0;
-    min-height: 88px;
-    display: flex !important;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: stretch;
-    gap: .38rem !important;
+    min-height: 0 !important;
+    display: grid !important;
+    gap: .28rem !important;
+    align-content: center;
   }
   .site-brand-title {
-    font-size: clamp(1.45rem, 6.5vw, 1.9rem);
-    letter-spacing: -.06em;
-    line-height: 1;
+    font-size: clamp(1.28rem, 4.5vw, 1.72rem) !important;
+    letter-spacing: -.055em !important;
+    line-height: 1.05 !important;
   }
   .site-brand-campaign {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    padding: .32rem .55rem;
-    border: 1px solid rgba(56,214,160,.32);
-    border-radius: 7px;
-    background: rgba(56,214,160,.08);
-    font-size: .72rem !important;
-    line-height: 1.35;
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    font-size: .76rem !important;
+    line-height: 1.35 !important;
   }
 }
-
 
 /* Procuro & Ofereço carousel: override generic mobile 44px touch targets.
    Keep the pagination dots horizontal and the arrows compact. */
