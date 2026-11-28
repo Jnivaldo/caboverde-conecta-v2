@@ -1169,9 +1169,9 @@ export default function App() {
                 O mercado digital de Cabo Verde
                 <span style={{ width: 28, height: 2, background: "#38D6A0", borderRadius: 99 }} />
               </div>
-              <h1 style={{ margin: "0", color: "#F8FAFC", fontSize: "clamp(2.7rem, 8vw, 5.65rem)", lineHeight: 0.98, letterSpacing: "-0.065em", fontWeight: 900, textTransform: "uppercase" }}>
-                <span style={{ display: "inline-block" }}>CABOVERDE</span>{" "}
-                <span style={{ display: "inline-block", color: "#60A5FA" }}>CONECTA</span>
+              <h1 className="site-brand-title" style={{ margin: "0", color: "#F8FAFC", fontSize: "clamp(2.7rem, 8vw, 5.65rem)", lineHeight: 0.98, letterSpacing: "-0.065em", fontWeight: 900, textTransform: "uppercase" }}>
+                <span style={{ display: "inline-block" }}>CABO</span><span style={{ display: "inline-block" }}>VERDE</span>{" "}
+                <span style={{ display: "inline-block" }}>CONECTA</span>
               </h1>
               <div style={{ width: 76, height: 4, margin: "1.05rem auto 0.95rem", borderRadius: 99, background: "#38D6A0" }} />
               <h2 style={{ margin: "0 auto 0.65rem", maxWidth: 850, color: "#F8FAFC", fontSize: "clamp(1.05rem, 2.5vw, 1.65rem)", lineHeight: 1.25, letterSpacing: "0.035em", fontWeight: 800, textTransform: "uppercase" }}>
