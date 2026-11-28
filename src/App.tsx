@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./responsive.css";import type { User } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
+const shareLinkStyle: React.CSSProperties = { display: "flex", alignItems: "center", justifyContent: "center", minHeight: 46, padding: ".7rem .75rem", border: "1px solid rgba(181,195,216,.24)", borderRadius: 10, color: "#E6EEF8", background: "rgba(255,255,255,.055)", textDecoration: "none", textAlign: "center", fontSize: ".88rem", fontWeight: 750 };
 const AuthPanel = React.lazy(() => import("./components/AuthPanel"));
 const ListingMediaPicker = React.lazy(() => import("./components/ListingMediaPicker"));
 const ListingMediaManager = React.lazy(() => import("./components/ListingMediaManager"));
@@ -401,6 +402,7 @@ export default function App() {
   const lightboxTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("fraude");
   const [reportDetails, setReportDetails] = useState("");
@@ -2015,7 +2017,7 @@ export default function App() {
           borderTop: "1px solid rgba(181,195,216,0.2)",
         }}
       >
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr)", gap: "2rem", alignItems: "start" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "minmax(0,1.2fr) repeat(3,minmax(0,1fr))", gap: "2rem", alignItems: "start" }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem", minWidth: 0 }}>
             <img
               src="https://raw.githubusercontent.com/Jnivaldo/caboverde-conecta-v2/main/Logo%20caboverdeconecta.png"
@@ -2041,12 +2043,38 @@ export default function App() {
             <button type="button" onClick={() => setPrivacyOpen(true)} style={{ justifySelf: "start", border: 0, padding: 0, background: "transparent", color: "#D7E6F4", textDecoration: "none", fontSize: ".9rem", cursor: "pointer", textAlign: "left" }}>Política de Privacidade</button>
             <span style={{ color: "#8192AA", fontSize: ".82rem", lineHeight: 1.55 }}>A sua confiança e a proteção dos seus dados são importantes para nós.</span>
           </div>
+          <div style={{ display: "grid", alignContent: "start", gap: ".7rem" }}>
+            <strong style={{ color: "#F8FAFC", fontSize: ".9rem", letterSpacing: ".04em" }}>DIVULGUE A PLATAFORMA</strong>
+            <button type="button" onClick={() => setShareOpen(true)} style={{ justifySelf: "start", display: "inline-flex", alignItems: "center", gap: ".55rem", border: "1px solid rgba(142,240,200,.5)", borderRadius: 10, padding: ".68rem .9rem", background: "linear-gradient(120deg,#0D8060,#145A50)", color: "#FFFFFF", fontSize: ".9rem", fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 22px rgba(0,0,0,.2)" }}>↗ Partilhar CaboVerde Conecta</button>
+            <span style={{ color: "#8192AA", fontSize: ".82rem", lineHeight: 1.55 }}>Ajude mais pessoas a encontrar produtos, imóveis, viaturas, profissionais e serviços em Cabo Verde.</span>
+          </div>
         </div>
         <div style={{ maxWidth: 1200, margin: "2rem auto 0", paddingTop: "1rem", borderTop: "1px solid rgba(181,195,216,0.12)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem", flexWrap: "wrap", color: "#8192AA", fontSize: ".76rem" }}>
           <span>© {new Date().getFullYear()} CaboVerde Conecta. Todos os direitos reservados.</span>
           <span>Feito para ligar Cabo Verde.</span>
         </div>
       </footer>
+
+      {shareOpen && (
+        <div role="dialog" aria-modal="true" aria-labelledby="share-title" onClick={() => setShareOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 125, display: "grid", placeItems: "center", background: "rgba(3,6,15,.88)", backdropFilter: "blur(8px)", padding: "1rem" }}>
+          <section onClick={(event) => event.stopPropagation()} style={{ width: "min(540px,100%)", padding: "clamp(1.1rem,3vw,1.7rem)", background: "#10182A", border: "1px solid rgba(142,240,200,.28)", borderRadius: 18, boxShadow: "0 28px 75px rgba(0,0,0,.5)", color: "#D7E6F4" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: ".6rem" }}>
+              <div><span style={{ color: "#38D6A0", fontSize: ".72rem", fontWeight: 800, letterSpacing: ".1em" }}>ESPALHE A CONEXÃO</span><h2 id="share-title" style={{ color: "#F8FAFC", margin: ".25rem 0 0", fontSize: "1.45rem" }}>Partilhar CaboVerde Conecta</h2></div>
+              <button type="button" onClick={() => setShareOpen(false)} aria-label="Fechar partilha" style={{ ...secondaryBtnStyle, width: "auto", padding: ".5rem .75rem" }}>Fechar ×</button>
+            </div>
+            <p style={{ color: "#AFC0D5", lineHeight: 1.55, fontSize: ".9rem" }}>Convide amigos, familiares e empresas a conhecer o ponto de encontro entre quem procura e quem oferece em Cabo Verde.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: ".65rem", marginTop: "1rem" }}>
+              <a href={`https://wa.me/?text=${encodeURIComponent("Conheça o CaboVerde Conecta — encontre e divulgue produtos, imóveis, viaturas, profissionais e serviços em Cabo Verde: https://www.caboverdeconecta.com")}`} target="_blank" rel="noopener noreferrer" style={{ ...shareLinkStyle }}>WhatsApp ↗</a>
+              <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.caboverdeconecta.com" target="_blank" rel="noopener noreferrer" style={{ ...shareLinkStyle }}>Facebook ↗</a>
+              <a href={`https://t.me/share/url?url=${encodeURIComponent("https://www.caboverdeconecta.com")}&text=${encodeURIComponent("Conheça o CaboVerde Conecta!")}`} target="_blank" rel="noopener noreferrer" style={{ ...shareLinkStyle }}>Telegram ↗</a>
+              <a href={`mailto:?subject=${encodeURIComponent("Conheça o CaboVerde Conecta")}&body=${encodeURIComponent("Visite https://www.caboverdeconecta.com — o ponto de encontro entre quem procura e quem oferece em Cabo Verde.")}`} style={{ ...shareLinkStyle }}>E-mail ↗</a>
+              <button type="button" onClick={() => { const url = "https://www.caboverdeconecta.com"; if (navigator.clipboard?.writeText) navigator.clipboard.writeText(url).then(() => window.alert("Endereço copiado. Já pode colar no Instagram, YouTube ou onde desejar.")); else window.prompt("Copie o endereço do site:", url); }} style={{ ...shareLinkStyle, cursor: "pointer" }}>Copiar endereço</button>
+              <button type="button" onClick={() => { const url = "https://www.caboverdeconecta.com"; const text = "Conheça o CaboVerde Conecta — encontre e divulgue produtos, imóveis, viaturas, profissionais e serviços em Cabo Verde."; if (navigator.share) navigator.share({ title: "CaboVerde Conecta", text, url }).catch(() => {}); else if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text + " " + url).then(() => window.alert("Texto e endereço copiados para partilhar.")); else window.prompt("Copie para partilhar:", text + " " + url); }} style={{ ...shareLinkStyle, cursor: "pointer", background: "linear-gradient(120deg,#0D8060,#145A50)", color: "#FFFFFF" }}>Mais opções no telemóvel ↗</button>
+            </div>
+            <p style={{ margin: ".9rem 0 0", color: "#8192AA", fontSize: ".78rem", lineHeight: 1.5 }}>Instagram e YouTube: copie o endereço e cole na descrição, biografia, publicação ou mensagem. A disponibilidade das opções depende da aplicação e do dispositivo.</p>
+          </section>
+        </div>
+      )}
 
       {privacyOpen && (
         <div role="dialog" aria-modal="true" aria-labelledby="privacy-title" onClick={() => setPrivacyOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 120, background: "rgba(3,6,15,.88)", backdropFilter: "blur(8px)", overflowY: "auto", padding: "1rem" }}>
