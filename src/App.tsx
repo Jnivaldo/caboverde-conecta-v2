@@ -1031,15 +1031,19 @@ export default function App() {
                   { key: "requests", label: "Procuro & Ofereço" },
                   ...(canAdmin ? [{ key: "admin", label: "Administração" }] : []),
                 ];
-                return navItems.map((item) => {
+                return [...navItems, ...navItems].map((item, index) => {
+                  const duplicate = index >= navItems.length;
                   const active = tab === item.key;
                   return (
                     <button
-                      key={item.key}
+                      key={item.key + (duplicate ? "-loop" : "")}
                       type="button"
+                      tabIndex={duplicate ? -1 : 0}
+                      aria-hidden={duplicate ? true : undefined}
                       className={item.key === "account" ? "account-nav-button" : undefined}
-                      aria-current={active ? "page" : undefined}
+                      aria-current={!duplicate && active ? "page" : undefined}
                       onClick={() => {
+                        if (duplicate) return;
                         if (item.key === "myListings") {
                           setTab("account");
                           window.setTimeout(() => document.getElementById("my-listings")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
@@ -1087,12 +1091,16 @@ export default function App() {
                 width: max-content;
                 align-items: center;
                 gap: .45rem;
-                animation: none;
-                will-change: auto;
+                animation: conecta-nav-marquee 26s linear infinite;
+                will-change: transform;
               }
               .mobile-nav-marquee:hover .mobile-nav-marquee-track,
-              .mobile-nav-marquee:focus-within .mobile-nav-marquee-track {
+              .mobile-nav-marquee:focus-within .mobile-nav-marquee-track,
+              .mobile-nav-marquee:active .mobile-nav-marquee-track {
                 animation-play-state: paused;
+              }
+              .mobile-nav-marquee-track > button[aria-hidden="true"] {
+                pointer-events: none;
               }
               @keyframes conecta-nav-marquee {
                 from { transform: translateX(0); }
