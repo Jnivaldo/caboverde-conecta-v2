@@ -102,9 +102,9 @@ export default function MonetizationPanel({ canAdmin }: { canAdmin: boolean }) {
         </div>
         <div style={{ border: "1px solid rgba(96,165,250,.3)", borderRadius: 10, padding: ".8rem", background: "rgba(29,78,216,.1)" }}>
           <strong style={{ color: "#93C5FD", fontSize: ".86rem" }}>Tabela de preços</strong>
-          <p style={{ margin: ".3rem 0 0", color: "#F8FAFC", fontSize: "1rem", fontWeight: 900 }}>Anúncio normal: 1.500 CVE</p>
-          <p style={{ margin: ".2rem 0 0", color: "#FDE68A", fontSize: "1rem", fontWeight: 900 }}>Destaque Premium: 1.000 CVE durante a campanha</p>
-          <p style={{ ...muted, margin: ".2rem 0 0" }}>Após as 50 vagas: anúncio normal 1.500 CVE e Destaque Premium 2.500 CVE por 30 dias. Pagamento por transferência com referência CVC e validação bancária manual.</p>
+          <p style={{ margin: ".3rem 0 0", color: "#F8FAFC", fontSize: "1rem", fontWeight: 900 }}>Anúncio Normal: 1.500 CVE / 30 dias</p>
+          <p style={{ margin: ".2rem 0 0", color: "#FDE68A", fontSize: "1rem", fontWeight: 900 }}>Anúncio Premium: 2.500 CVE / 30 dias</p>
+          <p style={{ ...muted, margin: ".2rem 0 0" }}>Atualizar um anúncio Normal já publicado para Premium custa mais 1.000 CVE. Durante a campanha, os primeiros 50 anúncios Normais são gratuitos e a administração pode oferecer Premium gratuitamente a anúncios selecionados.</p>
         </div>
       </div>
 
