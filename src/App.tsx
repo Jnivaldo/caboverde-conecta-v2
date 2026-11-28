@@ -1776,6 +1776,12 @@ export default function App() {
                     </div>
 
                     {item.listingStatus === "suspended" && item.moderationNote && <div style={{ color: "#FDE68A", fontSize: ".82rem" }}>Melhorias pedidas pela equipa: {item.moderationNote}</div>}
+                    {canClaimFreeSlot && item.isFeatured && item.listingStatus === "published" && authUser && item.ownerAccountId === authUser.id && (
+                      <div style={{ ...subCardStyle, border: "1px solid rgba(212,175,55,.5)", gap: ".35rem" }}>
+                        <strong style={{ color: "#FDE68A" }}>✦ O seu anúncio foi selecionado para Destaque Premium</strong>
+                        <span style={{ color: "#B5C3D8", fontSize: ".82rem" }}>Este destaque foi oferecido gratuitamente pela equipa durante a campanha.</span>
+                      </div>
+                    )}
                     {!canClaimFreeSlot && item.listingStatus === "published" && authUser && item.ownerAccountId === authUser.id && (() => {
                       const promotion = featuredPromotions.find((entry) => entry.listing_id === item.id && (entry.status === "pending_payment" || (entry.status === "active" && Boolean(entry.featured_until) && new Date(entry.featured_until as string).getTime() > Date.now())));
                       return <div style={{ ...subCardStyle, border: "1px solid rgba(212,175,55,.45)", gap: ".45rem" }}>
