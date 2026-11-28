@@ -884,7 +884,7 @@ export default function App() {
     const nextFeatured = !item.isFeatured;
     const { data, error } = await supabase
       .from("listings")
-      .update({ is_featured: nextFeatured, featured_until: nextFeatured ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null })
+      .update({ is_featured: nextFeatured, featured_until: nextFeatured ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null, ...(nextFeatured ? { expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() } : {}) })
       .eq("id", item.id)
       .select("is_featured")
       .maybeSingle();
