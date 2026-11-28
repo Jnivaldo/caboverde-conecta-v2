@@ -1020,48 +1020,89 @@ export default function App() {
             </div>
           </div>
 
-          <nav style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap" }}>
-            {[
-              { key: "account", label: "Minha Conta" },
-              ...(authUser ? [{ key: "myListings", label: "Os Meus Anúncios" }] : []),
-              { key: "home", label: "Início" },
-              { key: "publish", label: "Publicar Anúncio" },
-              { key: "requests", label: "Procuro & Ofereço" },
-              ...(canAdmin ? [{ key: "admin", label: "Administração" }] : []),
-            ].map((item) => {
-              const active = tab === item.key;
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  className={item.key === "account" ? "account-nav-button" : undefined}
-                  aria-current={active ? "page" : undefined}
-                  onClick={() => {
-                    if (item.key === "myListings") {
-                      setTab("account");
-                      window.setTimeout(() => document.getElementById("my-listings")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
-                    } else {
-                      setTab(item.key as typeof tab);
-                    }
-                  }}
-                  style={{
-                    padding: "0.5rem 0.9rem",
-                    borderRadius: 10,
-                    border: active
-                      ? "1px solid rgba(96,165,250,0.65)"
-                      : "1px solid rgba(181,195,216,0.18)",
-                    backgroundColor: active ? "#2563EB" : "#151F33",
-                    color: "#F8FAFC",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    fontSize: "0.85rem",
-                  }}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
+          <nav className="mobile-nav-marquee" aria-label="Navegação principal">
+            <div className="mobile-nav-marquee-track">
+              {(() => {
+                const navItems = [
+                  { key: "account", label: "Minha Conta" },
+                  ...(authUser ? [{ key: "myListings", label: "Os Meus Anúncios" }] : []),
+                  { key: "home", label: "Início" },
+                  { key: "publish", label: "Publicar Anúncio" },
+                  { key: "requests", label: "Procuro & Ofereço" },
+                  ...(canAdmin ? [{ key: "admin", label: "Administração" }] : []),
+                ];
+                return [...navItems, ...navItems].map((item, index) => {
+                  const duplicate = index >= navItems.length;
+                  const active = tab === item.key;
+                  return (
+                    <button
+                      key={item.key + (duplicate ? "-duplicate" : "")}
+                      type="button"
+                      className={item.key === "account" ? "account-nav-button" : undefined}
+                      aria-hidden={duplicate || undefined}
+                      aria-current={active ? "page" : undefined}
+                      tabIndex={duplicate ? -1 : 0}
+                      onClick={() => {
+                        if (item.key === "myListings") {
+                          setTab("account");
+                          window.setTimeout(() => document.getElementById("my-listings")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+                        } else {
+                          setTab(item.key as typeof tab);
+                        }
+                      }}
+                      style={{
+                        padding: "0.5rem 0.9rem",
+                        borderRadius: 10,
+                        border: active
+                          ? "1px solid rgba(96,165,250,0.65)"
+                          : "1px solid rgba(181,195,216,0.18)",
+                        backgroundColor: active ? "#2563EB" : "#151F33",
+                        color: "#F8FAFC",
+                        cursor: "pointer",
+                        fontWeight: 600,
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                });
+              })()}
+            </div>
           </nav>
+          <style>{`
+            @media (max-width: 700px) {
+              header nav.mobile-nav-marquee {
+                display: block !important;
+                width: 100%;
+                overflow: hidden;
+                white-space: nowrap;
+                padding: .18rem 0 .35rem;
+                -webkit-mask-image: linear-gradient(90deg, transparent, #000 2%, #000 98%, transparent);
+                mask-image: linear-gradient(90deg, transparent, #000 2%, #000 98%, transparent);
+              }
+              .mobile-nav-marquee-track {
+                display: flex;
+                width: max-content;
+                align-items: center;
+                gap: .45rem;
+                animation: conecta-nav-marquee 24s linear infinite;
+                will-change: transform;
+              }
+              .mobile-nav-marquee:hover .mobile-nav-marquee-track,
+              .mobile-nav-marquee:focus-within .mobile-nav-marquee-track {
+                animation-play-state: paused;
+              }
+              @keyframes conecta-nav-marquee {
+                from { transform: translateX(0); }
+                to { transform: translateX(-50%); }
+              }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .mobile-nav-marquee-track { animation: none !important; }
+              header nav.mobile-nav-marquee { overflow-x: auto; }
+            }
+          `}</style>
           <div className="header-utility-group" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: ".5rem", flex: "0 0 auto", minWidth: 0, position: "relative", zIndex: 50 }}>
             <button
               type="button"
