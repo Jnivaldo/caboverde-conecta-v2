@@ -458,7 +458,7 @@ export default function App() {
 
   const totalFreeSlots = 50;
   // Ativar apenas depois de validar e publicar o fluxo de cobrança.
-  const paidListingsEnabled = false;
+  const paidListingsEnabled = true;
   const [usedFreeSlots, setUsedFreeSlots] = useState(0);
   const freeSlotsRemaining = Math.max(0, totalFreeSlots - usedFreeSlots);
   const canClaimFreeSlot = freeSlotsRemaining > 0;
@@ -1623,7 +1623,7 @@ export default function App() {
               <div style={subCardStyle}>
                 <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>3. Modalidade e Pagamento (1.500 CVE)</strong>
                 <div style={{ fontSize: "0.85rem", color: "#B5C3D8", lineHeight: 1.55 }}>
-                  {canClaimFreeSlot ? `Campanha de lançamento: ainda existem ${freeSlotsRemaining} vagas gratuitas. Enquanto houver vagas, não é necessário efetuar qualquer transferência.` : "Campanha gratuita concluída. O valor por anúncio é 1.500 CVE. Depois de submeter, aceda a Minha Conta para escolher BCA ou BCN e enviar o comprovativo para validação."}
+                  {canClaimFreeSlot ? `Campanha de lançamento: ainda existem ${freeSlotsRemaining} vagas gratuitas. Enquanto houver vagas, não é necessário efetuar qualquer transferência.` : "Campanha gratuita concluída. O anúncio normal custa 1.500 CVE. Depois de submeter, aceda a Minha Conta para gerar o código CVC, escolher BCA ou BCN e usar o código como referência da transferência."}
                 </div>
                 <div style={{ border: "1px solid rgba(96,165,250,.34)", borderRadius: 12, padding: "1rem", background: "linear-gradient(145deg,rgba(17,29,49,.92),rgba(16,24,42,.92))", display: "grid", gap: ".5rem" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
@@ -1641,7 +1641,7 @@ export default function App() {
                     <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums", overflowWrap: "anywhere" }}>000300007050338410176</strong>
                     <button type="button" onClick={() => { void navigator.clipboard?.writeText("000300007050338410176"); }} style={{ ...secondaryBtnStyle, padding: ".35rem .55rem", fontSize: ".74rem" }}>Copiar NIB</button>
                   </div>
-                  <p style={{ margin: ".2rem 0 0", color: "#FDE68A", fontSize: ".76rem", lineHeight: 1.45 }}>{canClaimFreeSlot ? "Não efetue pagamentos enquanto houver vagas gratuitas disponíveis. A campanha aplica automaticamente a gratuidade." : "Transfira apenas depois de submeter um anúncio pago. Envie o comprovativo em Minha Conta e aguarde a confirmação administrativa."}</p>
+                  <p style={{ margin: ".2rem 0 0", color: "#FDE68A", fontSize: ".76rem", lineHeight: 1.45 }}>{canClaimFreeSlot ? "Não efetue pagamentos enquanto houver vagas gratuitas disponíveis. A campanha aplica automaticamente a gratuidade." : "Transfira apenas depois de gerar o código CVC em Minha Conta. Use-o como referência da transferência e aguarde a confirmação bancária pelo administrador."}</p>
                   <div style={{ borderTop: "1px solid rgba(181,195,216,.14)", marginTop: ".35rem", paddingTop: ".85rem", display: "grid", gap: ".5rem" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
                       <strong style={{ color: "#F8FAFC", fontSize: ".95rem" }}>Banco Cabo-verdiano de Negócios (BCN)</strong>
