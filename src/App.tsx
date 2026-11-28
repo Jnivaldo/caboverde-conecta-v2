@@ -1012,7 +1012,7 @@ export default function App() {
             />
             <div style={{ display: "grid", gap: ".28rem", minWidth: 0 }}>
               <strong className="site-brand-title">
-                <span>CABOVERDE</span> <span>CONECTA</span>
+                <span>CABO</span><span>VERDE</span> <span>CONECTA</span>
               </strong>
               <div className="site-brand-campaign" style={{ fontSize: "0.82rem", color: "#38D6A0", fontWeight: 600 }}>
                 Campanha de lançamento: até 50 anúncios gratuitos · Após campanha: 1.500 CVE
