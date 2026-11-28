@@ -1073,8 +1073,11 @@ export default function App() {
               header nav.mobile-nav-marquee {
                 display: block !important;
                 width: 100%;
-                overflow: hidden;
+                overflow-x: auto;
+                overflow-y: hidden;
                 white-space: nowrap;
+                scrollbar-width: thin;
+                -webkit-overflow-scrolling: touch;
                 padding: .18rem 0 .35rem;
                 -webkit-mask-image: linear-gradient(90deg, transparent, #000 2%, #000 98%, transparent);
                 mask-image: linear-gradient(90deg, transparent, #000 2%, #000 98%, transparent);
@@ -1084,8 +1087,8 @@ export default function App() {
                 width: max-content;
                 align-items: center;
                 gap: .45rem;
-                animation: conecta-nav-marquee 24s linear infinite;
-                will-change: transform;
+                animation: none;
+                will-change: auto;
               }
               .mobile-nav-marquee:hover .mobile-nav-marquee-track,
               .mobile-nav-marquee:focus-within .mobile-nav-marquee-track {
