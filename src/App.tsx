@@ -1071,6 +1071,7 @@ export default function App() {
             </div>
           </nav>
           <style>{`
+            .mobile-nav-marquee-track { display: contents; }
             @media (max-width: 700px) {
               header nav.mobile-nav-marquee {
                 display: block !important;
