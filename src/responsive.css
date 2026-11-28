@@ -366,6 +366,11 @@ main article.listing-card button[aria-label^="Ver fotografia"] {
   letter-spacing: .005em;
 }
 @media (max-width: 700px) {
+  .site-brand > img {
+    width: 96px !important;
+    height: 96px !important;
+    flex: 0 0 96px !important;
+  }
   .site-brand {
     width: 100%;
     padding: .28rem .1rem .48rem;
