@@ -400,6 +400,7 @@ export default function App() {
   const [lightbox, setLightbox] = useState<{ src: string; title: string; images: { id: string; url: string }[]; index: number } | null>(null);
   const lightboxTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("fraude");
   const [reportDetails, setReportDetails] = useState("");
@@ -2008,31 +2009,76 @@ export default function App() {
 
       <footer
         style={{
-          marginTop: "2rem",
-          padding: "2rem 1.25rem",
-          background: "linear-gradient(180deg, #10182A 0%, #0B1220 100%)",
-          borderTop: "1px solid rgba(181,195,216,0.18)",
+          marginTop: "2.5rem",
+          padding: "2.5rem 1.25rem 1.15rem",
+          background: "linear-gradient(180deg, #10182A 0%, #080E1B 100%)",
+          borderTop: "1px solid rgba(181,195,216,0.2)",
         }}
       >
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1.25rem", flexWrap: "wrap" }}>
-          <div style={{ flex: "1 1 260px" }}>
-            <strong style={{ display: "block", color: "#F8FAFC", fontSize: "1.05rem", marginBottom: "0.35rem" }}>Precisa de ajuda? Estamos aqui para si.</strong>
-            <p style={{ margin: 0, color: "#B5C3D8", fontSize: "0.88rem", lineHeight: 1.6 }}>Fale diretamente com a nossa equipa de suporte humano pelo WhatsApp. Teremos todo o gosto em esclarecer as suas dúvidas.</p>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr)", gap: "2rem", alignItems: "start" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem", minWidth: 0 }}>
+            <img
+              src="https://raw.githubusercontent.com/Jnivaldo/caboverde-conecta-v2/main/Logo%20caboverdeconecta.png"
+              alt="Logótipo CaboVerde Conecta"
+              width="92"
+              height="92"
+              loading="lazy"
+              style={{ width: 92, height: 92, objectFit: "contain", flex: "0 0 auto" }}
+            />
+            <div style={{ minWidth: 0 }}>
+              <strong style={{ display: "block", color: "#F8FAFC", fontSize: "1.12rem", letterSpacing: "-.025em", margin: "0.15rem 0 .45rem" }}>CaboVerde Conecta</strong>
+              <p style={{ margin: 0, color: "#AFC0D5", fontSize: ".88rem", lineHeight: 1.65 }}>O ponto de encontro entre quem procura e quem oferece em Cabo Verde.</p>
+            </div>
           </div>
-          <a
-            href="https://wa.me/2389823835?text=Ol%C3%A1%21%20Preciso%20de%20ajuda%20com%20o%20CaboVerde%20Conecta."
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Falar com o suporte humano do CaboVerde Conecta pelo WhatsApp"
-            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.6rem", padding: "0.85rem 1.15rem", borderRadius: 12, background: "#16A34A", border: "1px solid #22C55E", color: "#FFFFFF", textDecoration: "none", fontWeight: 750, fontSize: "0.92rem", boxShadow: "0 8px 22px rgba(22,163,74,.2)" }}
-          >
-            <span aria-hidden="true">✆</span> Suporte humano · WhatsApp
-          </a>
+          <div style={{ display: "grid", alignContent: "start", gap: ".7rem" }}>
+            <strong style={{ color: "#F8FAFC", fontSize: ".9rem", letterSpacing: ".04em" }}>CONTACTOS</strong>
+            <a href="mailto:jnivaldoliveira@gmail.com" style={{ color: "#D7E6F4", textDecoration: "none", fontSize: ".9rem", lineHeight: 1.5, overflowWrap: "anywhere" }}>✉ jnivaldoliveira@gmail.com</a>
+            <a href="https://wa.me/2389823835?text=Ol%C3%A1%21%20Preciso%20de%20ajuda%20com%20o%20CaboVerde%20Conecta." target="_blank" rel="noopener noreferrer" style={{ color: "#8EF0C8", textDecoration: "none", fontSize: ".9rem", lineHeight: 1.5 }}>WhatsApp · +238 982 38 35 ↗</a>
+            <span style={{ color: "#8192AA", fontSize: ".8rem" }}>Apoio a utilizadores e anunciantes</span>
+          </div>
+          <div style={{ display: "grid", alignContent: "start", gap: ".7rem" }}>
+            <strong style={{ color: "#F8FAFC", fontSize: ".9rem", letterSpacing: ".04em" }}>INFORMAÇÃO</strong>
+            <button type="button" onClick={() => setPrivacyOpen(true)} style={{ justifySelf: "start", border: 0, padding: 0, background: "transparent", color: "#D7E6F4", textDecoration: "none", fontSize: ".9rem", cursor: "pointer", textAlign: "left" }}>Política de Privacidade</button>
+            <span style={{ color: "#8192AA", fontSize: ".82rem", lineHeight: 1.55 }}>A sua confiança e a proteção dos seus dados são importantes para nós.</span>
+          </div>
         </div>
-        <div style={{ maxWidth: 1200, margin: "1.25rem auto 0", paddingTop: "0.85rem", borderTop: "1px solid rgba(181,195,216,0.1)", color: "#8192AA", fontSize: "0.76rem" }}>
-          CaboVerde Conecta · Estamos disponíveis para ajudar.
+        <div style={{ maxWidth: 1200, margin: "2rem auto 0", paddingTop: "1rem", borderTop: "1px solid rgba(181,195,216,0.12)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem", flexWrap: "wrap", color: "#8192AA", fontSize: ".76rem" }}>
+          <span>© {new Date().getFullYear()} CaboVerde Conecta. Todos os direitos reservados.</span>
+          <span>Feito para ligar Cabo Verde.</span>
         </div>
       </footer>
+
+      {privacyOpen && (
+        <div role="dialog" aria-modal="true" aria-labelledby="privacy-title" onClick={() => setPrivacyOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 120, background: "rgba(3,6,15,.88)", backdropFilter: "blur(8px)", overflowY: "auto", padding: "1rem" }}>
+          <section onClick={(event) => event.stopPropagation()} style={{ width: "min(820px,100%)", margin: "2rem auto", padding: "clamp(1rem,3vw,2rem)", background: "#10182A", border: "1px solid rgba(181,195,216,.22)", borderRadius: 18, boxShadow: "0 28px 75px rgba(0,0,0,.5)", color: "#D7E6F4", lineHeight: 1.7 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: "1rem" }}>
+              <div><span style={{ color: "#38D6A0", fontSize: ".72rem", fontWeight: 800, letterSpacing: ".1em" }}>CABOVERDE CONECTA</span><h2 id="privacy-title" style={{ color: "#F8FAFC", margin: ".2rem 0 0", fontSize: "1.55rem" }}>Política de Privacidade</h2></div>
+              <button type="button" onClick={() => setPrivacyOpen(false)} aria-label="Fechar política de privacidade" style={{ ...secondaryBtnStyle, width: "auto", padding: ".55rem .8rem" }}>Fechar ×</button>
+            </div>
+            <p style={{ color: "#AFC0D5", fontSize: ".82rem" }}>Última atualização: 28 de novembro de 2026</p>
+            <p>Esta política explica, de forma clara, como o CaboVerde Conecta recolhe, utiliza, conserva e protege informações quando visita a plataforma, cria uma conta, publica um anúncio ou entra em contacto connosco.</p>
+            <h3 style={{ color: "#F8FAFC" }}>1. Que informações podemos recolher</h3>
+            <p>Podemos tratar dados de conta e autenticação (como nome, endereço de email e dados necessários para iniciar sessão, incluindo através do Google); dados fornecidos nos anúncios (título, descrição, localização, fotografias, preço e contactos que o anunciante decida divulgar); mensagens enviadas ao suporte; denúncias de anúncios; e informação técnica básica necessária para segurança, funcionamento e diagnóstico da plataforma.</p>
+            <h3 style={{ color: "#F8FAFC" }}>2. Para que utilizamos os dados</h3>
+            <p>Utilizamos os dados para criar e gerir contas, apresentar e administrar anúncios, permitir o contacto direto entre interessados e anunciantes, prestar apoio, gerir denúncias e prevenir fraude ou abuso, verificar pagamentos relacionados com anúncios e manter a segurança e o funcionamento do serviço.</p>
+            <h3 style={{ color: "#F8FAFC" }}>3. Anúncios e partilha de informação</h3>
+            <p>Os dados incluídos num anúncio publicado — incluindo fotografias, localização e contactos escolhidos pelo anunciante — podem ficar visíveis publicamente. O CaboVerde Conecta não deve ser utilizado para publicar dados pessoais de terceiros sem autorização. Quando contacta um anunciante, a comunicação pode continuar diretamente por telefone ou WhatsApp, sujeito também às políticas desses serviços.</p>
+            <h3 style={{ color: "#F8FAFC" }}>4. Prestadores de serviços</h3>
+            <p>A plataforma utiliza prestadores tecnológicos para alojamento, base de dados, autenticação e operação do site, incluindo serviços da Supabase e da Vercel. Se escolher iniciar sessão com Google, a autenticação também envolve a Google. Estes prestadores tratam informação na medida necessária à prestação dos respetivos serviços, de acordo com os seus próprios termos e políticas.</p>
+            <h3 style={{ color: "#F8FAFC" }}>5. Conservação e segurança</h3>
+            <p>Conservamos os dados pelo período necessário para prestar o serviço, cumprir obrigações aplicáveis, resolver disputas e proteger a plataforma. Aplicamos medidas técnicas e organizativas razoáveis para proteger a informação, mas nenhum serviço online pode garantir segurança absoluta.</p>
+            <h3 style={{ color: "#F8FAFC" }}>6. Os seus direitos e escolhas</h3>
+            <p>Pode solicitar acesso, correção ou eliminação dos seus dados pessoais, bem como colocar questões sobre a sua utilização, através dos contactos indicados abaixo. Alguns dados poderão ter de ser conservados quando exista uma obrigação legal ou necessidade legítima de segurança, prevenção de fraude ou resolução de litígios. Pode também optar por não divulgar dados pessoais nos campos públicos dos anúncios.</p>
+            <h3 style={{ color: "#F8FAFC" }}>7. Cookies e tecnologias semelhantes</h3>
+            <p>A plataforma e os seus prestadores podem utilizar armazenamento local, cookies ou tecnologias semelhantes estritamente necessários à autenticação, segurança, preferências e funcionamento do serviço. As definições do navegador permitem gerir ou bloquear cookies, embora algumas funcionalidades possam deixar de funcionar corretamente.</p>
+            <h3 style={{ color: "#F8FAFC" }}>8. Alterações a esta política</h3>
+            <p>Podemos atualizar esta política para refletir alterações no serviço ou nas obrigações aplicáveis. A versão em vigor será disponibilizada nesta página, com a respetiva data de atualização.</p>
+            <h3 style={{ color: "#F8FAFC" }}>9. Contactos</h3>
+            <p>Para questões ou pedidos relacionados com privacidade e dados pessoais, contacte-nos por <a href="mailto:jnivaldoliveira@gmail.com" style={{ color: "#8EF0C8" }}>jnivaldoliveira@gmail.com</a> ou pelo WhatsApp <a href="https://wa.me/2389823835" target="_blank" rel="noopener noreferrer" style={{ color: "#8EF0C8" }}>+238 982 38 35</a>.</p>
+            <p style={{ color: "#8192AA", fontSize: ".8rem", borderTop: "1px solid rgba(181,195,216,.12)", paddingTop: ".8rem" }}>Esta política é uma informação geral sobre o funcionamento da plataforma e deve ser revista para refletir a entidade jurídica responsável e os requisitos legais aplicáveis em Cabo Verde antes de ser considerada aconselhamento jurídico.</p>
+          </section>
+        </div>
+      )}
 
       {/* Assistente temporariamente oculto; a implementação será preservada para uma revisão posterior. */}
       {selectedListing && (
