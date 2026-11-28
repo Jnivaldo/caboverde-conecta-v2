@@ -1031,17 +1031,14 @@ export default function App() {
                   { key: "requests", label: "Procuro & Ofereço" },
                   ...(canAdmin ? [{ key: "admin", label: "Administração" }] : []),
                 ];
-                return [...navItems, ...navItems].map((item, index) => {
-                  const duplicate = index >= navItems.length;
+                return navItems.map((item) => {
                   const active = tab === item.key;
                   return (
                     <button
-                      key={item.key + (duplicate ? "-duplicate" : "")}
+                      key={item.key}
                       type="button"
                       className={item.key === "account" ? "account-nav-button" : undefined}
-                      aria-hidden={duplicate || undefined}
                       aria-current={active ? "page" : undefined}
-                      tabIndex={duplicate ? -1 : 0}
                       onClick={() => {
                         if (item.key === "myListings") {
                           setTab("account");
