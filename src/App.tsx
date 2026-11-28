@@ -1062,17 +1062,18 @@ export default function App() {
               );
             })}
           </nav>
-          <button
-            type="button"
-            onClick={() => setShareOpen(true)}
-            aria-label="Partilhar CaboVerde Conecta"
-            title="Partilhar CaboVerde Conecta"
-            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: ".35rem", flex: "0 0 auto", minHeight: 34, padding: ".38rem .58rem", border: "1px solid rgba(181,195,216,.22)", borderRadius: 9, background: "rgba(255,255,255,.035)", color: "#B9C7D9", fontSize: ".76rem", fontWeight: 650, cursor: "pointer" }}
-          >
-            <span aria-hidden="true" style={{ fontSize: ".92rem", lineHeight: 1 }}>↗</span>
-            <span>Partilhar</span>
-          </button>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.7rem", flex: "1 1 100%", width: "100%", minHeight: 52, paddingTop: "0.55rem", borderTop: "1px solid rgba(181,195,216,0.14)", flexWrap: "nowrap", minWidth: 0, position: "relative", zIndex: 50 }}>
+          <div className="header-utility-group" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: ".5rem", flex: "0 0 auto", minWidth: 0, position: "relative", zIndex: 50 }}>
+            <button
+              type="button"
+              onClick={() => setShareOpen(true)}
+              aria-label="Partilhar CaboVerde Conecta"
+              title="Partilhar CaboVerde Conecta"
+              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: ".3rem", flex: "0 0 auto", minHeight: 34, padding: ".34rem .52rem", border: "1px solid rgba(181,195,216,.22)", borderRadius: 9, background: "rgba(255,255,255,.035)", color: "#B9C7D9", fontSize: ".74rem", fontWeight: 650, cursor: "pointer", whiteSpace: "nowrap" }}
+            >
+              <span aria-hidden="true" style={{ fontSize: ".9rem", lineHeight: 1 }}>↗</span>
+              <span>Partilhar</span>
+            </button>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: ".45rem", flex: "0 1 auto", minWidth: 0, flexWrap: "nowrap" }}>
             <div
               role="status"
               aria-live="polite"
@@ -1104,6 +1105,7 @@ export default function App() {
               {authLoading ? "A verificar sessão..." : authUser ? "Sessão iniciada" : "Não autenticado"}
             </div>
             <React.Suspense fallback={<span role="status" style={{ color: "#AFC0D6", fontSize: ".78rem" }}>A carregar notificações…</span>}><NotificationCenter userId={authUser?.id ?? null} onNavigate={(nextTab) => setTab(nextTab)} /></React.Suspense>
+            </div>
           </div>
         </div>
       </header>
