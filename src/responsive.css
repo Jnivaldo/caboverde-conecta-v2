@@ -663,3 +663,49 @@ main article.listing-card-featured .listing-featured-badge {
     padding: 0.9rem 1rem;
   }
 }
+
+
+/* Reforço explícito do botão Publicar anúncio para prevalecer sobre estilos globais. */
+main section button.publish-submit-button {
+  display: block !important;
+  width: 100% !important;
+  min-height: 64px !important;
+  padding: 1.05rem 1.5rem !important;
+  border: 2px solid #60A5FA !important;
+  border-radius: 15px !important;
+  background: linear-gradient(110deg, #2563EB 0%, #1D4ED8 45%, #172554 100%) !important;
+  color: #FFFFFF !important;
+  font-family: inherit !important;
+  font-size: 1.08rem !important;
+  font-weight: 900 !important;
+  letter-spacing: .025em !important;
+  line-height: 1.25 !important;
+  text-align: center !important;
+  text-shadow: 0 1px 1px rgba(0,0,0,.2) !important;
+  box-shadow: 0 10px 26px rgba(37,99,235,.42), inset 0 1px 0 rgba(255,255,255,.22) !important;
+  cursor: pointer !important;
+  transition: transform .18s ease, filter .18s ease, box-shadow .18s ease !important;
+}
+main section button.publish-submit-button:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  filter: brightness(1.15) !important;
+  box-shadow: 0 14px 32px rgba(37,99,235,.52), inset 0 1px 0 rgba(255,255,255,.25) !important;
+}
+main section button.publish-submit-button:active:not(:disabled) {
+  transform: translateY(0) !important;
+}
+main section button.publish-submit-button:focus-visible {
+  outline: 3px solid #93C5FD !important;
+  outline-offset: 4px !important;
+}
+main section button.publish-submit-button:disabled {
+  opacity: .72 !important;
+  cursor: wait !important;
+}
+@media (max-width: 560px) {
+  main section button.publish-submit-button {
+    min-height: 60px !important;
+    font-size: 1rem !important;
+    padding: .95rem 1rem !important;
+  }
+}
