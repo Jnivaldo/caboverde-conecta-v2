@@ -1003,16 +1003,6 @@ export default function App() {
           }}
         >
           <div className="site-brand" style={{ display: "flex", alignItems: "center", gap: "0.85rem", minWidth: 0 }}>
-            <button
-              type="button"
-              onClick={() => setShareOpen(true)}
-              aria-label="Partilhar CaboVerde Conecta"
-              title="Partilhar CaboVerde Conecta"
-              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: ".4rem", flex: "0 0 auto", minHeight: 42, padding: ".55rem .72rem", border: "1px solid rgba(142,240,200,.55)", borderRadius: 11, background: "linear-gradient(135deg,#0D8060,#145A50)", color: "#FFFFFF", fontSize: ".82rem", fontWeight: 850, cursor: "pointer", boxShadow: "0 5px 16px rgba(0,0,0,.2)" }}
-            >
-              <span aria-hidden="true" style={{ fontSize: "1.05rem", lineHeight: 1 }}>↗</span>
-              <span>Partilhar</span>
-            </button>
             <img
               src="https://raw.githubusercontent.com/Jnivaldo/caboverde-conecta-v2/main/Logo%20caboverdeconecta.png"
               alt="Logótipo CaboVerde Conecta"
@@ -1072,6 +1062,16 @@ export default function App() {
               );
             })}
           </nav>
+          <button
+            type="button"
+            onClick={() => setShareOpen(true)}
+            aria-label="Partilhar CaboVerde Conecta"
+            title="Partilhar CaboVerde Conecta"
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: ".35rem", flex: "0 0 auto", minHeight: 34, padding: ".38rem .58rem", border: "1px solid rgba(181,195,216,.22)", borderRadius: 9, background: "rgba(255,255,255,.035)", color: "#B9C7D9", fontSize: ".76rem", fontWeight: 650, cursor: "pointer" }}
+          >
+            <span aria-hidden="true" style={{ fontSize: ".92rem", lineHeight: 1 }}>↗</span>
+            <span>Partilhar</span>
+          </button>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.7rem", flex: "1 1 100%", width: "100%", minHeight: 52, paddingTop: "0.55rem", borderTop: "1px solid rgba(181,195,216,0.14)", flexWrap: "nowrap", minWidth: 0, position: "relative", zIndex: 50 }}>
             <div
               role="status"
