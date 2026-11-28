@@ -48,8 +48,21 @@ export default function HomeSearchSpotlight({
         .home-search-quick-label { color:#AFC2D9; font-size:.76rem; font-weight:700; margin-right:.15rem; }
         .home-search-chip { padding:.42rem .78rem; border:1px solid rgba(191,219,254,.28); border-radius:999px; background:rgba(7,11,24,.25); color:#EAF2FC; font:650 .78rem system-ui,-apple-system,sans-serif; cursor:pointer; }
         .home-search-chip[aria-pressed="true"] { border-color:#6EE7B7; background:rgba(16,185,129,.2); color:#A7F3D0; }
-        @media(max-width:760px) { .home-search-form { grid-template-columns:1fr 1fr; gap:.45rem; padding:.5rem; } .home-search-input { grid-column:1 / -1; min-height:58px; } .home-search-select { min-height:48px; border:1px solid #E2E8F0; border-radius:9px; } .home-search-submit { grid-column:1 / -1; min-height:52px; } }
-        @media(max-width:420px) { .home-search-form { grid-template-columns:1fr; } .home-search-input,.home-search-select,.home-search-submit { grid-column:auto; } }
+        @media(max-width:760px) {
+          .home-search-form { grid-template-columns:1fr 1fr; gap:.45rem; padding:.5rem; }
+          .home-search-input { grid-column:1 / -1; min-height:58px; }
+          .home-search-select { min-height:48px; border:1px solid #E2E8F0; border-radius:9px; }
+          .home-search-submit { grid-column:1 / -1; min-height:52px; }
+          .home-search-quick { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.42rem; margin-top:.75rem; }
+          .home-search-quick-label { grid-column:1 / -1; margin:0 0 .08rem; }
+          .home-search-chip { min-width:0; padding:.52rem .18rem; text-align:center; white-space:nowrap; font-size:.76rem; line-height:1.15; }
+        }
+        @media(max-width:420px) {
+          .home-search-form { grid-template-columns:1fr; }
+          .home-search-input,.home-search-select,.home-search-submit { grid-column:auto; }
+          .home-search-quick { grid-template-columns:repeat(3,minmax(0,1fr)); gap:.38rem; }
+          .home-search-chip { padding:.48rem .12rem; font-size:.72rem; }
+        }
       `}</style>
       <div className="home-search-kicker"><span aria-hidden="true" style={{ width:8,height:8,borderRadius:99,background:"#38D6A0",boxShadow:"0 0 12px rgba(56,214,160,.65)" }} /> Encontre no mercado de Cabo Verde</div>
       <h2 className="home-search-title">O que procura hoje?</h2>
