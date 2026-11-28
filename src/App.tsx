@@ -240,7 +240,7 @@ function ListingDescription({ description }: { description: string }) {
 export default function App() {
   // Simulação visual isolada: nunca altera a campanha nem permite submeter pagamentos/anúncios.
   const priceTestMode = new URLSearchParams(window.location.search).get("modo-teste-precos") === "1";
-  const [tab, setTab] = useState<"home" | "publish" | "account" | "admin" | "requests">("home");
+  const [tab, setTab] = useState<"home" | "publish" | "account" | "admin" | "requests">(priceTestMode ? "publish" : "home");
   const [procurementFocus, setProcurementFocus] = useState<{ requestId: string; offerId?: string } | null>(null);
   const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
   const [featuredPromotions, setFeaturedPromotions] = useState<Array<{ id: string; listing_id: string; owner_id: string; amount_cve: number; duration_days: number; status: string; bank?: "BCA" | "BCN" | null; payment_code?: string | null; payment_reference: string | null; admin_note: string | null; created_at: string; featured_until: string | null }>>([]);
