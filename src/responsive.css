@@ -254,7 +254,8 @@ p, h1, h2, h3, strong, span, a, li, label {
   .listing-search-filters .filter-half { grid-column: span 1; min-width: 0 !important; }
   .listing-search-filters input,
   .listing-search-filters select { min-height: 44px; padding-left: .65rem !important; padding-right: .55rem !important; }
-  .listing-search-filters .filter-clear { width: 100%; }
+  /* Esconder a ação "Limpar filtros" no telemóvel para poupar espaço. */
+  .listing-search-filters .filter-clear { display: none !important; }
 }
 @media (max-width: 360px) {
   main section div.listing-search-filters { grid-template-columns: minmax(0, 1fr) !important; }
