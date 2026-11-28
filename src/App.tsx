@@ -241,8 +241,9 @@ export default function App() {
   const [tab, setTab] = useState<"home" | "publish" | "account" | "admin" | "requests">("home");
   const [procurementFocus, setProcurementFocus] = useState<{ requestId: string; offerId?: string } | null>(null);
   const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
-  const [featuredPromotions, setFeaturedPromotions] = useState<Array<{ id: string; listing_id: string; owner_id: string; amount_cve: number; duration_days: number; status: string; payment_reference: string | null; admin_note: string | null; created_at: string; featured_until: string | null }>>([]);
+  const [featuredPromotions, setFeaturedPromotions] = useState<Array<{ id: string; listing_id: string; owner_id: string; amount_cve: number; duration_days: number; status: string; bank?: "BCA" | "BCN" | null; payment_code?: string | null; payment_reference: string | null; admin_note: string | null; created_at: string; featured_until: string | null }>>([]);
   const [featuredPromotionBusy, setFeaturedPromotionBusy] = useState<string | null>(null);
+  const [featuredBank, setFeaturedBank] = useState<"BCA" | "BCN">("BCA");
   const [featuredSchemaAvailable, setFeaturedSchemaAvailable] = useState(false);
   const [auditLogs, setAuditLogs] = useState<string[]>([]);
   const [authUser, setAuthUser] = useState<User | null>(null);
@@ -341,7 +342,7 @@ export default function App() {
     let active = true;
     async function loadFeaturedPromotions() {
       if (!authUser) { setFeaturedPromotions([]); return; }
-      const { data, error } = await supabase.from("listing_featured_promotions").select("id, listing_id, owner_id, amount_cve, duration_days, status, payment_reference, admin_note, created_at, featured_until").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("listing_featured_promotions").select("id, listing_id, owner_id, amount_cve, duration_days, status, bank, payment_code, payment_reference, admin_note, created_at, featured_until").order("created_at", { ascending: false });
       if (!active) return;
       if (error) { console.error("Falha ao carregar pedidos de destaque:", error.message); return; }
       setFeaturedPromotions((data ?? []) as typeof featuredPromotions);
@@ -530,10 +531,10 @@ export default function App() {
     const alreadyOpen = featuredPromotions.some((promotion) => promotion.listing_id === item.id && ["pending_payment", "active"].includes(promotion.status));
     if (alreadyOpen || item.isFeatured) { setEditFeedback("Este anúncio já tem um pedido pendente ou um destaque ativo."); return; }
     setFeaturedPromotionBusy(item.id);
-    const { error } = await supabase.rpc("request_listing_featured_promotion", { p_listing_id: item.id });
+    const { error } = await supabase.rpc("request_listing_featured_promotion", { p_listing_id: item.id, p_bank: featuredBank });
     setFeaturedPromotionBusy(null);
     if (error) { setEditFeedback("Não foi possível solicitar o destaque: " + error.message); return; }
-    const { data, error: reloadError } = await supabase.from("listing_featured_promotions").select("id, listing_id, owner_id, amount_cve, duration_days, status, payment_reference, admin_note, created_at, featured_until").order("created_at", { ascending: false });
+    const { data, error: reloadError } = await supabase.from("listing_featured_promotions").select("id, listing_id, owner_id, amount_cve, duration_days, status, bank, payment_code, payment_reference, admin_note, created_at, featured_until").order("created_at", { ascending: false });
     if (!reloadError) setFeaturedPromotions((data ?? []) as typeof featuredPromotions);
     setEditFeedback("Pedido registado. Valor: 2.500 CVE por 30 dias. O destaque só será ativado após confirmação manual do pagamento pela equipa.");
   }
@@ -542,7 +543,7 @@ export default function App() {
     if (!authUser || !canAdmin) return;
     let paymentReference: string | null = null;
     if (decision === "confirm") {
-      if (!window.confirm("Confirma que recebeu e verificou o pagamento de 2.500 CVE deste pedido?")) return;
+      if (!window.confirm("Confirma que recebeu e verificou o pagamento deste pedido de " + (featuredPromotions.find((entry) => entry.id === promotionId)?.amount_cve ?? 0).toLocaleString("pt-PT") + " CVE?")) return;
       paymentReference = window.prompt("Referência do pagamento/comprovativo (opcional):")?.trim().slice(0, 200) || null;
     } else if (!window.confirm("Tem a certeza de que pretende rejeitar este pedido de destaque?")) return;
     const promotion = featuredPromotions.find((entry) => entry.id === promotionId);
@@ -550,7 +551,7 @@ export default function App() {
     const { error } = await supabase.rpc("review_listing_featured_promotion", { p_promotion_id: promotionId, p_decision: decision, p_payment_reference: paymentReference, p_admin_note: null });
     setFeaturedPromotionBusy(null);
     if (error) { setFeedback("Não foi possível rever o pedido: " + error.message); return; }
-    const { data, error: reloadError } = await supabase.from("listing_featured_promotions").select("id, listing_id, owner_id, amount_cve, duration_days, status, payment_reference, admin_note, created_at, featured_until").order("created_at", { ascending: false });
+    const { data, error: reloadError } = await supabase.from("listing_featured_promotions").select("id, listing_id, owner_id, amount_cve, duration_days, status, bank, payment_code, payment_reference, admin_note, created_at, featured_until").order("created_at", { ascending: false });
     if (!reloadError) setFeaturedPromotions((data ?? []) as typeof featuredPromotions);
     if (decision === "confirm" && promotion) {
       const { data: listingData } = await supabase.from("listings").select("*").eq("id", promotion.listing_id).maybeSingle();
@@ -1806,7 +1807,7 @@ export default function App() {
                       return <div style={{ ...subCardStyle, border: "1px solid rgba(212,175,55,.45)", gap: ".45rem" }}>
                         <strong style={{ color: "#FDE68A" }}>✦ Destaque Premium · 2.500 CVE / 30 dias</strong>
                         <span style={{ color: "#B5C3D8", fontSize: ".82rem" }}>Mais visibilidade na página inicial, etiqueta exclusiva e moldura dourada. O destaque só começa após confirmação do pagamento.</span>
-                        {promotion ? <span style={{ color: promotion.status === "active" ? "#86EFAC" : "#FCD34D", fontWeight: 750, fontSize: ".82rem" }}>{promotion.status === "active" ? "Destaque ativo até " + new Date(promotion.featured_until || "").toLocaleDateString("pt-PT") : "Pedido registado — aguarda pagamento e confirmação"}</span> : <button type="button" disabled={featuredPromotionBusy === item.id || item.isFeatured} onClick={() => void requestFeaturedPromotion(item)} style={{ ...actionBtnStyle("#9A7416"), color: "#FFF7D6", border: "1px solid rgba(253,230,138,.55)" }}>{featuredPromotionBusy === item.id ? "A registar pedido…" : "Quero Destaque Premium · 2.500 CVE"}</button>}
+                        {promotion ? <><span style={{ color: promotion.status === "active" ? "#86EFAC" : "#FCD34D", fontWeight: 750, fontSize: ".82rem" }}>{promotion.status === "active" ? "Destaque ativo até " + new Date(promotion.featured_until || "").toLocaleDateString("pt-PT") : "Pedido registado — " + promotion.amount_cve.toLocaleString("pt-PT") + " CVE · " + (promotion.bank || "BCA") + " · aguarda pagamento e confirmação"}</span>{promotion.status === "pending_payment" && promotion.payment_code && <div style={{ display: "flex", alignItems: "center", gap: ".55rem", flexWrap: "wrap" }}><strong style={{ color: "#FDE68A", letterSpacing: ".08em", fontSize: "1.15rem" }}>{promotion.payment_code}</strong><button type="button" onClick={() => void navigator.clipboard?.writeText(promotion.payment_code || "")} style={secondaryBtnStyle}>Copiar código</button></div>}</> : <><label style={{ color: "#CBD5E1", fontSize: ".8rem" }}>Banco para transferência <select value={featuredBank} onChange={(event) => setFeaturedBank(event.target.value as "BCA" | "BCN")} style={inputStyle}><option value="BCA">BCA</option><option value="BCN">BCN</option></select></label><button type="button" disabled={featuredPromotionBusy === item.id || item.isFeatured} onClick={() => void requestFeaturedPromotion(item)} style={{ ...actionBtnStyle("#9A7416"), color: "#FFF7D6", border: "1px solid rgba(253,230,138,.55)" }}>{featuredPromotionBusy === item.id ? "A registar pedido…" : "Quero Destaque Premium · preço da campanha"}</button></>}
                       </div>;
                     })()}
                     {item.listingStatus === "suspended" && <button type="button" onClick={() => void republishListing(item)} style={actionBtnStyle("#15803D")}>Voltar a publicar</button>}
@@ -1914,12 +1915,12 @@ export default function App() {
             <div style={{ display: "grid", gap: "0.9rem", marginBottom: "1.5rem" }}>
               <section style={{ ...subCardStyle, border: "1px solid rgba(212,175,55,.42)" }}>
                 <strong style={{ color: "#FDE68A", fontSize: "1.05rem" }}>Pedidos de Destaque Premium</strong>
-                <span style={{ color: "#B5C3D8", fontSize: ".82rem" }}>2.500 CVE por anúncio · 30 dias. Confirme apenas pagamentos efetivamente recebidos e verificados.</span>
+                <span style={{ color: "#B5C3D8", fontSize: ".82rem" }}>1.000 CVE durante a campanha de lançamento; depois 2.500 CVE · 30 dias. Confirme apenas pagamentos efetivamente recebidos e verificados.</span>
                 {featuredPromotions.filter((promotion) => promotion.status === "pending_payment").length === 0 ? <span style={{ color: "#94A3B8", fontSize: ".85rem" }}>Não existem pedidos pendentes de pagamento.</span> : featuredPromotions.filter((promotion) => promotion.status === "pending_payment").map((promotion) => {
                   const promotedListing = listings.find((entry) => entry.id === promotion.listing_id);
                   return <div key={promotion.id} style={{ ...rowCardStyle, display: "grid", gap: ".55rem" }}>
                     <strong>{promotedListing?.title || "Anúncio " + promotion.listing_id}</strong>
-                    <span style={{ color: "#B5C3D8", fontSize: ".82rem" }}>Anunciante: {promotedListing?.ownerEmail || promotion.owner_id} · {promotion.amount_cve.toLocaleString("pt-PT")} CVE · {promotion.duration_days} dias · Pedido em {new Date(promotion.created_at).toLocaleString("pt-PT")}</span>
+                    <span style={{ color: "#B5C3D8", fontSize: ".82rem" }}>Anunciante: {promotedListing?.ownerEmail || promotion.owner_id} · {promotion.amount_cve.toLocaleString("pt-PT")} CVE · {promotion.duration_days} dias · {promotion.bank || "Banco por selecionar"} · Pedido em {new Date(promotion.created_at).toLocaleString("pt-PT")}</span><strong style={{ color: "#FDE68A", letterSpacing: ".08em" }}>Referência CVC: {promotion.payment_code || "Não disponível"}</strong>
                     <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
                       <button type="button" disabled={featuredPromotionBusy === promotion.id} onClick={() => void reviewFeaturedPromotion(promotion.id, "confirm")} style={actionBtnStyle("#15803D")}>{featuredPromotionBusy === promotion.id ? "A processar…" : "Confirmar pagamento e ativar"}</button>
                       <button type="button" disabled={featuredPromotionBusy === promotion.id} onClick={() => void reviewFeaturedPromotion(promotion.id, "reject")} style={actionBtnStyle("#991B1B")}>Rejeitar pedido</button>
