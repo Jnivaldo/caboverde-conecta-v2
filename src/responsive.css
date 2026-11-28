@@ -366,26 +366,42 @@ main article.listing-card button[aria-label^="Ver fotografia"] {
   letter-spacing: .005em;
 }
 @media (max-width: 700px) {
-  .site-brand > img {
-    width: 96px !important;
-    height: 96px !important;
-    flex: 0 0 96px !important;
-  }
+  /* No telemóvel, o logótipo acompanha a altura total do título e da faixa da campanha. */
   .site-brand {
     width: 100%;
     padding: .28rem .1rem .48rem;
-    gap: .38rem;
+    gap: .55rem;
+    align-items: stretch !important;
+  }
+  .site-brand > img {
+    width: clamp(76px, 22vw, 88px) !important;
+    height: auto !important;
+    min-height: 88px !important;
+    aspect-ratio: 1 / 1;
+    align-self: stretch;
+    flex: 0 0 clamp(76px, 22vw, 88px) !important;
+    object-fit: contain;
+  }
+  .site-brand > div {
+    min-width: 0;
+    min-height: 88px;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: .38rem !important;
   }
   .site-brand-title {
-    font-size: clamp(1.55rem, 7vw, 2.05rem);
+    font-size: clamp(1.45rem, 6.5vw, 1.9rem);
     letter-spacing: -.06em;
     line-height: 1;
   }
   .site-brand-campaign {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    width: fit-content;
+    width: 100%;
     max-width: 100%;
+    box-sizing: border-box;
     padding: .32rem .55rem;
     border: 1px solid rgba(56,214,160,.32);
     border-radius: 7px;
