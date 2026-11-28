@@ -694,11 +694,10 @@ export default function App() {
       p_whatsapp: cleanWhatsApp,
       p_phone: cleanPhone,
       p_image_url: imageUrl.trim(),
-      p_is_featured: publicationPlan === "premium",
     };
     const { data, error } = paymentMethod === "free_launch"
       ? await supabase.rpc("submit_listing", submitArgs)
-      : await supabase.rpc("submit_paid_listing", submitArgs);
+      : await supabase.rpc("submit_paid_listing", { ...submitArgs, p_is_featured: publicationPlan === "premium" });
 
     if (error) {
       const message = error.message.includes("CAMPAIGN_FULL_PAYMENT_NOT_AVAILABLE")
