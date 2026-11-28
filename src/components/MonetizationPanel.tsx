@@ -101,15 +101,16 @@ export default function MonetizationPanel({ canAdmin }: { canAdmin: boolean }) {
           <p style={{ ...muted, margin: ".3rem 0 0" }}>Os primeiros 50 anúncios recebem vaga gratuita. Pedidos e propostas em Procuro &amp; Ofereço continuam gratuitos.</p>
         </div>
         <div style={{ border: "1px solid rgba(96,165,250,.3)", borderRadius: 10, padding: ".8rem", background: "rgba(29,78,216,.1)" }}>
-          <strong style={{ color: "#93C5FD", fontSize: ".86rem" }}>Preço após a campanha</strong>
-          <p style={{ margin: ".3rem 0 0", color: "#F8FAFC", fontSize: "1.15rem", fontWeight: 900 }}>1.500 CVE <span style={{ color: "#AFC0D6", fontSize: ".75rem", fontWeight: 600 }}>por anúncio</span></p>
-          <p style={{ ...muted, margin: ".2rem 0 0" }}>Preço definido; checkout e cobrança ainda não ativados.</p>
+          <strong style={{ color: "#93C5FD", fontSize: ".86rem" }}>Tabela de preços</strong>
+          <p style={{ margin: ".3rem 0 0", color: "#F8FAFC", fontSize: "1rem", fontWeight: 900 }}>Anúncio normal: 1.500 CVE</p>
+          <p style={{ margin: ".2rem 0 0", color: "#FDE68A", fontSize: "1rem", fontWeight: 900 }}>Destaque Premium: 1.000 CVE durante a campanha</p>
+          <p style={{ ...muted, margin: ".2rem 0 0" }}>Após as 50 vagas: anúncio normal 1.500 CVE e Destaque Premium 2.500 CVE por 30 dias. Pagamento por transferência com referência CVC e validação bancária manual.</p>
         </div>
       </div>
 
       <div style={{ border: "1px solid rgba(250,204,21,.35)", borderRadius: 10, padding: ".8rem", background: "rgba(120,85,10,.12)" }}>
-        <strong style={{ color: "#FDE68A", fontSize: ".82rem" }}>Modo de segurança: pagamentos desativados</strong>
-        <p style={{ ...muted, margin: ".25rem 0 0" }}>Nenhuma transferência, referência de pagamento ou cobrança é solicitada nesta fase. {counts.awaitingPayment} anúncio(s) com estado de pagamento pendente; confirme sempre os registos antes de ativar qualquer método.</p>
+        <strong style={{ color: "#FDE68A", fontSize: ".82rem" }}>Validação manual de pagamentos</strong>
+        <p style={{ ...muted, margin: ".25rem 0 0" }}>O código CVC serve apenas como referência da transferência, nunca como comprovativo. Confirme o crédito diretamente no banco antes de aprovar qualquer pedido. {counts.awaitingPayment} anúncio(s) com pagamento pendente.</p>
       </div>
 
       {error && <div role="alert" style={{ color: "#FCA5A5", fontSize: ".8rem" }}>{error}</div>}
