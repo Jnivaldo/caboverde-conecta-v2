@@ -12,6 +12,7 @@ const ProcuroAdminPanel = React.lazy(() => import("./components/ProcuroAdminPane
 const NotificationCenter = React.lazy(() => import("./components/NotificationCenter"));
 const MonetizationPanel = React.lazy(() => import("./components/MonetizationPanel"));
 const ListingPaymentsPanel = React.lazy(() => import("./components/ListingPaymentsPanel"));
+const FinancePanel = React.lazy(() => import("./components/FinancePanel"));
 
 import {
   type Listing,
@@ -506,12 +507,12 @@ export default function App() {
       return true;
     });
     filtered.sort((a, b) => {
+      if (a.isFeatured !== b.isFeatured) return a.isFeatured ? -1 : 1;
       if (query.trim()) {
         const aMatch = getSearchMatch(query, [a.title, a.description, a.category, a.subcategory]);
         const bMatch = getSearchMatch(query, [b.title, b.description, b.category, b.subcategory]);
         if (aMatch !== bMatch) return aMatch === "exact" ? -1 : 1;
       }
-      if (a.isFeatured !== b.isFeatured) return a.isFeatured ? -1 : 1;
       if (sortOrder === "low" || sortOrder === "high") {
         const pa = parsePrice(a.price), pb = parsePrice(b.price);
         if (pa === null && pb === null) return 0;
@@ -1389,7 +1390,7 @@ export default function App() {
                   gap: "1.2rem",
                 }}
               >
-              {publicListings.filter((ad) => !ad.isFeatured).map((ad) => (
+              {publicListings.map((ad) => (
                 <article key={ad.id} className={`listing-card${ad.isFeatured ? " listing-card-featured" : ""}`} style={cardStyle}>
                   <ListingGallery
                     title={ad.title}
@@ -1876,6 +1877,7 @@ export default function App() {
 
         {tab === "admin" && (
           <section style={panelStyle}>
+            <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><FinancePanel canAdmin={canAdmin} /></React.Suspense>
             <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><MonetizationPanel canAdmin={canAdmin} /></React.Suspense>
             <React.Suspense fallback={<div style={{ minHeight: 60 }} />}><ListingPaymentsPanel userId={authUser?.id ?? null} listings={accountListings} canAdmin={canAdmin} onPaymentReviewed={(listingId) => {
               void supabase.from("listings").select("*").eq("id", listingId).maybeSingle().then(({ data, error }) => {
