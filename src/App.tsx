@@ -14,7 +14,6 @@ const MonetizationPanel = React.lazy(() => import("./components/MonetizationPane
 const ListingPaymentsPanel = React.lazy(() => import("./components/ListingPaymentsPanel"));
 const FinancePanel = React.lazy(() => import("./components/FinancePanel"));
 const ListingReportsPanel = React.lazy(() => import("./components/ListingReportsPanel"));
-const ListingReportsPanel = React.lazy(() => import("./components/ListingReportsPanel"));
 
 import {
   type Listing,
@@ -401,11 +400,6 @@ export default function App() {
   const [lightbox, setLightbox] = useState<{ src: string; title: string; images: { id: string; url: string }[]; index: number } | null>(null);
   const lightboxTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
-  const [reportOpen, setReportOpen] = useState(false);
-  const [reportReason, setReportReason] = useState("fraude");
-  const [reportDetails, setReportDetails] = useState("");
-  const [reportFeedback, setReportFeedback] = useState("");
-  const [reportBusy, setReportBusy] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("fraude");
   const [reportDetails, setReportDetails] = useState("");
