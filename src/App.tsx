@@ -1682,8 +1682,14 @@ export default function App() {
                 )}
               </div>
 
-              <button type="submit" disabled={isSubmitting} style={{ ...primaryBtnStyle, opacity: isSubmitting ? 0.72 : 1, cursor: isSubmitting ? "wait" : "pointer", minHeight: 48 }}>
-                {isSubmitting ? "A publicar anúncio… Não feche esta página" : "Publicar Anúncio"}
+              <button
+                type="submit"
+                className="publish-submit-button"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+                style={{ opacity: isSubmitting ? 0.72 : 1, cursor: isSubmitting ? "wait" : "pointer" }}
+              >
+                {isSubmitting ? "A publicar anúncio… Não feche esta página" : "Publicar anúncio"}
               </button>
             </form>
           </section>
