@@ -433,6 +433,7 @@ export default function App() {
   const [phone, setPhone] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("free_launch");
+  const [publicationPlan, setPublicationPlan] = useState<"normal" | "premium">("normal");
   const [proofRef, setProofRef] = useState("");
   const [feedback, setFeedback] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -536,7 +537,7 @@ export default function App() {
     if (error) { setEditFeedback("Não foi possível solicitar o destaque: " + error.message); return; }
     const { data, error: reloadError } = await supabase.from("listing_featured_promotions").select("id, listing_id, owner_id, amount_cve, duration_days, status, bank, payment_code, payment_reference, admin_note, created_at, featured_until").order("created_at", { ascending: false });
     if (!reloadError) setFeaturedPromotions((data ?? []) as typeof featuredPromotions);
-    setEditFeedback("Pedido registado. Valor: 2.500 CVE por 30 dias. O destaque só será ativado após confirmação manual do pagamento pela equipa.");
+    setEditFeedback("Pedido registado. Valor: 1.000 CVE para atualizar o anúncio para Premium durante 30 dias. O destaque só será ativado após confirmação manual do pagamento pela equipa.");
   }
 
   async function reviewFeaturedPromotion(promotionId: string, decision: "confirm" | "reject") {
@@ -693,6 +694,7 @@ export default function App() {
       p_whatsapp: cleanWhatsApp,
       p_phone: cleanPhone,
       p_image_url: imageUrl.trim(),
+      p_is_featured: publicationPlan === "premium",
     };
     const { data, error } = paymentMethod === "free_launch"
       ? await supabase.rpc("submit_listing", submitArgs)
@@ -750,6 +752,7 @@ export default function App() {
       addAudit(`Anúncio ${newAd.id} submetido com pagamento por transferência pendente de validação.`);
     }
     setTitle("");
+    setPublicationPlan("normal");
     setPrice("");
     setDescription("");
     setProofRef("");
@@ -1620,56 +1623,28 @@ export default function App() {
                 <React.Suspense fallback={<span style={{ color: "#AFC0D6" }}>A carregar gestor de fotografias…</span>}><ListingMediaPicker files={mediaFiles} onChange={setMediaFiles} /></React.Suspense>
               </div>
 
-              <div style={subCardStyle}>
-                <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>3. Modalidade e Pagamento (1.500 CVE)</strong>
-                <div style={{ fontSize: "0.85rem", color: "#B5C3D8", lineHeight: 1.55 }}>
-                  {canClaimFreeSlot ? `Campanha de lançamento: ainda existem ${freeSlotsRemaining} vagas gratuitas. Enquanto houver vagas, não é necessário efetuar qualquer transferência.` : "Campanha gratuita concluída. O anúncio normal custa 1.500 CVE. Depois de submeter, aceda a Minha Conta para gerar o código CVC, escolher BCA ou BCN e usar o código como referência da transferência."}
-                </div>
-                <div style={{ border: "1px solid rgba(96,165,250,.34)", borderRadius: 12, padding: "1rem", background: "linear-gradient(145deg,rgba(17,29,49,.92),rgba(16,24,42,.92))", display: "grid", gap: ".5rem" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
-                    <strong style={{ color: "#F8FAFC", fontSize: ".95rem" }}>Banco Comercial do Atlântico (BCA)</strong>
-                  </div>
-                  <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Titular da conta</div>
-                  <strong style={{ color: "#F8FAFC", fontSize: ".9rem" }}>José Nivaldo G. Oliveira</strong>
-                  <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>IBAN</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: ".5rem", flexWrap: "wrap" }}>
-                    <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums", overflowWrap: "anywhere" }}>CV64 0003 0000 7050 3384 1017 6</strong>
-                    <button type="button" onClick={() => { void navigator.clipboard?.writeText("CV64000300007050338410176"); }} style={{ ...secondaryBtnStyle, padding: ".35rem .55rem", fontSize: ".74rem" }}>Copiar IBAN</button>
-                  </div>
-                  <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>NIB</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: ".5rem", flexWrap: "wrap" }}>
-                    <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums", overflowWrap: "anywhere" }}>000300007050338410176</strong>
-                    <button type="button" onClick={() => { void navigator.clipboard?.writeText("000300007050338410176"); }} style={{ ...secondaryBtnStyle, padding: ".35rem .55rem", fontSize: ".74rem" }}>Copiar NIB</button>
-                  </div>
-                  <p style={{ margin: ".2rem 0 0", color: "#FDE68A", fontSize: ".76rem", lineHeight: 1.45 }}>{canClaimFreeSlot ? "Não efetue pagamentos enquanto houver vagas gratuitas disponíveis. A campanha aplica automaticamente a gratuidade." : "Transfira apenas depois de gerar o código CVC em Minha Conta. Use-o como referência da transferência e aguarde a confirmação bancária pelo administrador."}</p>
-                  <div style={{ borderTop: "1px solid rgba(181,195,216,.14)", marginTop: ".35rem", paddingTop: ".85rem", display: "grid", gap: ".5rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", flexWrap: "wrap" }}>
-                      <strong style={{ color: "#F8FAFC", fontSize: ".95rem" }}>Banco Cabo-verdiano de Negócios (BCN)</strong>
-                    </div>
-                    <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Titular da conta</div>
-                    <strong style={{ color: "#F8FAFC", fontSize: ".9rem" }}>José Nivaldo G. Oliveira</strong>
-                    <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Número de conta</div>
-                    <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums" }}>119418310001</strong>
-                    <div style={{ color: "#AFC0D6", fontSize: ".78rem" }}>NIB</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: ".5rem", flexWrap: "wrap" }}>
-                      <strong style={{ color: "#DBEAFE", fontSize: ".88rem", fontVariantNumeric: "tabular-nums", overflowWrap: "anywhere" }}>000400000119418310146</strong>
-                      <button type="button" onClick={() => { void navigator.clipboard?.writeText("000400000119418310146"); }} style={{ ...secondaryBtnStyle, padding: ".35rem .55rem", fontSize: ".74rem" }}>Copiar NIB</button>
-                    </div>
-                  </div>
-                </div>
 
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                  style={inputStyle}
-                  disabled
-                >
-                  {canClaimFreeSlot ? (
-                    <option value="free_launch">Campanha de lançamento — publicação gratuita</option>
-                  ) : (
-                    <option value="bank_transfer">Pagamento por transferência — 1.500 CVE</option>
-                  )}
-                </select>
+              <div style={subCardStyle}>
+                <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>3. Tipo de anúncio e preço</strong>
+                {canClaimFreeSlot ? (
+                  <>
+                    <div style={{ color: "#86EFAC", fontSize: ".9rem", fontWeight: 750 }}>Campanha de lançamento: anúncio Normal gratuito para os primeiros 50.</div>
+                    <p style={{ margin: 0, color: "#B5C3D8", fontSize: ".82rem", lineHeight: 1.5 }}>Durante a campanha, os destaques Premium são atribuídos gratuitamente pela administração a anúncios selecionados.</p>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ margin: 0, color: "#B5C3D8", fontSize: ".82rem" }}>Escolha uma das duas modalidades. Ambas têm duração de 30 dias.</p>
+                    <label style={{ display: "flex", alignItems: "center", gap: ".7rem", border: publicationPlan === "normal" ? "2px solid #60A5FA" : "1px solid rgba(148,163,184,.3)", borderRadius: 11, padding: ".85rem", cursor: "pointer" }}>
+                      <input type="radio" name="publicationPlan" value="normal" checked={publicationPlan === "normal"} onChange={() => setPublicationPlan("normal")} />
+                      <span style={{ display: "grid", gap: ".15rem" }}><strong style={{ color: "#F8FAFC" }}>Anúncio Normal — 1.500 CVE</strong><span style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Publicação durante 30 dias</span></span>
+                    </label>
+                    <label style={{ display: "flex", alignItems: "center", gap: ".7rem", border: publicationPlan === "premium" ? "2px solid #D6B45A" : "1px solid rgba(148,163,184,.3)", borderRadius: 11, padding: ".85rem", cursor: "pointer" }}>
+                      <input type="radio" name="publicationPlan" value="premium" checked={publicationPlan === "premium"} onChange={() => setPublicationPlan("premium")} />
+                      <span style={{ display: "grid", gap: ".15rem" }}><strong style={{ color: "#FDE68A" }}>Anúncio Premium — 2.500 CVE</strong><span style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Mais visibilidade e destaque durante 30 dias</span></span>
+                    </label>
+                    <p style={{ margin: 0, color: "#FDE68A", fontSize: ".78rem" }}>Depois de submeter, aceda a Minha Conta para gerar o código CVC e efetuar a transferência. A publicação fica pendente até à confirmação do pagamento e moderação.</p>
+                  </>
+                )}
               </div>
 
               <div style={{ ...subCardStyle, border: "1px solid rgba(96,165,250,.38)" }}>
@@ -1802,12 +1777,12 @@ export default function App() {
                     </div>
 
                     {item.listingStatus === "suspended" && item.moderationNote && <div style={{ color: "#FDE68A", fontSize: ".82rem" }}>Melhorias pedidas pela equipa: {item.moderationNote}</div>}
-                    {item.listingStatus === "published" && authUser && item.ownerAccountId === authUser.id && (() => {
+                    {!canClaimFreeSlot && item.listingStatus === "published" && authUser && item.ownerAccountId === authUser.id && (() => {
                       const promotion = featuredPromotions.find((entry) => entry.listing_id === item.id && (entry.status === "pending_payment" || (entry.status === "active" && Boolean(entry.featured_until) && new Date(entry.featured_until as string).getTime() > Date.now())));
                       return <div style={{ ...subCardStyle, border: "1px solid rgba(212,175,55,.45)", gap: ".45rem" }}>
-                        <strong style={{ color: "#FDE68A" }}>✦ Destaque Premium · 1.000 CVE na campanha / 30 dias</strong>
+                        <strong style={{ color: "#FDE68A" }}>✦ Atualizar para Destaque Premium · +1.000 CVE / 30 dias</strong>
                         <span style={{ color: "#B5C3D8", fontSize: ".82rem" }}>Mais visibilidade na página inicial, etiqueta exclusiva e moldura dourada. O destaque só começa após confirmação do pagamento.</span>
-                        {promotion ? <><span style={{ color: promotion.status === "active" ? "#86EFAC" : "#FCD34D", fontWeight: 750, fontSize: ".82rem" }}>{promotion.status === "active" ? "Destaque ativo até " + new Date(promotion.featured_until || "").toLocaleDateString("pt-PT") : "Pedido registado — " + promotion.amount_cve.toLocaleString("pt-PT") + " CVE · " + (promotion.bank || "BCA") + " · aguarda pagamento e confirmação"}</span>{promotion.status === "pending_payment" && promotion.payment_code && <div style={{ display: "flex", alignItems: "center", gap: ".55rem", flexWrap: "wrap" }}><strong style={{ color: "#FDE68A", letterSpacing: ".08em", fontSize: "1.15rem" }}>{promotion.payment_code}</strong><button type="button" onClick={() => void navigator.clipboard?.writeText(promotion.payment_code || "")} style={secondaryBtnStyle}>Copiar código</button></div>}</> : <><label style={{ color: "#CBD5E1", fontSize: ".8rem" }}>Banco para transferência <select value={featuredBank} onChange={(event) => setFeaturedBank(event.target.value as "BCA" | "BCN")} style={inputStyle}><option value="BCA">BCA</option><option value="BCN">BCN</option></select></label><button type="button" disabled={featuredPromotionBusy === item.id || item.isFeatured} onClick={() => void requestFeaturedPromotion(item)} style={{ ...actionBtnStyle("#9A7416"), color: "#FFF7D6", border: "1px solid rgba(253,230,138,.55)" }}>{featuredPromotionBusy === item.id ? "A registar pedido…" : "Quero Destaque Premium · preço da campanha"}</button></>}
+                        {promotion ? <><span style={{ color: promotion.status === "active" ? "#86EFAC" : "#FCD34D", fontWeight: 750, fontSize: ".82rem" }}>{promotion.status === "active" ? "Destaque ativo até " + new Date(promotion.featured_until || "").toLocaleDateString("pt-PT") : "Pedido registado — " + promotion.amount_cve.toLocaleString("pt-PT") + " CVE · " + (promotion.bank || "BCA") + " · aguarda pagamento e confirmação"}</span>{promotion.status === "pending_payment" && promotion.payment_code && <div style={{ display: "flex", alignItems: "center", gap: ".55rem", flexWrap: "wrap" }}><strong style={{ color: "#FDE68A", letterSpacing: ".08em", fontSize: "1.15rem" }}>{promotion.payment_code}</strong><button type="button" onClick={() => void navigator.clipboard?.writeText(promotion.payment_code || "")} style={secondaryBtnStyle}>Copiar código</button></div>}</> : <><label style={{ color: "#CBD5E1", fontSize: ".8rem" }}>Banco para transferência <select value={featuredBank} onChange={(event) => setFeaturedBank(event.target.value as "BCA" | "BCN")} style={inputStyle}><option value="BCA">BCA</option><option value="BCN">BCN</option></select></label><button type="button" disabled={featuredPromotionBusy === item.id || item.isFeatured} onClick={() => void requestFeaturedPromotion(item)} style={{ ...actionBtnStyle("#9A7416"), color: "#FFF7D6", border: "1px solid rgba(253,230,138,.55)" }}>{featuredPromotionBusy === item.id ? "A registar pedido…" : "Atualizar para Premium · 1.000 CVE"}</button></>}
                       </div>;
                     })()}
                     {item.listingStatus === "suspended" && <button type="button" onClick={() => void republishListing(item)} style={actionBtnStyle("#15803D")}>Voltar a publicar</button>}
@@ -1915,7 +1890,7 @@ export default function App() {
             <div style={{ display: "grid", gap: "0.9rem", marginBottom: "1.5rem" }}>
               <section style={{ ...subCardStyle, border: "1px solid rgba(212,175,55,.42)" }}>
                 <strong style={{ color: "#FDE68A", fontSize: "1.05rem" }}>Pedidos de Destaque Premium</strong>
-                <span style={{ color: "#B5C3D8", fontSize: ".82rem" }}>1.000 CVE durante a campanha de lançamento; depois 2.500 CVE · 30 dias. Confirme apenas pagamentos efetivamente recebidos e verificados.</span>
+                <span style={{ color: "#B5C3D8", fontSize: ".82rem" }}>Atualização de anúncio Normal para Premium: 1.000 CVE adicionais por 30 dias. Durante a campanha, a administração pode oferecer Premium gratuitamente a anúncios selecionados. Confirme apenas pagamentos efetivamente recebidos e verificados.</span>
                 {featuredPromotions.filter((promotion) => promotion.status === "pending_payment").length === 0 ? <span style={{ color: "#94A3B8", fontSize: ".85rem" }}>Não existem pedidos pendentes de pagamento.</span> : featuredPromotions.filter((promotion) => promotion.status === "pending_payment").map((promotion) => {
                   const promotedListing = listings.find((entry) => entry.id === promotion.listing_id);
                   return <div key={promotion.id} style={{ ...rowCardStyle, display: "grid", gap: ".55rem" }}>
