@@ -238,6 +238,8 @@ function ListingDescription({ description }: { description: string }) {
 }
 
 export default function App() {
+  // Simulação visual isolada: nunca altera a campanha nem permite submeter pagamentos/anúncios.
+  const priceTestMode = new URLSearchParams(window.location.search).get("modo-teste-precos") === "1";
   const [tab, setTab] = useState<"home" | "publish" | "account" | "admin" | "requests">("home");
   const [procurementFocus, setProcurementFocus] = useState<{ requestId: string; offerId?: string } | null>(null);
   const [listings, setListings] = useState<Listing[]>(INITIAL_LISTINGS);
@@ -619,6 +621,10 @@ export default function App() {
 
   async function handlePublishSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (priceTestMode) {
+      setFeedback("Modo de teste de preços: a simulação é apenas visual. Nenhum anúncio, pedido ou pagamento foi enviado.");
+      return;
+    }
     if (isSubmitting) return;
     setFeedback("");
     setSubmissionSuccess(false);
@@ -1625,7 +1631,8 @@ export default function App() {
 
               <div style={subCardStyle}>
                 <strong style={{ fontSize: "0.92rem", color: "#F8FAFC" }}>3. Tipo de anúncio e preço</strong>
-                {canClaimFreeSlot ? (
+                {priceTestMode && <div role="status" style={{ border: "1px solid #FBBF24", background: "rgba(120,85,10,.16)", color: "#FDE68A", borderRadius: 10, padding: ".75rem", fontSize: ".82rem", lineHeight: 1.5 }}><strong>Modo de teste — preços após a campanha</strong><br />Está a visualizar a tabela que será apresentada quando as 50 vagas gratuitas terminarem. Esta simulação não altera a campanha real e bloqueia qualquer submissão.</div>}
+                {canClaimFreeSlot && !priceTestMode ? (
                   <>
                     <div style={{ color: "#86EFAC", fontSize: ".9rem", fontWeight: 750 }}>Campanha de lançamento: anúncio Normal gratuito para os primeiros 50.</div>
                     <p style={{ margin: 0, color: "#B5C3D8", fontSize: ".82rem", lineHeight: 1.5 }}>Durante a campanha, os destaques Premium são atribuídos gratuitamente pela administração a anúncios selecionados.</p>
