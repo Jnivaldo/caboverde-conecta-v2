@@ -618,3 +618,19 @@ main article.listing-card-featured .listing-featured-badge {
   .premium-showcase-card,.premium-details-button { transition:none; }
   .premium-carousel { overflow-x:auto; }
 }
+
+
+/* Footer: compact, readable layout on phones. */
+@media (max-width: 700px) {
+  footer > div:first-child {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 1.35rem !important;
+  }
+  footer > div:first-child > div:first-child img {
+    width: 76px !important;
+    height: 76px !important;
+  }
+  footer > div:last-child {
+    align-items: flex-start !important;
+  }
+}
