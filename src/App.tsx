@@ -999,12 +999,21 @@ export default function App() {
             flexWrap: "wrap",
           }}
         >
-          <div className="site-brand">
-            <strong className="site-brand-title">
-              <span>CABOVERDE</span> <span>CONECTA</span>
-            </strong>
-            <div className="site-brand-campaign" style={{ fontSize: "0.82rem", color: "#38D6A0", fontWeight: 600 }}>
-              Campanha de lançamento: até 50 anúncios gratuitos · Após campanha: 1.500 CVE
+          <div className="site-brand" style={{ display: "flex", alignItems: "center", gap: "0.85rem", minWidth: 0 }}>
+            <img
+              src="https://raw.githubusercontent.com/Jnivaldo/caboverde-conecta-v2/main/Logo%20caboverdeconecta.png"
+              alt="Logótipo CaboVerde Conecta"
+              width="88"
+              height="88"
+              style={{ width: "clamp(64px, 12vw, 88px)", height: "clamp(64px, 12vw, 88px)", objectFit: "contain", flex: "0 0 auto" }}
+            />
+            <div style={{ display: "grid", gap: ".28rem", minWidth: 0 }}>
+              <strong className="site-brand-title">
+                <span>CABOVERDE</span> <span>CONECTA</span>
+              </strong>
+              <div className="site-brand-campaign" style={{ fontSize: "0.82rem", color: "#38D6A0", fontWeight: 600 }}>
+                Campanha de lançamento: até 50 anúncios gratuitos · Após campanha: 1.500 CVE
+              </div>
             </div>
           </div>
 
