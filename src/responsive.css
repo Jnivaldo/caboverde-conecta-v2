@@ -354,8 +354,11 @@ main article.listing-card button[aria-label^="Ver fotografia"] {
   font-weight: 950;
   text-shadow: 0 2px 14px rgba(0,0,0,.22);
 }
-.site-brand-title span:last-child {
+.site-brand-title span:nth-child(2) {
   color: #38D6A0;
+}
+.site-brand-title span:last-child {
+  color: #151F33;
 }
 .site-brand-campaign {
   font-size: .76rem !important;
