@@ -548,7 +548,7 @@ export default function App() {
     } else if (!window.confirm("Tem a certeza de que pretende rejeitar este pedido de destaque?")) return;
     const promotion = featuredPromotions.find((entry) => entry.id === promotionId);
     setFeaturedPromotionBusy(promotionId);
-    const { error } = await supabase.rpc("review_listing_featured_promotion", { p_promotion_id: promotionId, p_decision: decision, p_payment_reference: paymentReference, p_admin_note: null });
+    const { error } = await supabase.rpc("review_listing_featured_promotion", { p_promotion_id: promotionId, p_decision: decision, p_payment_reference: paymentReference, p_admin_note: null, p_bank: featuredPromotions.find((entry) => entry.id === promotionId)?.bank ?? null });
     setFeaturedPromotionBusy(null);
     if (error) { setFeedback("Não foi possível rever o pedido: " + error.message); return; }
     const { data, error: reloadError } = await supabase.from("listing_featured_promotions").select("id, listing_id, owner_id, amount_cve, duration_days, status, bank, payment_code, payment_reference, admin_note, created_at, featured_until").order("created_at", { ascending: false });
