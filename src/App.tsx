@@ -1640,14 +1640,30 @@ export default function App() {
                 ) : (
                   <>
                     <p style={{ margin: 0, color: "#B5C3D8", fontSize: ".82rem" }}>Escolha uma das duas modalidades. Ambas têm duração de 30 dias.</p>
-                    <label style={{ display: "flex", alignItems: "center", gap: ".7rem", border: publicationPlan === "normal" ? "2px solid #60A5FA" : "1px solid rgba(148,163,184,.3)", borderRadius: 11, padding: ".85rem", cursor: "pointer" }}>
-                      <input type="radio" name="publicationPlan" value="normal" checked={publicationPlan === "normal"} onChange={() => setPublicationPlan("normal")} />
-                      <span style={{ display: "grid", gap: ".15rem" }}><strong style={{ color: "#F8FAFC" }}>Anúncio Normal — 1.500 CVE</strong><span style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Publicação durante 30 dias</span></span>
-                    </label>
-                    <label style={{ display: "flex", alignItems: "center", gap: ".7rem", border: publicationPlan === "premium" ? "2px solid #D6B45A" : "1px solid rgba(148,163,184,.3)", borderRadius: 11, padding: ".85rem", cursor: "pointer" }}>
-                      <input type="radio" name="publicationPlan" value="premium" checked={publicationPlan === "premium"} onChange={() => setPublicationPlan("premium")} />
-                      <span style={{ display: "grid", gap: ".15rem" }}><strong style={{ color: "#FDE68A" }}>Anúncio Premium — 2.500 CVE</strong><span style={{ color: "#AFC0D6", fontSize: ".78rem" }}>Mais visibilidade e destaque durante 30 dias</span></span>
-                    </label>
+                    <div className="publication-plan-grid" role="radiogroup" aria-label="Escolha o tipo de anúncio">
+                      <label className={`publication-plan-card publication-plan-normal ${publicationPlan === "normal" ? "is-selected" : ""}`}>
+                        <input className="publication-plan-radio" type="radio" name="publicationPlan" value="normal" checked={publicationPlan === "normal"} onChange={() => setPublicationPlan("normal")} />
+                        <span className="publication-plan-card-top">
+                          <span className="publication-plan-icon" aria-hidden="true">▤</span>
+                          <span className="publication-plan-choice">{publicationPlan === "normal" ? "Selecionado" : "Escolher plano"}</span>
+                        </span>
+                        <span className="publication-plan-name">Anúncio Normal</span>
+                        <span className="publication-plan-price">1.500 <small>CVE</small></span>
+                        <span className="publication-plan-description">Publicação durante 30 dias</span>
+                        <span className="publication-plan-includes">Presença no catálogo de anúncios</span>
+                      </label>
+                      <label className={`publication-plan-card publication-plan-premium ${publicationPlan === "premium" ? "is-selected" : ""}`}>
+                        <input className="publication-plan-radio" type="radio" name="publicationPlan" value="premium" checked={publicationPlan === "premium"} onChange={() => setPublicationPlan("premium")} />
+                        <span className="publication-plan-card-top">
+                          <span className="publication-plan-icon" aria-hidden="true">✦</span>
+                          <span className="publication-plan-choice">{publicationPlan === "premium" ? "Selecionado" : "Maior destaque"}</span>
+                        </span>
+                        <span className="publication-plan-name">Anúncio Premium</span>
+                        <span className="publication-plan-price">2.500 <small>CVE</small></span>
+                        <span className="publication-plan-description">Mais visibilidade e destaque durante 30 dias</span>
+                        <span className="publication-plan-includes">Destaque Premium no portal</span>
+                      </label>
+                    </div>
                     <p style={{ margin: 0, color: "#FDE68A", fontSize: ".78rem" }}>Depois de submeter, aceda a Minha Conta para gerar o código CVC e efetuar a transferência. A publicação fica pendente até à confirmação do pagamento e moderação.</p>
                   </>
                 )}
